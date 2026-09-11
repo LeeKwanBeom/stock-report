@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex, nofollow">
 <title>종베 기록</title>
 <style>
-:root{--bg:#f6f5f2;--card:#fff;--line:#e4e2dc;--text:#1f1e1b;--sub:#6b6a64;--muted:#9a988f;--accent:#1f5fae;--accentBg:#e6f0fb;--up:#d23b30;--down:#1f5fd1;--warn:#7a4a06;--warnBg:#faeeda;--ok:#2f6b12;--bad:#a32d2d;--chip:#f1efe8}
-@media (prefers-color-scheme:dark){:root{--bg:#151513;--card:#1f1f1c;--line:#34332f;--text:#ecebe6;--sub:#b3b1a8;--muted:#86847c;--accent:#85b7eb;--accentBg:#0c2c4f;--up:#f07a70;--down:#7fa8f5;--warn:#fac775;--warnBg:#412402;--ok:#97c459;--bad:#f09595;--chip:#2c2c2a}}
+:root{--bg:#f6f5f2;--card:#fff;--line:#e4e2dc;--text:#1f1e1b;--sub:#6b6a64;--muted:#9a988f;--accent:#1f5fae;--accentBg:#e6f0fb;--up:#ff0000;--down:#0000ff;--warn:#7a4a06;--warnBg:#faeeda;--ok:#2f6b12;--bad:#a32d2d;--chip:#f1efe8}
+@media (prefers-color-scheme:dark){:root{--bg:#151513;--card:#1f1f1c;--line:#34332f;--text:#ecebe6;--sub:#b3b1a8;--muted:#86847c;--accent:#85b7eb;--accentBg:#0c2c4f;--up:#ff4d4d;--down:#6b7dff;--warn:#fac775;--warnBg:#412402;--ok:#97c459;--bad:#f09595;--chip:#2c2c2a}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 .wrap{max-width:480px;margin:0 auto;padding:12px 12px 32px}
@@ -41,7 +41,9 @@ label.chk{display:flex;gap:8px;align-items:center;padding:4px 0}
 .bar{height:40px;position:relative}
 .bar .mid{position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--line)}
 .bar i{position:absolute;left:18%;right:18%;border-radius:2px}
-.bar i.p{bottom:50%;background:var(--up);opacity:.6}.bar i.n{top:50%;background:var(--down);opacity:.55}
+.bar i.p{bottom:50%;background:var(--up)}.bar i.n{top:50%;background:var(--down)}
+.flag.warn{background:var(--warnBg);color:var(--warn)}
+.gapline{font-size:11px;color:var(--muted);margin-top:4px}
 .secblk{padding:10px 0;border-top:1px solid var(--line)}
 .flag{font-size:11px;padding:1px 6px;border-radius:5px;background:var(--accentBg);color:var(--accent);margin-left:4px}
 details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
@@ -222,7 +224,7 @@ function renderLive(d) {
     const liveNames = Object.keys(bySec).filter(n => bySec[n][lastT]).sort(byConc);
     const goneNames = Object.keys(bySec).filter(n => !bySec[n][lastT]);
     const mkAxis = () => { const ax = el('div', 'axis'); ax.style.gridTemplateColumns = gridCols; times.forEach(t => ax.appendChild(el('span', null, tLabel(t)))); return ax; };
-    const gaps = [];
+    const stockMapL = {}; arr(d.stocks).forEach(s => { stockMapL[s['섹터명']] = arr(s['종목']); });
     const mkBlk = n => {
       const present = times.map(t => bySec[n][t]).filter(Boolean);
       const last = present[present.length - 1];
@@ -232,6 +234,8 @@ function renderLive(d) {
       const top = el('div', 'head');
       const nm = el('span'); add(nm, el('strong', null, n + ' '), el('span', 'muted', has(last['집중도%']) ? last['집중도%'] + '%' : ''));
       if (dupAt[n]) add(nm, el('span', 'flag', '카드 2장 ' + [...new Set(dupAt[n])].map(tLabel).join(',')));
+      const gapNow = bySec[n][lastT] && bySec[n][lastT]['괴리'] === 'Y';
+      if (gapNow) add(nm, el('span', 'flag warn', '괴리'));
       let tag = '—', cls = 'sub';
       if (!bySec[n][lastT]) { tag = tLabel(last['시각']) + ' 이후 없음'; cls = 'muted'; }
       else if (lm !== null && lm > 0) { tag = `가속 · 양수 ${posN}/${present.length}`; cls = 'up'; }
@@ -245,10 +249,14 @@ function renderLive(d) {
         const b = el('div', 'bar'); add(b, el('span', 'mid'));
         if (v !== null && v !== 0) { const bar = el('i', v > 0 ? 'p' : 'n'); bar.style.height = Math.max(2, Math.round(Math.abs(v) / maxAbs * 19)) + 'px'; b.appendChild(bar); }
         bars.appendChild(b);
-        vals.appendChild(el('span', null, v === null ? '' : (v > 0 ? '+' : '') + v.toFixed(1)));
+        const v1 = v === null ? null : Math.round(v * 10) / 10;
+        vals.appendChild(el('span', null, v1 === null ? '' : (v1 === 0 ? '0.0' : (v1 > 0 ? '+' : '') + v1.toFixed(1))));
       });
       add(blk, bars, vals);
-      if (bySec[n][lastT] && bySec[n][lastT]['괴리'] === 'Y') gaps.push([n, bySec[n][lastT]['거래대금1위']]);
+      if (gapNow) {
+        const hiL = (stockMapL[n] || []).slice().sort((a, b) => (num(b['등락률']) ?? -999) - (num(a['등락률']) ?? -999))[0];
+        add(blk, el('div', 'gapline', `괴리 : 대금 1위 ${bySec[n][lastT]['거래대금1위'] || '—'}` + (hiL ? ` / 등락 1위 ${hiL['종목명']} ${hiL['등락률']}%` : '')));
+      }
       return blk;
     };
     const list = el('div', 'card');
@@ -261,12 +269,6 @@ function renderLive(d) {
       goneNames.forEach(n => list4.appendChild(mkBlk(n)));
       add(det, list4); add(c1, det);
     }
-    const stockMap = {}; arr(d.stocks).forEach(s => { stockMap[s['섹터명']] = arr(s['종목']); });
-    gaps.forEach(([n, lead]) => {
-      const rows = stockMap[n] || [];
-      const hi = rows.slice().sort((a, b) => (num(b['등락률']) ?? -999) - (num(a['등락률']) ?? -999))[0];
-      add(c1, el('div', 'note', `괴리 — ${n} : 거래대금 1위 ${lead || '—'}` + (hi ? ` / 등락 1위 ${hi['종목명']} ${hi['등락률']}%` : '')));
-    });
   }
 
   const inq = arr(d.inq).slice().sort((a, b) => (num(a['조회순위']) ?? 99) - (num(b['조회순위']) ?? 99));
