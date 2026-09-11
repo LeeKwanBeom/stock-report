@@ -207,19 +207,23 @@ function renderLive(d) {
     const times = [...new Set(flow.map(r => String(r['시각'])))].sort();
     const lastT = times[times.length - 1];
     const gridCols = `repeat(${times.length}, minmax(0,1fr))`;
-    const bySec = {}; flow.forEach(r => { (bySec[r['섹터명']] = bySec[r['섹터명']] || {})[String(r['시각'])] = r; });
-    const maxAbs = Math.max(0.5, ...flow.map(r => Math.abs(num(r['모멘텀']) ?? 0)));
-    const names = Object.keys(bySec).sort((a, b) => {
-      const ia = bySec[a][lastT] ? 1 : 0, ib = bySec[b][lastT] ? 1 : 0;
-      if (ia !== ib) return ib - ia;
-      return (num((bySec[b][lastT] || {})['집중도%']) ?? -1) - (num((bySec[a][lastT] || {})['집중도%']) ?? -1);
+    const bySec = {}; const dupAt = {};
+    flow.forEach(r => {
+      const n = r['섹터명'], t = String(r['시각']);
+      const m = (bySec[n] = bySec[n] || {});
+      if (m[t]) {
+        (dupAt[n] = dupAt[n] || []).push(t);
+        if ((num(r['섹터누적억']) ?? 0) <= (num(m[t]['섹터누적억']) ?? 0)) return;
+      }
+      m[t] = r;
     });
-    const list = el('div', 'card');
-    const axis = el('div', 'axis'); axis.style.gridTemplateColumns = gridCols;
-    times.forEach(t => axis.appendChild(el('span', null, tLabel(t))));
-    add(list, axis);
+    const maxAbs = Math.max(0.5, ...flow.map(r => Math.abs(num(r['모멘텀']) ?? 0)));
+    const byConc = (a, b) => (num((bySec[b][lastT] || {})['집중도%']) ?? -1) - (num((bySec[a][lastT] || {})['집중도%']) ?? -1);
+    const liveNames = Object.keys(bySec).filter(n => bySec[n][lastT]).sort(byConc);
+    const goneNames = Object.keys(bySec).filter(n => !bySec[n][lastT]);
+    const mkAxis = () => { const ax = el('div', 'axis'); ax.style.gridTemplateColumns = gridCols; times.forEach(t => ax.appendChild(el('span', null, tLabel(t)))); return ax; };
     const gaps = [];
-    names.forEach(n => {
+    const mkBlk = n => {
       const present = times.map(t => bySec[n][t]).filter(Boolean);
       const last = present[present.length - 1];
       const lm = num(last['모멘텀']);
@@ -227,8 +231,9 @@ function renderLive(d) {
       const blk = el('div', 'secblk');
       const top = el('div', 'head');
       const nm = el('span'); add(nm, el('strong', null, n + ' '), el('span', 'muted', has(last['집중도%']) ? last['집중도%'] + '%' : ''));
+      if (dupAt[n]) add(nm, el('span', 'flag', '카드 2장 ' + [...new Set(dupAt[n])].map(tLabel).join(',')));
       let tag = '—', cls = 'sub';
-      if (!bySec[n][lastT]) { tag = tLabel(last['시각']) + ' 이후 카드 없음'; cls = 'muted'; }
+      if (!bySec[n][lastT]) { tag = tLabel(last['시각']) + ' 이후 없음'; cls = 'muted'; }
       else if (lm !== null && lm > 0) { tag = `가속 · 양수 ${posN}/${present.length}`; cls = 'up'; }
       else if (lm !== null && lm < 0) { tag = `감속 · 양수 ${posN}/${present.length}`; cls = 'down'; }
       add(top, nm, el('span', cls, tag));
@@ -243,10 +248,19 @@ function renderLive(d) {
         vals.appendChild(el('span', null, v === null ? '' : (v > 0 ? '+' : '') + v.toFixed(1)));
       });
       add(blk, bars, vals);
-      add(list, blk);
       if (bySec[n][lastT] && bySec[n][lastT]['괴리'] === 'Y') gaps.push([n, bySec[n][lastT]['거래대금1위']]);
-    });
+      return blk;
+    };
+    const list = el('div', 'card');
+    add(list, mkAxis());
+    liveNames.forEach(n => list.appendChild(mkBlk(n)));
     add(c1, list);
+    if (goneNames.length) {
+      const det = el('details'); add(det, el('summary', null, `${tLabel(lastT)} 에 없는 카드 ${goneNames.length}개 (테마 종료 · 이름 바뀜 · 오독)`));
+      const list4 = el('div', 'card'); add(list4, mkAxis());
+      goneNames.forEach(n => list4.appendChild(mkBlk(n)));
+      add(det, list4); add(c1, det);
+    }
     const stockMap = {}; arr(d.stocks).forEach(s => { stockMap[s['섹터명']] = arr(s['종목']); });
     gaps.forEach(([n, lead]) => {
       const rows = stockMap[n] || [];
