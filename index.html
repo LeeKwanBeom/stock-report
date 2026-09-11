@@ -276,14 +276,14 @@ function renderLive(d) {
         tms.forEach(tt => {
           const i = ranked[tt].indexOf(nm);
           const td = el('td', i === 0 ? 'r1' : null, i < 0 ? '—' : String(i + 1));
-          if (i >= 0 && flowTop[tt] === nm) td.appendChild(el('sup', null, '↑'));
+          if (i >= 0 && flowTop[tt] === nm) td.appendChild(el('sup', null, '₩'));
           const r = sb[tt][nm]; if (r) td.title = `누적 ${r['누적억']}억 · 구간 ${r['구간증분억'] || '—'}억 · ${r['등락률']}%`;
           tr.appendChild(td);
         });
         tb.appendChild(tr);
       });
       add(box, tb);
-      add(box, el('div', 'leg', '숫자 = 카드 안 누적 거래대금 순위 · 빨간 칸 = 누적 1위 · ↑ = 그 구간 유입 1위 (가격 표시 아님, 앞 기록이 1시간보다 멀면 구간도 길어짐) · — = 티마 카드(4종목)에 없음 (순위 하락이 아님)'));
+      add(box, el('div', 'leg', '숫자 = 카드 안 누적 거래대금 순위 · 빨간 칸 = 누적 1위 · ₩ = 그 구간 돈이 가장 많이 들어온 종목 (앞 기록이 1시간보다 멀면 구간도 길어짐) · — = 티마 카드(4종목)에 없음 (순위 하락이 아님)'));
       return box;
     };
     const mkBlk = n => {
