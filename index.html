@@ -44,6 +44,17 @@ label.chk{display:flex;gap:8px;align-items:center;padding:4px 0}
 .bar i.p{bottom:50%;background:var(--up)}.bar i.n{top:50%;background:var(--down)}
 .flag.warn{background:var(--warnBg);color:var(--warn)}
 .gapline{font-size:11px;color:var(--muted);margin-top:4px}
+.hint{font-size:11px;color:var(--accent);margin-top:6px}
+.secblk.tap{cursor:pointer}
+.rk{margin-top:8px;padding:8px;border-radius:8px;background:var(--bg)}
+.rk .lead{font-size:12px;margin-bottom:6px}
+.rk table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
+.rk th{font-size:10px;font-weight:400;color:var(--muted);padding:2px 0}
+.rk td{text-align:center;padding:4px 0;border-top:1px solid var(--line)}
+.rk td.nm{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk td.r1{background:var(--accentBg);color:var(--accent);font-weight:600}
+.rk sup{color:var(--up);font-size:9px}
+.rk .leg{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
 .secblk{padding:10px 0;border-top:1px solid var(--line)}
 .flag{font-size:11px;padding:1px 6px;border-radius:5px;background:var(--accentBg);color:var(--accent);margin-left:4px}
 details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
@@ -225,6 +236,55 @@ function renderLive(d) {
     const goneNames = Object.keys(bySec).filter(n => !bySec[n][lastT]);
     const mkAxis = () => { const ax = el('div', 'axis'); ax.style.gridTemplateColumns = gridCols; times.forEach(t => ax.appendChild(el('span', null, tLabel(t)))); return ax; };
     const stockMapL = {}; arr(d.stocks).forEach(s => { stockMapL[s['섹터명']] = arr(s['종목']); });
+    const stBy = {};
+    arr(d.stockFlow).forEach(r => {
+      if (r['섹터명'] === '개별이슈') return;
+      const tt = String(r['시각']);
+      const m = ((stBy[r['섹터명']] = stBy[r['섹터명']] || {})[tt] = stBy[r['섹터명']][tt] || {});
+      const prev = m[r['종목명']];
+      if (!prev || (num(r['누적억']) ?? 0) > (num(prev['누적억']) ?? 0)) m[r['종목명']] = r;
+    });
+    const mkRank = n => {
+      const sb = stBy[n]; if (!sb) return null;
+      const tms = Object.keys(sb).sort();
+      const ranked = {}; const flowTop = {};
+      tms.forEach(tt => {
+        const rs = Object.values(sb[tt]).sort((a, b) => (num(b['누적억']) ?? 0) - (num(a['누적억']) ?? 0));
+        ranked[tt] = rs.map(r => r['종목명']);
+        const withFlow = rs.filter(r => has(r['구간증분억']));
+        if (withFlow.length >= 2) flowTop[tt] = withFlow.slice().sort((a, b) => (num(b['구간증분억']) ?? 0) - (num(a['구간증분억']) ?? 0))[0]['종목명'];
+      });
+      const seq = [];
+      tms.forEach(tt => { const top = ranked[tt][0]; if (top && (!seq.length || seq[seq.length - 1][1] !== top)) seq.push([tt, top]); });
+      const lastTm = tms[tms.length - 1];
+      const names = [...new Set(tms.flatMap(tt => ranked[tt]))].sort((a, b) => {
+        const ra = ranked[lastTm].indexOf(a), rb = ranked[lastTm].indexOf(b);
+        const va = ra < 0 ? 99 : ra, vb = rb < 0 ? 99 : rb;
+        if (va !== vb) return va - vb;
+        return Math.min(...tms.map(tt => { const i = ranked[tt].indexOf(a); return i < 0 ? 99 : i; })) - Math.min(...tms.map(tt => { const i = ranked[tt].indexOf(b); return i < 0 ? 99 : i; }));
+      });
+      const box = el('div', 'rk'); box.hidden = true;
+      const lead = el('div', 'lead');
+      add(lead, el('span', 'sub', '대장 변천 : '), el('span', null, seq.length <= 1 ? `${seq[0] ? seq[0][1] : '—'} ${seq[0] ? tLabel(seq[0][0]) + ' 부터 1위 유지' : ''}` : seq.map(([tt, nm]) => `${tLabel(tt)} ${nm}`).join(' → ')));
+      add(box, lead);
+      const tb = el('table'); const cg = el('colgroup');
+      const c0 = el('col'); c0.style.width = '30%'; cg.appendChild(c0); tms.forEach(() => cg.appendChild(el('col'))); tb.appendChild(cg);
+      const hr = el('tr'); hr.appendChild(el('th')); tms.forEach(tt => hr.appendChild(el('th', null, tLabel(tt)))); tb.appendChild(hr);
+      names.forEach(nm => {
+        const tr = el('tr'); tr.appendChild(el('td', 'nm', nm));
+        tms.forEach(tt => {
+          const i = ranked[tt].indexOf(nm);
+          const td = el('td', i === 0 ? 'r1' : null, i < 0 ? '—' : String(i + 1));
+          if (i >= 0 && flowTop[tt] === nm) td.appendChild(el('sup', null, '●'));
+          const r = sb[tt][nm]; if (r) td.title = `누적 ${r['누적억']}억 · 구간 ${r['구간증분억'] || '—'}억 · ${r['등락률']}%`;
+          tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+      add(box, tb);
+      add(box, el('div', 'leg', '숫자 = 카드 안 누적 거래대금 순위 · 색칠 = 1위 · ● = 그 1시간 유입 1위 · — = 티마 카드(4종목)에 없음 (순위 하락이 아님)'));
+      return box;
+    };
     const mkBlk = n => {
       const present = times.map(t => bySec[n][t]).filter(Boolean);
       const last = present[present.length - 1];
@@ -256,6 +316,13 @@ function renderLive(d) {
       if (gapNow) {
         const hiL = (stockMapL[n] || []).slice().sort((a, b) => (num(b['등락률']) ?? -999) - (num(a['등락률']) ?? -999))[0];
         add(blk, el('div', 'gapline', `괴리 : 대금 1위 ${bySec[n][lastT]['거래대금1위'] || '—'}` + (hiL ? ` / 등락 1위 ${hiL['종목명']} ${hiL['등락률']}%` : '')));
+      }
+      const rkBox = mkRank(n);
+      if (rkBox) {
+        const hint = el('div', 'hint', '▾ 종목 순위 보기');
+        add(blk, hint, rkBox);
+        blk.classList.add('tap');
+        blk.onclick = () => { rkBox.hidden = !rkBox.hidden; hint.textContent = rkBox.hidden ? '▾ 종목 순위 보기' : '▴ 접기'; };
       }
       return blk;
     };
