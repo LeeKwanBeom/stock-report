@@ -14,6 +14,10 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system
 .tabs{display:flex;gap:6px;margin-bottom:10px}
 .tabs button{flex:1;padding:8px 0;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--sub);font:inherit}
 .tabs button.on{background:var(--accentBg);color:var(--accent);border-color:transparent;font-weight:600}
+.datebar{display:flex;align-items:center;gap:6px;margin:0 0 12px}
+.datebar button{padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);font:inherit}
+.datebar button:disabled{color:var(--muted);opacity:.5}
+.datebar select{flex:1;text-align:center;text-align-last:center;padding:6px}
 .head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .head h1{font-size:18px;margin:0}
 select{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
@@ -69,6 +73,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
     <button data-tab="close" class="on">마감</button>
     <button data-tab="verify">검증</button>
   </div>
+  <div class="datebar" id="datebar" hidden></div>
   <section id="live" hidden><div class="empty">장중 페이지는 다음 단계에서 만듭니다</div></section>
   <section id="close"><div class="empty">불러오는 중</div></section>
   <section id="verify" hidden><div class="empty">검증 페이지는 표본이 쌓인 뒤 만듭니다</div></section>
@@ -76,7 +81,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 <script>
 const WD = '일월화수목금토';
 const arr = x => Array.isArray(x) ? x : (x && Array.isArray(x.value) ? x.value : (x == null ? [] : [x]));
-const num = s => { const v = parseFloat(String(s ?? '').replace(/,/g, '')); return isNaN(v) ? null : v; };
+const num = s => { const v = parseFloat(String(s ?? '').replace(/,/g, '')); return isFinite(v) ? v : null; };
 const has = s => s !== undefined && s !== null && String(s).trim() !== '';
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined && text !== null) e.textContent = text; return e; }
 function add(parent, ...kids) { kids.forEach(k => { if (k) parent.appendChild(k); }); return parent; }
@@ -108,12 +113,6 @@ function renderClose(d, dates) {
   add(left, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) ${String(d.at).slice(0, 2)}:${String(d.at).slice(2)} 판정`));
   const right = el('div'); right.style.display = 'flex'; right.style.gap = '6px'; right.style.alignItems = 'center';
   if (has(g['비고'])) add(right, el('span', 'badge', g['비고']));
-  if (dates.length > 1) {
-    const sel = el('select');
-    dates.forEach(x => { const o = el('option', null, `${+x.slice(4, 6)}/${+x.slice(6, 8)}`); o.value = x; if (x === ymd) o.selected = true; sel.appendChild(o); });
-    sel.onchange = () => loadDate(sel.value, dates);
-    add(right, sel);
-  }
   add(box, add(head, left, right));
 
   const st = d.status || {};
@@ -231,7 +230,8 @@ function renderLive(d) {
       }
       m[t] = r;
     });
-    const maxAbs = Math.max(0.5, ...flow.map(r => Math.abs(num(r['모멘텀']) ?? 0)));
+    const scaleRows = flow.filter(r => String(r['시각']) >= '0900');
+    const maxAbs = Math.max(0.5, ...(scaleRows.length ? scaleRows : flow).map(r => Math.abs(num(r['모멘텀']) ?? 0)));
     const byConc = (a, b) => (num((bySec[b][lastT] || {})['집중도%']) ?? -1) - (num((bySec[a][lastT] || {})['집중도%']) ?? -1);
     const liveNames = Object.keys(bySec).filter(n => bySec[n][lastT]).sort(byConc);
     const goneNames = Object.keys(bySec).filter(n => !bySec[n][lastT]);
@@ -308,7 +308,7 @@ function renderLive(d) {
       times.forEach(t => {
         const r = bySec[n][t]; const v = r ? num(r['모멘텀']) : null;
         const b = el('div', 'bar'); add(b, el('span', 'mid'));
-        if (v !== null && v !== 0) { const bar = el('i', v > 0 ? 'p' : 'n'); bar.style.height = Math.max(2, Math.round(Math.abs(v) / maxAbs * 19)) + 'px'; b.appendChild(bar); }
+        if (v !== null && v !== 0) { const bar = el('i', v > 0 ? 'p' : 'n'); bar.style.height = Math.min(19, Math.max(2, Math.round(Math.abs(v) / maxAbs * 19))) + 'px'; b.appendChild(bar); }
         bars.appendChild(b);
         const v1 = v === null ? null : Math.round(v * 10) / 10;
         vals.appendChild(el('span', null, v1 === null ? '' : (v1 === 0 ? '0.0' : (v1 > 0 ? '+' : '') + v1.toFixed(1))));
@@ -367,12 +367,34 @@ function renderLive(d) {
   add(box, el('div', 'foot', `관찰 전용 — 9~10시는 보기만 · 생성 ${d.generated || '—'}`));
 }
 
+let DATES = [];
+function renderDatebar(cur) {
+  const bar = document.getElementById('datebar'); bar.innerHTML = '';
+  if (!DATES.length) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const idx = DATES.indexOf(cur);
+  const older = el('button', null, '◀'); older.setAttribute('aria-label', '이전 거래일');
+  const newer = el('button', null, '▶'); newer.setAttribute('aria-label', '다음 거래일');
+  older.disabled = idx < 0 || idx >= DATES.length - 1;
+  newer.disabled = idx <= 0;
+  older.onclick = () => loadDate(DATES[idx + 1], DATES);
+  newer.onclick = () => loadDate(DATES[idx - 1], DATES);
+  const sel = el('select'); sel.setAttribute('aria-label', '날짜 선택');
+  DATES.forEach((x, i) => {
+    const wdx = WD[new Date(+x.slice(0, 4), +x.slice(4, 6) - 1, +x.slice(6, 8)).getDay()];
+    const o = el('option', null, `${+x.slice(4, 6)}/${+x.slice(6, 8)} (${wdx})${i === 0 ? ' 최근' : ''}`); o.value = x; if (x === cur) o.selected = true; sel.appendChild(o);
+  });
+  sel.onchange = () => loadDate(sel.value, DATES);
+  add(bar, older, sel, newer);
+}
+
 async function loadDate(ymd, dates) {
   let d;
   try { d = await getJson(ymd ? `data/${ymd}.json` : 'data/latest.json'); }
   catch (e) { ['close', 'live'].forEach(id => { const b = document.getElementById(id); b.innerHTML = ''; add(b, el('div', 'empty', '데이터를 못 불러왔습니다 : ' + e.message)); }); return; }
   try { renderClose(d, dates); } catch (e) { add(document.getElementById('close'), el('div', 'empty', '마감 화면 오류 : ' + e.message)); }
   try { renderLive(d); } catch (e) { add(document.getElementById('live'), el('div', 'empty', '장중 화면 오류 : ' + e.message)); }
+  renderDatebar(String(d.date || ''));
 }
 
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
@@ -383,7 +405,8 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
 (async () => {
   let dates = [];
   try { dates = arr((await getJson('data/dates.json')).dates); } catch (e) { }
-  loadDate(null, dates);
+  DATES = dates.map(String).sort().reverse();
+  loadDate(null, DATES);
 })();
 </script>
 </body>
