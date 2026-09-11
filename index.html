@@ -35,6 +35,16 @@ select{font:inherit;color:var(--text);background:var(--card);border:1px solid va
 label.chk{display:flex;gap:8px;align-items:center;padding:4px 0}
 .foot{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
 .empty{padding:24px 0;text-align:center;color:var(--muted)}
+.axis,.bars,.vals{display:grid;gap:3px;align-items:center;text-align:center}
+.axis{font-size:10px;color:var(--muted);margin:2px 0 2px}
+.vals{font-size:10px;color:var(--sub);margin-top:2px}
+.bar{height:40px;position:relative}
+.bar .mid{position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--line)}
+.bar i{position:absolute;left:18%;right:18%;border-radius:2px}
+.bar i.p{bottom:50%;background:var(--up);opacity:.6}.bar i.n{top:50%;background:var(--down);opacity:.55}
+.secblk{padding:10px 0;border-top:1px solid var(--line)}
+.flag{font-size:11px;padding:1px 6px;border-radius:5px;background:var(--accentBg);color:var(--accent);margin-left:4px}
+details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 @media (min-width:860px){.wrap{max-width:960px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}}
 </style>
 </head>
@@ -114,6 +124,7 @@ function renderClose(d, dates) {
   const judge = arr(d.judge1520);
   const stockMap = {}; arr(d.stocks).forEach(s => { stockMap[s['섹터명']] = arr(s['종목']); });
   const resMap = {}; arr(d.result).forEach(r => { resMap[r['섹터'] + '|' + r['종목']] = r; });
+  const inqMap = {}; arr(d.inq).forEach(r => { inqMap[String(r['코드'])] = r['조회순위']; });
   const cands = judge.filter(r => r['판정'] === '후보');
 
   add(c1, el('div', 'label', cands.length ? '종베 후보' : '종베 후보 — 없음'));
@@ -133,6 +144,7 @@ function renderClose(d, dates) {
     rows.forEach((s, i) => {
       const row = el('div', 'row');
       const nm = el('span'); add(nm, el('span', 'sub', (roles[i] || '') + ' '), el('span', s['종목명'] === r['대장'] ? 'acc' : null, s['종목명']));
+      if (has(inqMap[String(s['종목코드'])])) add(nm, el('span', 'flag', '조회 ' + inqMap[String(s['종목코드'])] + '위'));
       const rt = el('span'); add(rt, el('span', null, (s['누적억'] || '—') + '억 '), pctEl(s['등락률']));
       const res = resMap[r['섹터명'] + '|' + s['종목명']];
       if (res && has(res['D1종가%'])) { filled++; add(rt, el('span', 'sub', ' → D+1 '), pctEl(res['D1종가%'])); }
@@ -175,9 +187,108 @@ function renderClose(d, dates) {
   add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 관문1 표본 ${g['표본일수'] || '—'}일 · 생성 ${d.generated || '—'}`));
 }
 
+function tLabel(t) { t = String(t); return t.slice(2) === '00' ? (+t.slice(0, 2)) + '시' : (+t.slice(0, 2)) + ':' + t.slice(2); }
+
+function renderLive(d) {
+  const box = document.getElementById('live'); box.innerHTML = '';
+  const ymd = String(d.date || '');
+  const g = d.gate1 || {};
+  const wd = has(g['요일']) ? g['요일'] : WD[new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8)).getDay()];
+  add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 하루 흐름`));
+  box.lastChild.style.fontSize = '18px'; box.lastChild.style.margin = '0';
+  add(box, el('div', 'status', '15:20 까지 · 관찰 전용, 후보는 마감 탭 · 장중 매시간 갱신은 다음 단계'));
+
+  const flow = arr(d.sectorFlow).filter(r => r['섹터명'] !== '개별이슈');
+  const cols = el('div', 'cols'); const c1 = el('div'); const c2 = el('div'); add(box, add(cols, c1, c2));
+
+  add(c1, el('div', 'label', '섹터 모멘텀 흐름 (구간 유입 비중 − 누적 비중, %p)'));
+  if (!flow.length) { add(c1, el('div', 'empty', '섹터 증분 기록 없음')); }
+  else {
+    const times = [...new Set(flow.map(r => String(r['시각'])))].sort();
+    const lastT = times[times.length - 1];
+    const gridCols = `repeat(${times.length}, minmax(0,1fr))`;
+    const bySec = {}; flow.forEach(r => { (bySec[r['섹터명']] = bySec[r['섹터명']] || {})[String(r['시각'])] = r; });
+    const maxAbs = Math.max(0.5, ...flow.map(r => Math.abs(num(r['모멘텀']) ?? 0)));
+    const names = Object.keys(bySec).sort((a, b) => {
+      const ia = bySec[a][lastT] ? 1 : 0, ib = bySec[b][lastT] ? 1 : 0;
+      if (ia !== ib) return ib - ia;
+      return (num((bySec[b][lastT] || {})['집중도%']) ?? -1) - (num((bySec[a][lastT] || {})['집중도%']) ?? -1);
+    });
+    const list = el('div', 'card');
+    const axis = el('div', 'axis'); axis.style.gridTemplateColumns = gridCols;
+    times.forEach(t => axis.appendChild(el('span', null, tLabel(t))));
+    add(list, axis);
+    const gaps = [];
+    names.forEach(n => {
+      const present = times.map(t => bySec[n][t]).filter(Boolean);
+      const last = present[present.length - 1];
+      const lm = num(last['모멘텀']);
+      const posN = present.filter(r => (num(r['모멘텀']) ?? 0) > 0).length;
+      const blk = el('div', 'secblk');
+      const top = el('div', 'head');
+      const nm = el('span'); add(nm, el('strong', null, n + ' '), el('span', 'muted', has(last['집중도%']) ? last['집중도%'] + '%' : ''));
+      let tag = '—', cls = 'sub';
+      if (!bySec[n][lastT]) { tag = tLabel(last['시각']) + ' 이후 카드 없음'; cls = 'muted'; }
+      else if (lm !== null && lm > 0) { tag = `가속 · 양수 ${posN}/${present.length}`; cls = 'up'; }
+      else if (lm !== null && lm < 0) { tag = `감속 · 양수 ${posN}/${present.length}`; cls = 'down'; }
+      add(top, nm, el('span', cls, tag));
+      add(blk, top);
+      const bars = el('div', 'bars'); bars.style.gridTemplateColumns = gridCols;
+      const vals = el('div', 'vals'); vals.style.gridTemplateColumns = gridCols;
+      times.forEach(t => {
+        const r = bySec[n][t]; const v = r ? num(r['모멘텀']) : null;
+        const b = el('div', 'bar'); add(b, el('span', 'mid'));
+        if (v !== null && v !== 0) { const bar = el('i', v > 0 ? 'p' : 'n'); bar.style.height = Math.max(2, Math.round(Math.abs(v) / maxAbs * 19)) + 'px'; b.appendChild(bar); }
+        bars.appendChild(b);
+        vals.appendChild(el('span', null, v === null ? '' : (v > 0 ? '+' : '') + v.toFixed(1)));
+      });
+      add(blk, bars, vals);
+      add(list, blk);
+      if (bySec[n][lastT] && bySec[n][lastT]['괴리'] === 'Y') gaps.push([n, bySec[n][lastT]['거래대금1위']]);
+    });
+    add(c1, list);
+    const stockMap = {}; arr(d.stocks).forEach(s => { stockMap[s['섹터명']] = arr(s['종목']); });
+    gaps.forEach(([n, lead]) => {
+      const rows = stockMap[n] || [];
+      const hi = rows.slice().sort((a, b) => (num(b['등락률']) ?? -999) - (num(a['등락률']) ?? -999))[0];
+      add(c1, el('div', 'note', `괴리 — ${n} : 거래대금 1위 ${lead || '—'}` + (hi ? ` / 등락 1위 ${hi['종목명']} ${hi['등락률']}%` : '')));
+    });
+  }
+
+  const inq = arr(d.inq).slice().sort((a, b) => (num(a['조회순위']) ?? 99) - (num(b['조회순위']) ?? 99));
+  add(c2, el('div', 'label', '조회순위 해답지' + (has(d.inqTime) ? ` (${tLabel(d.inqTime)} 키움 실시간 조회 20위)` : '')));
+  if (!inq.length) { add(c2, el('div', 'empty', '이날은 조회순위 수집 전 (9/11 부터)')); }
+  else {
+    const outs = inq.filter(r => !has(r['거래대금순위']));
+    add(c2, el('div', 'status', `20위 중 거래대금 100위 밖 ${outs.length}개` + (outs.length ? ' : ' + outs.map(r => r['종목명']).join(' · ') : '')));
+    const mkRow = r => {
+      const row = el('div', 'row');
+      const nm = el('span'); add(nm, el('span', 'sub', r['조회순위'] + '. '), el('span', null, r['종목명']));
+      if (r['구분'] === 'ETF') add(nm, el('span', 'muted', ' ETF'));
+      const rk = num(r['거래대금순위']);
+      if ((num(r['조회순위']) ?? 99) <= 5 && (rk === null || rk > 20)) add(nm, el('span', 'flag', '선행'));
+      const rt = el('span'); add(rt, pctEl(r['등락률']), el('span', 'sub', rk === null ? ' · 대금 100위 밖' : ` · 대금 ${rk}위`));
+      return add(row, nm, rt);
+    };
+    const list2 = el('div', 'list');
+    inq.slice(0, 10).forEach(r => list2.appendChild(mkRow(r)));
+    add(c2, list2);
+    if (inq.length > 10) {
+      const det = el('details'); add(det, el('summary', null, `11~${inq.length}위 보기`));
+      const list3 = el('div', 'list'); inq.slice(10).forEach(r => list3.appendChild(mkRow(r)));
+      add(det, list3); add(c2, det);
+    }
+    add(c2, el('div', 'status', '선행 = 조회 5위 안 + 거래대금 20위 밖 (인계문서 4절 정의). 관찰 표시일 뿐 판정에 안 쓴다'));
+  }
+  add(box, el('div', 'foot', `관찰 전용 — 9~10시는 보기만 · 생성 ${d.generated || '—'}`));
+}
+
 async function loadDate(ymd, dates) {
-  try { renderClose(await getJson(ymd ? `data/${ymd}.json` : 'data/latest.json'), dates); }
-  catch (e) { document.getElementById('close').innerHTML = ''; add(document.getElementById('close'), el('div', 'empty', '데이터를 못 불러왔습니다 : ' + e.message)); }
+  let d;
+  try { d = await getJson(ymd ? `data/${ymd}.json` : 'data/latest.json'); }
+  catch (e) { ['close', 'live'].forEach(id => { const b = document.getElementById(id); b.innerHTML = ''; add(b, el('div', 'empty', '데이터를 못 불러왔습니다 : ' + e.message)); }); return; }
+  try { renderClose(d, dates); } catch (e) { add(document.getElementById('close'), el('div', 'empty', '마감 화면 오류 : ' + e.message)); }
+  try { renderLive(d); } catch (e) { add(document.getElementById('live'), el('div', 'empty', '장중 화면 오류 : ' + e.message)); }
 }
 
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
