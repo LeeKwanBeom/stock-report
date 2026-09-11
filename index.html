@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>종베 기록</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--line:#e4e2dc;--text:#1f1e1b;--sub:#6b6a64;--muted:#9a988f;--accent:#1f5fae;--accentBg:#e6f0fb;--up:#d23b30;--down:#1f5fd1;--warn:#7a4a06;--warnBg:#faeeda;--ok:#2f6b12;--bad:#a32d2d;--chip:#f1efe8}
+@media (prefers-color-scheme:dark){:root{--bg:#151513;--card:#1f1f1c;--line:#34332f;--text:#ecebe6;--sub:#b3b1a8;--muted:#86847c;--accent:#85b7eb;--accentBg:#0c2c4f;--up:#f07a70;--down:#7fa8f5;--warn:#fac775;--warnBg:#412402;--ok:#97c459;--bad:#f09595;--chip:#2c2c2a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+.wrap{max-width:480px;margin:0 auto;padding:12px 12px 32px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;padding:8px 0;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--sub);font:inherit}
+.tabs button.on{background:var(--accentBg);color:var(--accent);border-color:transparent;font-weight:600}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.head h1{font-size:18px;margin:0}
+select{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
+.status{font-size:12px;color:var(--muted);margin:4px 0 12px}
+.badge{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--warnBg);color:var(--warn)}
+.label{font-size:12px;color:var(--sub);margin:14px 0 6px}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 4px;text-align:center}
+.metric .k{font-size:11px;color:var(--sub)}.metric .v{font-size:16px;font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.card.cand{border:2px solid var(--accent)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
+.chip{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--chip)}
+.note{font-size:12px;padding:6px 8px;border-radius:6px;background:var(--warnBg);color:var(--warn);margin-top:6px}
+.up{color:var(--up)}.down{color:var(--down)}.muted{color:var(--muted)}.sub{color:var(--sub)}.ok{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}.acc{color:var(--accent);font-weight:600}
+.list{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 12px}
+.list .row:first-child{border-top:0}
+label.chk{display:flex;gap:8px;align-items:center;padding:4px 0}
+.foot{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
+.empty{padding:24px 0;text-align:center;color:var(--muted)}
+@media (min-width:860px){.wrap{max-width:960px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tabs">
+    <button data-tab="live">장중</button>
+    <button data-tab="close" class="on">마감</button>
+    <button data-tab="verify">검증</button>
+  </div>
+  <section id="live" hidden><div class="empty">장중 페이지는 다음 단계에서 만듭니다</div></section>
+  <section id="close"><div class="empty">불러오는 중</div></section>
+  <section id="verify" hidden><div class="empty">검증 페이지는 표본이 쌓인 뒤 만듭니다</div></section>
+</div>
+<script>
+const WD = '일월화수목금토';
+const arr = x => Array.isArray(x) ? x : (x && Array.isArray(x.value) ? x.value : (x == null ? [] : [x]));
+const num = s => { const v = parseFloat(String(s ?? '').replace(/,/g, '')); return isNaN(v) ? null : v; };
+const has = s => s !== undefined && s !== null && String(s).trim() !== '';
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined && text !== null) e.textContent = text; return e; }
+function add(parent, ...kids) { kids.forEach(k => { if (k) parent.appendChild(k); }); return parent; }
+function pctEl(s) {
+  const v = num(s);
+  if (v === null) return el('span', 'muted', '—');
+  return el('span', v > 0 ? 'up' : (v < 0 ? 'down' : ''), (v > 0 ? '+' : '') + v.toFixed(2) + '%');
+}
+function shortTime(s) {
+  if (!has(s)) return '—';
+  const today = new Date(); const pad = n => String(n).padStart(2, '0');
+  const t = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  return s.startsWith(t) ? s.slice(11, 16) : s.slice(5, 16).replace('-', '/');
+}
+async function getJson(path) {
+  const res = await fetch(path + '?t=' + Date.now());
+  if (!res.ok) throw new Error(path + ' ' + res.status);
+  return res.json();
+}
+
+function renderClose(d, dates) {
+  const box = document.getElementById('close'); box.innerHTML = '';
+  const g = d.gate1 || {};
+  const ymd = String(d.date || '');
+  const wd = has(g['요일']) ? g['요일'] : WD[new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8)).getDay()];
+
+  const head = el('div', 'head');
+  const left = el('div');
+  add(left, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) ${String(d.at).slice(0, 2)}:${String(d.at).slice(2)} 판정`));
+  const right = el('div'); right.style.display = 'flex'; right.style.gap = '6px'; right.style.alignItems = 'center';
+  if (has(g['비고'])) add(right, el('span', 'badge', g['비고']));
+  if (dates.length > 1) {
+    const sel = el('select');
+    dates.forEach(x => { const o = el('option', null, `${+x.slice(4, 6)}/${+x.slice(6, 8)}`); o.value = x; if (x === ymd) o.selected = true; sel.appendChild(o); });
+    sel.onchange = () => loadDate(sel.value, dates);
+    add(right, sel);
+  }
+  add(box, add(head, left, right));
+
+  const st = d.status || {};
+  const pushOk = String(st.push || '').includes('OK');
+  const status = el('div', 'status');
+  add(status, el('span', null, `수집 ${shortTime(st['수집'])} · OCR 경고 ${st['OCR경고오늘'] ?? '—'} · push `),
+    el('span', pushOk ? 'ok' : 'bad', has(st.push) ? shortTime(st.push) + (pushOk ? '' : ' 확인') : '—'));
+  add(box, status);
+
+  const cols = el('div', 'cols'); const c1 = el('div'); const c2 = el('div'); add(box, add(cols, c1, c2));
+
+  const gl = el('div', 'label');
+  add(gl, el('span', null, '관문1 오늘 할 장인가 '), el('span', g['관문1'] === '통과' ? 'ok' : 'bad', g['관문1'] || '—'));
+  if (has(g['걸린조건'])) add(gl, el('span', 'sub', ' · ' + g['걸린조건']));
+  add(c1, gl);
+  const m4 = el('div', 'grid4');
+  [['상한가', g['상한가'], ''], ['상승비율', g['상승비율%'], '%'], ['B트랙', g['B트랙수'], '개'], ['B비중', g['B비중%'], '%']].forEach(([k, v, u]) => {
+    const m = el('div', 'metric'); add(m, el('div', 'k', k), el('div', 'v', has(v) ? v + u : '—')); m4.appendChild(m);
+  });
+  add(c1, m4);
+
+  const judge = arr(d.judge1520);
+  const stockMap = {}; arr(d.stocks).forEach(s => { stockMap[s['섹터명']] = arr(s['종목']); });
+  const resMap = {}; arr(d.result).forEach(r => { resMap[r['섹터'] + '|' + r['종목']] = r; });
+  const cands = judge.filter(r => r['판정'] === '후보');
+
+  add(c1, el('div', 'label', cands.length ? '종베 후보' : '종베 후보 — 없음'));
+  const roles = ['대장', '2등', '3등', '4등'];
+  cands.forEach(r => {
+    const card = el('div', 'card cand');
+    const top = el('div', 'head');
+    add(top, el('strong', null, r['섹터명']), el('span', 'badge', '후보 · 어종'));
+    top.lastChild.style.background = 'var(--accentBg)'; top.lastChild.style.color = 'var(--accent)';
+    add(card, top);
+    const chips = el('div', 'chips');
+    [['집중도', r['집중도%'], '%'], ['모멘텀', r['모멘텀'], ''], ['2따', r['2따스코어'], ''], ['유입', r['유입패턴'], ''], ['대장견인', r['대장견인'], ''], ['연속', r['연속'], '']]
+      .forEach(([k, v, u]) => { if (has(v)) chips.appendChild(el('span', 'chip', `${k} ${v}${u}`)); });
+    add(card, chips);
+    const rows = stockMap[r['섹터명']] || [];
+    let filled = 0;
+    rows.forEach((s, i) => {
+      const row = el('div', 'row');
+      const nm = el('span'); add(nm, el('span', 'sub', (roles[i] || '') + ' '), el('span', s['종목명'] === r['대장'] ? 'acc' : null, s['종목명']));
+      const rt = el('span'); add(rt, el('span', null, (s['누적억'] || '—') + '억 '), pctEl(s['등락률']));
+      const res = resMap[r['섹터명'] + '|' + s['종목명']];
+      if (res && has(res['D1종가%'])) { filled++; add(rt, el('span', 'sub', ' → D+1 '), pctEl(res['D1종가%'])); }
+      add(card, add(row, nm, rt));
+    });
+    if (!rows.length) add(card, el('div', 'muted', '종목 표 없음 (stock_delta 확인)'));
+    if (r['괴리'] === 'Y' && rows.length) {
+      const hi = rows.slice().sort((a, b) => (num(b['등락률']) ?? -999) - (num(a['등락률']) ?? -999))[0];
+      add(card, el('div', 'note', `괴리 — 등락 1위 ${hi['종목명']} ${hi['등락률']}%. 거래대금 1위를 대장으로, 차트로 확인`));
+    }
+    if (rows.length && !filled) add(card, el('div', 'muted', 'D+1 결과는 다음 거래일 20:05 이후'));
+    add(c1, card);
+  });
+
+  const j14 = arr(d.judge1400);
+  if (j14.length) {
+    const c14 = j14.filter(r => r['판정'] === '후보').map(r => r['섹터명']);
+    const same = c14.join() === cands.map(r => r['섹터명']).join();
+    add(c1, el('div', 'status', `14:00 후보 : ${c14.length ? c14.join(', ') : '없음'} ${same ? '(15:20 과 같음)' : '(15:20 과 다름)'}`));
+  }
+
+  add(c2, el('div', 'label', '섹터 판정'));
+  const list = el('div', 'list');
+  judge.slice().sort((a, b) => (num(b['집중도%']) ?? 0) - (num(a['집중도%']) ?? 0)).forEach(r => {
+    const row = el('div', 'row');
+    const nm = el('span'); add(nm, el('span', null, r['섹터명'] + ' '), el('span', 'muted', has(r['집중도%']) ? r['집중도%'] + '%' : ''));
+    const rt = el('span', 'sub', `모멘텀 ${r['모멘텀'] ?? '—'} · 2따 ${r['2따스코어'] ?? '—'} · `);
+    add(rt, el('span', r['판정'] === '후보' ? 'acc' : null, r['판정'] || '—'));
+    add(list, add(row, nm, rt));
+  });
+  add(c2, list);
+
+  add(c2, el('div', 'label', '관문6 사람 판단'));
+  const chk = el('div', 'card');
+  ['3레벨 뉴스인가, 재료 살아있나', '악재 없나', '내일 이벤트 (홀짝 배제)', '괴리 캡처 확인', '재료 D-day 가 언제인가'].forEach(t => {
+    const lb = el('label', 'chk'); const cb = el('input'); cb.type = 'checkbox'; add(lb, cb, el('span', null, t)); chk.appendChild(lb);
+  });
+  add(c2, chk);
+
+  add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 관문1 표본 ${g['표본일수'] || '—'}일 · 생성 ${d.generated || '—'}`));
+}
+
+async function loadDate(ymd, dates) {
+  try { renderClose(await getJson(ymd ? `data/${ymd}.json` : 'data/latest.json'), dates); }
+  catch (e) { document.getElementById('close').innerHTML = ''; add(document.getElementById('close'), el('div', 'empty', '데이터를 못 불러왔습니다 : ' + e.message)); }
+}
+
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  ['live', 'close', 'verify'].forEach(id => { document.getElementById(id).hidden = id !== b.dataset.tab; });
+});
+
+(async () => {
+  let dates = [];
+  try { dates = arr((await getJson('data/dates.json')).dates); } catch (e) { }
+  loadDate(null, dates);
+})();
+</script>
+</body>
+</html>
