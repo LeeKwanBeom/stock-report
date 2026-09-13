@@ -28,7 +28,7 @@
   --up:#ff0000;--down:#0000ff;--r1Bg:#ffe3e3;
   --warn:#7a4a06;--warnBg:#faeeda;--warnLine:#ecd3a8;--alert:#b45309;--ok:#2f6b12;--bad:#c1121f;
   --shadow:0 2px 10px rgba(110,11,20,.05);
-  --heroA:#7a0c17;--heroB:#c1121f;--heroC:#e5383b;--heroShadow:0 6px 18px rgba(122,12,23,.18);
+  --heroA:#7a0c17;--heroFade:rgba(122,12,23,0);--heroB:#c1121f;--heroC:#e5383b;--heroShadow:0 6px 18px rgba(122,12,23,.18);
 }
 @media (prefers-color-scheme:dark){:root{
   --bg:#140b0d;--card:#1f1215;--card2:#26171b;--soft:#23151a;--line:#3a2529;--line2:#33222a;--rule:#3a2529;
@@ -39,7 +39,7 @@
   --up:#ff4d4d;--down:#6b7dff;--r1Bg:#4a1717;
   --warn:#fac775;--warnBg:#412402;--warnLine:#6a4a1a;--alert:#e08a3c;--ok:#97c459;--bad:#f09595;
   --shadow:0 2px 10px rgba(0,0,0,.35);
-  --heroA:#3e0710;--heroB:#7a0c17;--heroC:#a81c28;--heroShadow:0 6px 18px rgba(0,0,0,.45);
+  --heroA:#3e0710;--heroFade:rgba(62,7,16,0);--heroB:#7a0c17;--heroC:#a81c28;--heroShadow:0 6px 18px rgba(0,0,0,.45);
 }}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -47,7 +47,8 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 .wrap{max-width:480px;margin:0 auto;padding:14px 12px calc(32px + env(safe-area-inset-bottom, 0px))}
 
 /* 머리 : 시안 3 틀 + 시안 1 색 + 시안 2 탭 막대 */
-.hero{color:#fff;background:linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow)}
+/* 9/13 : 윗변은 폰 상태 표시줄 색(theme-color = --heroA) 한 색으로 시작해 아래로 대각선 그라데이션에 섞임 */
+.hero{color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 6px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 44px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow)}
 .hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 18px 18px}
 .tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
 .tabs button{padding:6px 0;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.72);font:inherit;font-size:12.5px;cursor:pointer}
@@ -58,7 +59,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 .hq{margin-top:14px;font-size:13.5px;line-height:1.5;padding:11px 13px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.10)}
 .hq b{font-weight:700;color:#fff}
 /* 9/13 : 머리의 탭이 화면 밖으로 나가면 같은 탭 막대를 위에 고정 */
-.stick{position:fixed;top:0;left:0;right:0;z-index:20;color:#fff;background:linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow);transform:translateY(-100%);visibility:hidden;transition:transform .18s ease,visibility 0s linear .18s}
+.stick{position:fixed;top:0;left:0;right:0;z-index:20;color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 4px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 34px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow);transform:translateY(-100%);visibility:hidden;transition:transform .18s ease,visibility 0s linear .18s}
 .stick.show{transform:none;visibility:visible;transition:transform .18s ease}
 .stick .wrap{padding:calc(6px + env(safe-area-inset-top, 0px)) 18px 6px}
 .stick .tabs{margin:0}
