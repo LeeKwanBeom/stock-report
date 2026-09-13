@@ -58,12 +58,12 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 .hsub{margin-top:5px;font-size:12.5px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
 .hq{margin-top:14px;font-size:13.5px;line-height:1.5;padding:11px 13px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.10)}
 .hq b{font-weight:700;color:#fff}
-/* 9/13 : 머리의 탭이 화면 밖으로 나가면 같은 탭 막대를 위에 고정 */
-.stick{position:fixed;top:0;left:0;right:0;z-index:20;color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 4px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 34px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow);transform:translateY(-100%);visibility:hidden;transition:transform .18s ease,visibility 0s linear .18s}
-.stick.show{transform:none;visibility:visible;transition:transform .18s ease}
-.stick .wrap{padding:calc(6px + env(safe-area-inset-top, 0px)) 18px 6px}
+/* 9/13 : 1px 이라도 스크롤하면 탭 막대를 위에 고정. 탭 위치와 배경(머리 높이만큼 늘인 같은 그라데이션)을 머리와 똑같이 맞춰 튀지 않게 */
+.stick{position:fixed;top:0;left:0;right:0;z-index:20;color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 6px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 44px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);background-repeat:no-repeat;background-size:100% var(--heroH, 100%);visibility:hidden}
+.stick.show{visibility:visible}
+.stick.past{box-shadow:var(--heroShadow)}
+.stick .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 18px 6px}
 .stick .tabs{margin:0}
-@media (prefers-reduced-motion:reduce){.stick,.stick.show{transition:none}}
 
 .datebar{display:flex;align-items:center;gap:6px;margin:0 0 14px}
 .datebar button{padding:6px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--wine);font:inherit;cursor:pointer}
@@ -122,7 +122,7 @@ label.chk input{width:16px;height:16px;accent-color:var(--brand)}
 .rk .leg{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
 .secblk{padding:10px 0;border-top:1px solid var(--line2)}
 details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
-@media (min-width:860px){.wrap{max-width:960px}.hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 18px}.stick .wrap{padding:calc(6px + env(safe-area-inset-top, 0px)) 12px 6px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}}
+@media (min-width:860px){.wrap{max-width:960px}.hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 18px}.stick .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 6px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}}
 
 /* 복기 탭 (시안 3 모양) — 다른 탭 클래스와 겹치지 않게 rv- 로 시작 */
 .rv-note{border:1px solid var(--noteLine);border-radius:12px;background:var(--noteBg);padding:12px 13px;margin-bottom:22px;color:var(--sub);font-size:12px;line-height:1.72}
@@ -667,6 +667,7 @@ function switchTab(tab, how) {
   if (bar.childElementCount) bar.hidden = CUR === 'review';
   const top = HERO_EL.offsetHeight - STICK.offsetHeight;
   if (how === 'stick' || (how === 'swipe' && window.scrollY > top)) window.scrollTo(0, top);
+  syncStick();
 }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => switchTab(b.dataset.tab, b.closest('.stick') ? 'stick' : null));
 
@@ -693,13 +694,17 @@ document.addEventListener('touchend', e => {
 }, { passive: true });
 document.addEventListener('touchcancel', () => { SWIPE = null; }, { passive: true });
 
-if ('IntersectionObserver' in window) {
-  new IntersectionObserver(([e]) => {
-    const on = !e.isIntersecting && e.boundingClientRect.top < 0;
-    STICK.classList.toggle('show', on);
-    STICK.setAttribute('aria-hidden', on ? 'false' : 'true');
-  }).observe(HERO_TABS);
+function syncStick() {
+  const heroH = HERO_EL.offsetHeight;
+  const on = window.scrollY > 0;
+  STICK.style.setProperty('--heroH', heroH + 'px');
+  STICK.classList.toggle('show', on);
+  STICK.classList.toggle('past', window.scrollY >= heroH - STICK.offsetHeight);   // 머리가 다 지나간 뒤에만 그림자
+  STICK.setAttribute('aria-hidden', on ? 'false' : 'true');
 }
+window.addEventListener('scroll', syncStick, { passive: true });
+window.addEventListener('resize', syncStick);
+syncStick();
 
 let LAST_LOAD = 0;
 async function loadAll() {
