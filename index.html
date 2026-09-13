@@ -5,78 +5,204 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>종베 기록</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
-:root{--bg:#f6f5f2;--card:#fff;--line:#e4e2dc;--text:#1f1e1b;--sub:#6b6a64;--muted:#9a988f;--accent:#1f5fae;--accentBg:#e6f0fb;--up:#ff0000;--down:#0000ff;--r1Bg:#ffe3e3;--warn:#7a4a06;--warnBg:#faeeda;--ok:#2f6b12;--bad:#a32d2d;--chip:#f1efe8}
-@media (prefers-color-scheme:dark){:root{--bg:#151513;--card:#1f1f1c;--line:#34332f;--text:#ecebe6;--sub:#b3b1a8;--muted:#86847c;--accent:#85b7eb;--accentBg:#0c2c4f;--up:#ff4d4d;--down:#6b7dff;--r1Bg:#4a1717;--warn:#fac775;--warnBg:#412402;--ok:#97c459;--bad:#f09595;--chip:#2c2c2a}}
+/* 9/13 빨강 톤 통일 — 기준 화면 D:\stock\close_mockup_red.html · review_mockup4.html
+   꾸밈 = 와인·크림슨·연분홍 / 데이터 = HTS 원색(상승·대장·누적 1위 빨강, 하락 파랑) / 주의 = 주황 */
+:root{
+  --bg:#fbf5f4;--card:#fff;--card2:#fcf7f7;--soft:#fbf7f7;--line:#f0dfdf;--line2:#f3e6e6;--rule:#ecd9d9;
+  --text:#231416;--ink2:#5b3a3d;--sub:#7b6264;--muted:#a98f91;--muted2:#bda3a4;--chip:#f5eded;--chipInk:#5b4447;
+  --brand:#c1121f;--wine:#6e0b14;--wineFill:#6e0b14;--rose:#fdecee;--roseLine:#f6ccd1;--roseDash:#e79ba1;--cocoa:#332123;--onFill:#fff;
+  --naBg:#efe7e7;--naInk:#9a8a8b;--noteBg:#fff9f9;--noteLine:#e6cccd;
+  --meterTrack:#f6dada;--lossTrack:#f3e7e7;--lossFill:#c9a3a5;--barTrack:#f6e4e4;--barA:#a10f1b;--barB:#e5383b;--okRail:#f0b3b8;
+  --up:#ff0000;--down:#0000ff;--r1Bg:#ffe3e3;
+  --warn:#7a4a06;--warnBg:#faeeda;--warnLine:#ecd3a8;--alert:#b45309;--ok:#2f6b12;--bad:#c1121f;
+  --shadow:0 2px 10px rgba(110,11,20,.05);
+  --heroA:#7a0c17;--heroB:#c1121f;--heroC:#e5383b;--heroShadow:0 6px 18px rgba(122,12,23,.18);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#140b0d;--card:#1f1215;--card2:#26171b;--soft:#23151a;--line:#3a2529;--line2:#33222a;--rule:#3a2529;
+  --text:#f4e8e9;--ink2:#dcc3c6;--sub:#b39699;--muted:#8c7275;--muted2:#75606a;--chip:#2c1c20;--chipInk:#dcc3c6;
+  --brand:#f04a56;--wine:#ffb3ba;--wineFill:#7d1320;--rose:#3a1a20;--roseLine:#5a2a32;--roseDash:#8a3a44;--cocoa:#44302f;--onFill:#fff;
+  --naBg:#2c1f22;--naInk:#8c7275;--noteBg:#1f1215;--noteLine:#4a2e33;
+  --meterTrack:#3a2226;--lossTrack:#33242a;--lossFill:#8c6468;--barTrack:#35211f;--barA:#b3202c;--barB:#f04a56;--okRail:#7a3a42;
+  --up:#ff4d4d;--down:#6b7dff;--r1Bg:#4a1717;
+  --warn:#fac775;--warnBg:#412402;--warnLine:#6a4a1a;--alert:#e08a3c;--ok:#97c459;--bad:#f09595;
+  --shadow:0 2px 10px rgba(0,0,0,.35);
+  --heroA:#3e0710;--heroB:#7a0c17;--heroC:#a81c28;--heroShadow:0 6px 18px rgba(0,0,0,.45);
+}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
-.wrap{max-width:480px;margin:0 auto;padding:12px 12px 32px}
-.tabs{display:flex;gap:6px;margin-bottom:10px}
-.tabs button{flex:1;padding:8px 0;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--sub);font:inherit}
-.tabs button.on{background:var(--accentBg);color:var(--accent);border-color:transparent;font-weight:600}
-.datebar{display:flex;align-items:center;gap:6px;margin:0 0 12px}
-.datebar button{padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);font:inherit}
-.datebar button:disabled{color:var(--muted);opacity:.5}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:480px;margin:0 auto;padding:14px 12px 32px}
+
+/* 머리 : 시안 3 틀 + 시안 1 색 + 시안 2 탭 막대 */
+.hero{color:#fff;background:linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow)}
+.hero .wrap{padding:14px 18px 18px}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
+.tabs button{padding:6px 0;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.72);font:inherit;font-size:12.5px;cursor:pointer}
+.tabs button.on{background:#fff;color:#7a0c17;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.tabs button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.hero h1{margin:0;font-size:26px;letter-spacing:-.7px;font-weight:800;line-height:1.1}
+.hsub{margin-top:5px;font-size:12.5px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
+.hq{margin-top:14px;font-size:13.5px;line-height:1.5;padding:11px 13px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.10)}
+.hq b{font-weight:700;color:#fff}
+
+.datebar{display:flex;align-items:center;gap:6px;margin:0 0 14px}
+.datebar button{padding:6px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--wine);font:inherit;cursor:pointer}
+.datebar button:disabled{color:var(--muted);opacity:.5;cursor:default}
 .datebar select{flex:1;text-align:center;text-align-last:center;padding:6px}
+select{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px 6px}
+button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
 .head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.head h1{font-size:18px;margin:0}
-select{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
+.head h1{font-size:18px;margin:0;font-weight:800;letter-spacing:-.4px}
+.head strong{font-size:17px;font-weight:800;letter-spacing:-.4px}
 .status{font-size:12px;color:var(--muted);margin:4px 0 12px}
-.badge{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--warnBg);color:var(--warn)}
-.label{font-size:12px;color:var(--sub);margin:14px 0 6px}
+.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--warnBg);color:var(--warn);white-space:nowrap}
+.badge.cand{background:var(--brand);color:var(--onFill)}
+.label{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;font-size:12px;font-weight:800;color:var(--wine);letter-spacing:.3px;margin:22px 2px 10px}
+.label::after{content:"";flex:1;min-width:24px;height:1px;background:var(--rule);align-self:center;margin-left:4px}
+.label .sub,.label .muted{font-weight:400}
+.cols > div > .label:first-child{margin-top:8px}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.metric{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 4px;text-align:center}
-.metric .k{font-size:11px;color:var(--sub)}.metric .v{font-size:16px;font-weight:600}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
-.card.cand{border:2px solid var(--accent)}
-.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}
-.chip{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--chip)}
-.note{font-size:12px;padding:6px 8px;border-radius:6px;background:var(--warnBg);color:var(--warn);margin-top:6px}
-.up{color:var(--up)}.down{color:var(--down)}.muted{color:var(--muted)}.sub{color:var(--sub)}.ok{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}.acc{color:var(--accent);font-weight:600}
-.list{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 12px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 4px;text-align:center}
+.metric .k{font-size:10.5px;color:var(--muted)}.metric .v{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.card.cand{border:1.5px solid var(--roseDash)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line2)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 9px}
+.chip{font-size:11px;padding:3px 9px;border-radius:14px;background:var(--chip);color:var(--chipInk)}
+.note{font-size:12.5px;line-height:1.6;padding:9px 11px;border-radius:10px;background:var(--warnBg);color:var(--warn);border:1px solid var(--warnLine);margin-top:8px}
+.up{color:var(--up)}.down{color:var(--down)}.muted{color:var(--muted)}.sub{color:var(--sub)}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}.acc{color:var(--brand);font-weight:700}
+.list{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 14px;box-shadow:var(--shadow)}
 .list .row:first-child{border-top:0}
-label.chk{display:flex;gap:8px;align-items:center;padding:4px 0}
-.foot{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
+label.chk{display:flex;gap:9px;align-items:center;padding:5px 0}
+label.chk input{width:16px;height:16px;accent-color:var(--brand)}
+.foot{font-size:11.5px;color:var(--muted);text-align:center;margin-top:22px;padding-top:14px;border-top:1px solid var(--rule)}
 .empty{padding:24px 0;text-align:center;color:var(--muted)}
 .axis,.bars,.vals{display:grid;gap:3px;align-items:center;text-align:center}
 .axis{font-size:10px;color:var(--muted);margin:2px 0 2px}
-.vals{font-size:10px;color:var(--sub);margin-top:2px}
+.vals{font-size:10px;color:var(--sub);margin-top:2px;font-variant-numeric:tabular-nums}
 .bar{height:40px;position:relative}
 .bar .mid{position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--line)}
 .bar i{position:absolute;left:18%;right:18%;border-radius:2px}
 .bar i.p{bottom:50%;background:var(--up)}.bar i.n{top:50%;background:var(--down)}
+.flag{font-size:10.5px;padding:1px 7px;border-radius:10px;background:var(--rose);color:var(--wine);margin-left:4px}
 .flag.warn{background:var(--warnBg);color:var(--warn)}
 .gapline{font-size:11px;color:var(--muted);margin-top:4px}
-.hint{font-size:11px;color:var(--accent);margin-top:6px}
+.hint{font-size:11px;color:var(--wine);margin-top:6px}
 .secblk.tap{cursor:pointer}
-.rk{margin-top:8px;padding:8px;border-radius:8px;background:var(--bg)}
+.rk{margin-top:8px;padding:8px;border-radius:10px;background:var(--soft);border:1px solid var(--line2)}
 .rk .lead{font-size:12px;margin-bottom:6px}
 .rk table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}
 .rk th{font-size:10px;font-weight:400;color:var(--muted);padding:2px 0}
-.rk td{text-align:center;padding:4px 0;border-top:1px solid var(--line)}
+.rk td{text-align:center;padding:4px 0;border-top:1px solid var(--line2);font-variant-numeric:tabular-nums}
 .rk td.nm{text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rk td.r1{background:var(--r1Bg);color:var(--up);font-weight:600}
+.rk td.r1{background:var(--r1Bg);color:var(--up);font-weight:700}
 .rk sup{color:var(--text);font-size:10px;font-weight:600;margin-left:1px}
-.lead1{color:var(--up);font-weight:600}
+.lead1{color:var(--up);font-weight:800}
 .rk .leg{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
-.secblk{padding:10px 0;border-top:1px solid var(--line)}
-.flag{font-size:11px;padding:1px 6px;border-radius:5px;background:var(--accentBg);color:var(--accent);margin-left:4px}
+.secblk{padding:10px 0;border-top:1px solid var(--line2)}
 details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
-@media (min-width:860px){.wrap{max-width:960px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}}
+@media (min-width:860px){.wrap{max-width:960px}.hero .wrap{padding:14px 12px 18px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}}
+
+/* 복기 탭 (시안 3 모양) — 다른 탭 클래스와 겹치지 않게 rv- 로 시작 */
+.rv-note{border:1px solid var(--noteLine);border-radius:12px;background:var(--noteBg);padding:12px 13px;margin-bottom:22px;color:var(--sub);font-size:12px;line-height:1.72}
+.rv-note b,.rv-warn b{color:var(--wine);font-weight:700}
+.rv-sec{display:flex;align-items:baseline;gap:7px;margin:0 2px 10px}
+.rv-sec h2{margin:0;font-size:12px;font-weight:800;color:var(--wine);letter-spacing:.6px}
+.rv-sec .c{font-size:11.5px;color:var(--muted)}
+.rv-sec .ln{flex:1;height:1px;background:var(--rule)}
+.rv-sec.mt{margin-top:26px}
+@media (min-width:860px){.cols > section > .rv-sec:first-child{margin-top:0}}
+.rv-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rv-stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px}
+.rv-stat.hot{background:linear-gradient(165deg,var(--card) 0%,var(--rose) 100%);border-color:var(--roseLine)}
+.rv-stat .k{font-size:11.5px;color:var(--sub)}
+.rv-stat .v{font-size:24px;font-weight:800;letter-spacing:-.8px;font-variant-numeric:tabular-nums;margin-top:2px;line-height:1.15}
+.rv-stat .v.big{font-size:26px;letter-spacing:-1px}
+.rv-stat .v small{font-size:11.5px;font-weight:600;color:var(--muted);margin-left:5px;letter-spacing:0}
+.rv-stat.hot .v{color:var(--brand)}
+.rv-meter{height:5px;border-radius:5px;background:var(--meterTrack);margin-top:9px;overflow:hidden}
+.rv-meter i{display:block;height:100%;background:linear-gradient(90deg,var(--wineFill),var(--barB));border-radius:5px}
+.rv-meter.loss{background:var(--lossTrack)}.rv-meter.loss i{background:var(--lossFill)}
+.rv-warn{margin-top:8px;background:var(--card);border:1px solid var(--roseLine);border-radius:14px;padding:11px 13px 11px 14px;font-size:12.5px;line-height:1.65;color:var(--ink2);position:relative;overflow:hidden}
+.rv-warn::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand)}
+.rv-quad{display:grid;grid-template-columns:38px 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px;margin-top:8px}
+.rv-quad .ax{font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:center;letter-spacing:.4px}
+.rv-quad .cell{border-radius:11px;padding:10px 11px;min-height:64px}
+.rv-quad .n{font-size:21px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
+.rv-quad .t{font-size:11.5px;margin-top:3px}
+.q-ok{background:var(--rose);color:var(--wine)}
+.q-chk{background:var(--card);color:var(--brand);border:1.5px dashed var(--roseDash)}
+.q-luck{background:var(--wineFill);color:var(--onFill)}
+.q-exec{background:var(--cocoa);color:var(--onFill)}
+.q-luck .t,.q-exec .t{color:rgba(255,255,255,.86)}
+.rv-bars{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin-top:8px;display:flex;flex-direction:column;gap:7px}
+.rv-bars .r{display:flex;align-items:center;gap:9px;font-size:12px}
+.rv-bars .lab{width:104px;flex:none;color:var(--sub)}
+.rv-bars .tr{flex:1;height:8px;background:var(--barTrack);border-radius:5px;overflow:hidden}
+.rv-bars .tr i{display:block;height:100%;background:linear-gradient(90deg,var(--barA),var(--barB));border-radius:5px}
+.rv-bars .n{width:16px;text-align:right;font-weight:800;color:var(--wine);font-variant-numeric:tabular-nums}
+.rv-legend{display:flex;flex-wrap:wrap;gap:10px 14px;font-size:11.5px;color:var(--sub);margin:0 2px 12px}
+.rv-legend span{display:inline-flex;align-items:center;gap:5px}
+.mk{flex:none;width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-style:normal}
+.rv-legend .mk{width:15px;height:15px;font-size:9px}
+.m-y{background:var(--rose);color:var(--wine)}.m-n{background:var(--brand);color:var(--onFill)}.m-na{background:var(--naBg);color:var(--naInk)}.m-q{background:var(--card);color:var(--brand);border:1.5px solid var(--roseLine)}
+.rv-trade{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 15px 13px 17px;margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+.rv-trade::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.rv-trade.chk::before{background:repeating-linear-gradient(180deg,var(--brand) 0 7px,transparent 7px 12px)}
+.rv-trade.ok::before{background:var(--okRail)}.rv-trade.luck::before{background:var(--wineFill)}.rv-trade.exec::before{background:var(--cocoa)}
+.rv-th{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rv-th .nm{font-size:17px;font-weight:800;letter-spacing:-.4px}
+.rv-th .mt{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rv-badge{margin-left:auto;font-size:11px;font-weight:700;border-radius:20px;padding:3px 10px;white-space:nowrap}
+.b-chk{background:var(--card);color:var(--brand);border:1.5px dashed var(--brand)}.b-ok{background:var(--rose);color:var(--wine);border:1px solid var(--roseLine)}.b-luck{background:var(--wineFill);color:var(--onFill)}.b-exec{background:var(--cocoa);color:var(--onFill)}
+.rv-chips{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 11px}
+.rv-chip{font-size:11px;color:var(--chipInk);background:var(--chip);border-radius:14px;padding:3px 9px}
+.rv-chip.red{color:var(--wine);background:var(--rose)}
+.rv-kv{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card2);border:1px solid var(--line2);border-radius:11px;overflow:hidden}
+.rv-kv > div{padding:8px 6px;text-align:center}
+.rv-kv > div + div{border-left:1px solid var(--line2)}
+.rv-kv .k{font-size:10.5px;color:var(--muted)}
+.rv-kv .v{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.rv-kv .v.rate{font-weight:800}
+.rv-base{margin-top:9px;font-size:11.5px;line-height:1.7;color:var(--sub);background:var(--soft);border-radius:10px;padding:8px 10px}
+.rv-base b{color:var(--text);font-weight:700}
+.rv-base b.up{color:var(--up)}.rv-base b.down{color:var(--down)}
+.rv-src{color:var(--muted2)}
+.rv-rules{margin-top:11px}
+.rv-rules .g{font-size:10.5px;color:var(--muted);letter-spacing:.5px;margin:9px 0 3px}
+.rv-rules .g:first-child{margin-top:8px}
+.rv-rule{display:flex;align-items:flex-start;gap:9px;padding:3px 0;font-size:13px}
+.rv-rule .mk{margin-top:1px}
+.rv-rule .why{display:block;font-size:11.5px;color:var(--muted)}
+.rv-say{margin-top:11px;font-size:12.5px;line-height:1.6;color:var(--ink2);background:var(--rose);border-radius:10px;padding:9px 11px}
+.rv-foot{margin:24px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.9;border-top:1px solid var(--rule);padding-top:14px}
+.rv-foot b{color:var(--sub);font-weight:700}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="tabs">
-    <button data-tab="live">장중</button>
-    <button data-tab="close" class="on">마감</button>
-    <button data-tab="verify">검증</button>
+<header class="hero">
+  <div class="wrap">
+    <div class="tabs">
+      <button data-tab="live">장중</button>
+      <button data-tab="close" class="on">마감</button>
+      <button data-tab="verify">검증</button>
+      <button data-tab="review">복기</button>
+    </div>
+    <h1 id="heroTitle">마감</h1>
+    <div class="hsub" id="heroSub">15:20 KRX 기준 · NXT 제외</div>
+    <div class="hq" id="heroQ" hidden>손실이 났을 때 — <b>기준이 틀렸나, 내가 안 지켰나</b></div>
   </div>
+</header>
+<div class="wrap">
   <div class="datebar" id="datebar" hidden></div>
   <section id="live" hidden><div class="empty">장중 페이지는 다음 단계에서 만듭니다</div></section>
   <section id="close"><div class="empty">불러오는 중</div></section>
   <section id="verify" hidden><div class="empty">검증 페이지는 표본이 쌓인 뒤 만듭니다</div></section>
+  <section id="review" hidden><div class="empty">불러오는 중</div></section>
 </div>
 <script>
 const WD = '일월화수목금토';
@@ -145,8 +271,7 @@ function renderClose(d, dates) {
   cands.forEach(r => {
     const card = el('div', 'card cand');
     const top = el('div', 'head');
-    add(top, el('strong', null, r['섹터명']), el('span', 'badge', '후보 · 어종'));
-    top.lastChild.style.background = 'var(--accentBg)'; top.lastChild.style.color = 'var(--accent)';
+    add(top, el('strong', null, r['섹터명']), el('span', 'badge cand', '후보 · 어종'));
     add(card, top);
     const chips = el('div', 'chips');
     [['집중도', r['집중도%'], '%'], ['모멘텀', r['모멘텀'], ''], ['2따', r['2따스코어'], ''], ['유입', r['유입패턴'], ''], ['대장견인', r['대장견인'], ''], ['연속', r['연속'], '']]
@@ -367,11 +492,122 @@ function renderLive(d) {
   add(box, el('div', 'foot', `관찰 전용 — 9~10시는 보기만 · 생성 ${d.generated || '—'}`));
 }
 
+/* ── 복기 탭 (9/13) ─────────────────────────────────────────
+   data/review_sample.json 을 그린다. 지금은 가짜 자료이고, 실제 체결 자료가 생기면 같은 모양의 파일로 바꾼다.
+   아래에서 읽는 칸만 화면에 나온다(허용 목록) — 금액·수량·손익 원화·추정자산·주문번호·계좌번호는 읽지 않는다. */
+const RV_BADGE = { chk: '◆ 기준 점검', ok: '● 정상', luck: '▲ 운 · 가장 위험', exec: '✕ 실행 문제' };
+const RV_MARK = { y: '✓', n: '✕', na: '–', q: '?' };
+let REVIEW_SUB = '';
+function rvSegs(parent, segs) {
+  arr(segs).forEach(s => {
+    const t = String(s[0] ?? ''), k = s[1];
+    if (k === 'b') parent.appendChild(el('b', null, t));
+    else if (k === 'up' || k === 'down') parent.appendChild(el('b', k, t));
+    else if (k === 'src') parent.appendChild(el('span', 'rv-src', t));
+    else parent.appendChild(document.createTextNode(t));
+  });
+  return parent;
+}
+function rvPct(v) { const n = num(v); if (n === null) return '—'; return (n < 0 ? '−' : '+') + Math.abs(n).toFixed(1) + '%'; }
+function rvSign(v) { const n = num(v); return n === null || n === 0 ? '' : (n > 0 ? 'up' : 'down'); }
+function renderReview(rv) {
+  const box = document.getElementById('review'); box.innerHTML = '';
+  const trades = arr(rv.trades);
+  REVIEW_SUB = `${rv.period || ''} · 매매 ${trades.length}건 · D 매수 → D+1 매도`;
+  add(box, rvSegs(el('div', 'rv-note'), rv.note));
+
+  const cols = el('div', 'cols'); const s1 = el('section'); const s2 = el('section'); add(box, add(cols, s1, s2));
+  const sec = (title, cnt, extra) => { const h = el('div', 'rv-sec' + (extra ? ' ' + extra : '')); add(h, el('h2', null, title), el('span', 'c', cnt), el('span', 'ln')); return h; };
+
+  const sm = rv.summary || {};
+  const kept = num(sm.kept) ?? 0, total = num(sm.total) ?? 0, streak = num(sm.lossStreak) ?? 0;
+  add(s1, sec('누적', `${total}건`));
+  const stats = el('div', 'rv-stats');
+  const stat = (cls, k, v, vcls, small, meter) => {
+    const b = el('div', 'rv-stat' + (cls ? ' ' + cls : ''));
+    const vv = el('div', 'v' + (vcls ? ' ' + vcls : ''), v); vv.appendChild(el('small', null, small));
+    add(b, el('div', 'k', k), vv);
+    if (meter) { const m = el('div', 'rv-meter' + (meter[1] ? ' ' + meter[1] : '')); const i = el('i'); i.style.width = meter[0] + '%'; add(b, add(m, i)); }
+    return b;
+  };
+  add(stats,
+    stat('hot', '기준 준수율', (total ? Math.round(kept / total * 100) : 0) + '%', 'big', `${kept} / ${total}`, [total ? Math.round(kept / total * 100) : 0, '']),
+    stat('', '연속 손실', String(streak), 'big', '일 · 3일이면 쉬는 날', [Math.round(Math.min(streak, 3) / 3 * 100), 'loss']),
+    stat('', '지킨 매매 평균 수익률', rvPct(sm.keptAvg), rvSign(sm.keptAvg), `${sm.keptCount ?? 0}건`),
+    stat('', '어긴 매매 평균 수익률', rvPct(sm.brokeAvg), rvSign(sm.brokeAvg), `${sm.brokeCount ?? 0}건`));
+  add(s1, stats);
+  if (arr(rv.warn).length) add(s1, rvSegs(el('div', 'rv-warn'), rv.warn));
+
+  const q = rv.quad || {};
+  const quad = el('div', 'rv-quad');
+  const cell = (cls, n, t) => { const c = el('div', 'cell ' + cls); add(c, el('div', 'n', String(n ?? 0)), el('div', 't', t)); return c; };
+  add(quad, el('div'), el('div', 'ax', '수익'), el('div', 'ax', '손실'),
+    el('div', 'ax', '지킴'), cell('q-ok', q.ok, RV_BADGE.ok), cell('q-chk', q.chk, RV_BADGE.chk),
+    el('div', 'ax', '어김'), cell('q-luck', q.luck, RV_BADGE.luck), cell('q-exec', q.exec, RV_BADGE.exec));
+  add(s1, quad);
+
+  const vio = arr(rv.violations);
+  if (vio.length) {
+    const max = Math.max(1, ...vio.map(v => num(v[1]) ?? 0));
+    const bars = el('div', 'rv-bars');
+    vio.forEach(v => { const r = el('div', 'r'); const tr = el('span', 'tr'); const i = el('i'); i.style.width = Math.round((num(v[1]) ?? 0) / max * 100) + '%'; add(r, el('span', 'lab', v[0]), add(tr, i), el('span', 'n', String(v[1]))); bars.appendChild(r); });
+    add(s1, bars);
+  }
+
+  add(s2, sec('매매', '최근 순', 'mt'));
+  const leg = el('div', 'rv-legend');
+  [['y', 'm-y', '지킴'], ['n', 'm-n', '어김'], ['na', 'm-na', '해당 없음'], ['q', 'm-q', '사람 확인 필요']].forEach(([k, c, t]) => { const s = el('span'); add(s, el('i', 'mk ' + c, RV_MARK[k]), document.createTextNode(t)); leg.appendChild(s); });
+  add(s2, leg);
+
+  trades.forEach(t => {
+    const kind = RV_BADGE[t.kind] ? t.kind : 'ok';
+    const card = el('article', 'rv-trade ' + kind);
+    const th = el('div', 'rv-th');
+    add(th, el('span', 'nm', t.name), el('span', 'mt', `${t.dates || ''} · ${t.track || ''}트랙`), el('span', 'rv-badge b-' + kind, RV_BADGE[kind]));
+    add(card, th);
+    const chips = el('div', 'rv-chips');
+    arr(t.chips).forEach(c => chips.appendChild(el('span', 'rv-chip' + (c[1] === 'red' ? ' red' : ''), c[0])));
+    add(card, chips);
+    const kv = el('div', 'rv-kv');
+    const cellKv = (k, v, cls) => { const c = el('div'); add(c, el('div', 'k', k), el('div', 'v' + (cls ? ' ' + cls : ''), v)); return c; };
+    add(kv, cellKv('매수', t.buy || '—'), cellKv('매도', t.sell || '—'), cellKv('수익률', rvPct(t.rate), 'rate ' + rvSign(t.rate)), cellKv('비중', has(t.weight) ? t.weight + '%' : '—'));
+    add(card, kv);
+    if (arr(t.base).length) add(card, rvSegs(el('div', 'rv-base'), t.base));
+    const rules = el('div', 'rv-rules');
+    arr(t.rules).forEach(g => {
+      rules.appendChild(el('div', 'g', g[0]));
+      arr(g[1]).forEach(it => {
+        const mk = RV_MARK[it[0]] ? it[0] : 'q';
+        const r = el('div', 'rv-rule'); const sp = el('span', null, it[1]);
+        if (has(it[2])) sp.appendChild(el('span', 'why', it[2]));
+        add(r, el('i', 'mk m-' + mk, RV_MARK[mk]), sp); rules.appendChild(r);
+      });
+    });
+    add(card, rules);
+    if (has(t.say)) add(card, el('div', 'rv-say', t.say));
+    add(s2, card);
+  });
+
+  const foot = el('p', 'rv-foot');
+  add(foot, el('b', null, '공개 항목'), document.createTextNode(' : 종목 · 매수·매도 시각 · 수익률 % · 비중 % · 규칙 체크 · 네 칸 분류'), el('br'),
+    el('b', null, '올리지 않는 것'), document.createTextNode(' : 금액 · 수량 · 손익 원화 · 추정자산 · 주문번호 · 계좌번호'), el('br'),
+    document.createTextNode('수익률은 수수료·세금을 뺀 값 · 비중은 매수 직전 추정자산 대비 · 후보는 15:20 판정 · KRX 기준'));
+  add(box, foot);
+  if (CUR === 'review') setHero('review');
+}
+
 let DATES = [];
+let CUR = 'close';
+const HERO = { live: ['장중', '관찰 전용 — 9~10시는 보기만'], close: ['마감', '15:20 KRX 기준 · NXT 제외'], verify: ['검증', '표본 30개가 쌓인 뒤 만듭니다'], review: ['복기', ''] };
+function setHero(tab) {
+  document.getElementById('heroTitle').textContent = HERO[tab][0];
+  document.getElementById('heroSub').textContent = tab === 'review' ? REVIEW_SUB : HERO[tab][1];
+  document.getElementById('heroQ').hidden = tab !== 'review';
+}
 function renderDatebar(cur) {
   const bar = document.getElementById('datebar'); bar.innerHTML = '';
   if (!DATES.length) { bar.hidden = true; return; }
-  bar.hidden = false;
+  bar.hidden = CUR === 'review';
   const idx = DATES.indexOf(cur);
   const older = el('button', null, '◀'); older.setAttribute('aria-label', '이전 거래일');
   const newer = el('button', null, '▶'); newer.setAttribute('aria-label', '다음 거래일');
@@ -398,8 +634,12 @@ async function loadDate(ymd, dates) {
 }
 
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  CUR = b.dataset.tab;
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['live', 'close', 'verify'].forEach(id => { document.getElementById(id).hidden = id !== b.dataset.tab; });
+  ['live', 'close', 'verify', 'review'].forEach(id => { document.getElementById(id).hidden = id !== CUR; });
+  setHero(CUR);
+  const bar = document.getElementById('datebar');
+  if (bar.childElementCount) bar.hidden = CUR === 'review';
 });
 
 (async () => {
@@ -407,6 +647,8 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   try { dates = arr((await getJson('data/dates.json')).dates); } catch (e) { }
   DATES = dates.map(String).sort().reverse();
   loadDate(null, DATES);
+  try { renderReview(await getJson('data/review_sample.json')); }
+  catch (e) { const b = document.getElementById('review'); b.innerHTML = ''; add(b, el('div', 'empty', '복기 자료를 못 불러왔습니다 : ' + e.message)); }
 })();
 </script>
 </body>
