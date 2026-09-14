@@ -283,6 +283,15 @@ function renderClose(d, dates) {
   const wd = has(g['요일']) ? g['요일'] : WD[new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8)).getDay()];
 
   add(box, nowLine(d));   // 8-3 ③ 지금 / 자료
+  // 8-3 ① 장중 갱신 (9/14) — 판정 전 JSON(stage 'live') 이면 후보·관문1 을 그리지 않는다.
+  //   "후보 없음" 으로 읽히면 안 되기 때문 (4절 : 종베 후보는 마감 탭에만, 판정은 15:50 에 한 번). 장중 자료는 장중 탭.
+  if (d.stage === 'live') {
+    add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 판정 전`));
+    box.lastChild.style.fontSize = '18px'; box.lastChild.style.margin = '0';
+    add(box, el('div', 'state', `종베 판정은 15:50 에 한 번 나옵니다 (15:20 KRX 기준). 지금은 ${has(d.at) ? tLabel(d.at) + ' 까지의 ' : ''}장중 자료만 있습니다 — 장중 탭에서 보세요`));
+    add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 생성 ${d.generated || '—'}`));
+    return;
+  }
   const head = el('div', 'head');
   const left = el('div');
   add(left, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) ${String(d.at).slice(0, 2)}:${String(d.at).slice(2)} 판정`));
@@ -501,7 +510,9 @@ function nowLine(d) {
   add(a, el('span', null, '지금 '), el('b', null, `${now.getMonth() + 1}/${now.getDate()} (${WD[now.getDay()]}) ${pad2(now.getHours())}:${pad2(now.getMinutes())}`), el('span', null, ' · ' + sessionLabel(now)));
   const at = String(d.at || ''); const col = parseStamp((d.status || {})['수집']);
   const b = el('span');
-  add(b, el('span', null, '자료 '), el('b', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} ${at.slice(0, 2)}:${at.slice(2)} 판정`));
+  // 8-3 ① : 판정 전(stage 'live') 이면 "14:00 장중" (몇 시 자료까지 있나), 자료가 아직 없으면 "수집 전"
+  const atText = d.stage === 'live' ? (at ? `${at.slice(0, 2)}:${at.slice(2)} 장중` : '수집 전') : `${at.slice(0, 2)}:${at.slice(2)} 판정`;
+  add(b, el('span', null, '자료 '), el('b', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} ${atText}`));
   if (col) add(b, el('span', null, ` · 수집 ${pad2(col.getHours())}:${pad2(col.getMinutes())}`));
   if (!today && !latest) add(b, el('span', 'muted', ' · 지난 날짜 보는 중'));
   else if (!today && weekday) add(b, el('span', 'bad', ' · 오늘 자료 없음'));
@@ -542,7 +553,10 @@ function renderLive(d) {
   add(box, nowLine(d));   // 8-3 ③ 지금 / 자료
   add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 하루 흐름`));
   box.lastChild.style.fontSize = '18px'; box.lastChild.style.margin = '0';
-  add(box, el('div', 'status', '15:20 까지 · 관찰 전용, 후보는 마감 탭 · 장중 매시간 갱신은 다음 단계'));
+  // 8-3 ① (9/14) : 판정 전이면 몇 시 자료까지인지 + 매시 07분 갱신 안내. 판정 뒤는 15:20 까지
+  add(box, el('div', 'status', d.stage === 'live'
+    ? (has(d.at) ? `${tLabel(d.at)} 까지 · 판정 전 · 관찰 전용, 후보는 마감 탭 (15:50) · 매시 07분쯤 갱신` : '오늘 장중 자료 수집 전 · 매시 07분쯤 갱신')
+    : '15:20 까지 · 관찰 전용, 후보는 마감 탭'));
 
   const flow = arr(d.sectorFlow).filter(r => r['섹터명'] !== '개별이슈');
   const cols = el('div', 'cols'); const c1 = el('div'); const c2 = el('div'); add(box, add(cols, c1, c2));
@@ -839,7 +853,10 @@ async function loadDate(ymd, dates) {
   try { renderClose(d, dates); } catch (e) { add(document.getElementById('close'), el('div', 'empty', '마감 화면 오류 : ' + e.message)); }
   try { renderLive(d); } catch (e) { add(document.getElementById('live'), el('div', 'empty', '장중 화면 오류 : ' + e.message)); }
   renderDatebar(String(d.date || ''));
+  // 8-3 ① : 처음 열었을 때 최근 자료가 판정 전(장중) 이면 장중 탭부터. 그 뒤 탭 이동은 사용자 몫 (5분 뒤 다시 불러와도 안 바꿈)
+  if (!FIRST_SHOWN) { FIRST_SHOWN = true; if (d.stage === 'live' && !ymd) switchTab('live', null); }
 }
+let FIRST_SHOWN = false;
 
 const HERO_EL = document.querySelector('.hero');
 const HERO_TABS = HERO_EL.querySelector('.tabs');
