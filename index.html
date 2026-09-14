@@ -50,7 +50,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 /* 9/13 : 윗변은 폰 상태 표시줄 색(theme-color = --heroA) 한 색으로 시작해 아래로 대각선 그라데이션에 섞임 */
 .hero{color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 6px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 44px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow)}
 .hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 18px 18px}
-.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
+.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
 .tabs button{padding:6px 0;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.72);font:inherit;font-size:12.5px;cursor:pointer}
 .tabs button.on{background:#fff;color:#7a0c17;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .tabs button:focus-visible{outline:2px solid #fff;outline-offset:1px}
@@ -157,6 +157,22 @@ details.more .card strong{font-size:14.5px}
 .rk .leg{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
 .secblk{padding:10px 0;border-top:1px solid var(--line2)}
 details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
+/* 시계열 탭 (9/14 밤, 8-3 ④) — 시각 × 종목 격자. 옆으로 스크롤(data-noswipe), 첫 열 고정 */
+.sg{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:4px}
+.sg table{border-collapse:separate;border-spacing:0;table-layout:fixed;font-size:11.5px}
+.sg th{font-size:10px;font-weight:400;color:var(--muted);padding:2px 0 3px;text-align:center;white-space:nowrap}
+.sg td{text-align:center;padding:4px 0;border-top:1px solid var(--line2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.sg th:first-child,.sg td:first-child{position:sticky;left:0;z-index:1;background:var(--card);text-align:left;padding-right:6px;max-width:96px;overflow:hidden;text-overflow:ellipsis}
+.sg td.l1{color:var(--sub)}
+.sg td.l2{background:var(--rose);color:var(--wine);font-weight:700}
+.sg td.l3{background:var(--roseLine);color:var(--wine);font-weight:800}
+.sg td.l4{background:var(--brand);color:var(--onFill);font-weight:800}
+.sg td.dot{color:var(--brand);font-size:10px}
+.sg td.top{font-weight:800;color:var(--wine)}
+.sg td.up,.sg td.down{font-weight:600}
+.sg-lead{font-size:12.5px;line-height:1.6;margin:0 0 6px}
+.sg-lead b{color:var(--wine)}
+.sg-leg{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
 @media (min-width:860px){.wrap{max-width:960px}.hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 18px}.stick .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 6px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}}
 
 /* 복기 탭 (시안 3 모양) — 다른 탭 클래스와 겹치지 않게 rv- 로 시작 */
@@ -241,6 +257,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
     <div class="tabs">
       <button data-tab="live">장중</button>
       <button data-tab="close" class="on">마감</button>
+      <button data-tab="series">시계열</button>
       <button data-tab="verify">검증</button>
       <button data-tab="review">복기</button>
     </div>
@@ -254,6 +271,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
   <div class="datebar" id="datebar" hidden></div>
   <section id="live" hidden><div class="empty">장중 페이지는 다음 단계에서 만듭니다</div></section>
   <section id="close"><div class="empty">불러오는 중</div></section>
+  <section id="series" hidden><div class="empty">불러오는 중</div></section>
   <section id="verify" hidden><div class="empty">검증 페이지는 표본이 쌓인 뒤 만듭니다</div></section>
   <section id="review" hidden><div class="empty">불러오는 중</div></section>
 </div>
@@ -756,6 +774,158 @@ function renderLive(d) {
   add(box, el('div', 'foot', `관찰 전용 — 9~10시는 보기만 · 생성 ${d.generated || '—'}`));
 }
 
+/* ── 시계열 탭 (9/14 밤, 8-3 ④ · 인계문서 8-0★ D) ─────────────────────────
+   강의 네 기준(티마 대장 / 당일주도주_강의 / 120일 신고가_강의 / 실시간 조회순위)을 시각 × 종목 격자로.
+   값은 JSON 그대로(sectorFlow·condFlow·condTimes·inqFlow, pages-export v1.5). 화면이 하는 계산은 "그 회차에 몇 기준에 걸렸나" 를 세는 것뿐.
+   조회순위는 회차마다 찍은 1분 스냅샷(인계 6-18 ④) — 회차 사이에 잠깐 오른 종목은 안 잡힌다. 판정에 안 쓴다. */
+function renderSeries(d) {
+  const box = document.getElementById('series'); box.innerHTML = '';
+  const ymd = String(d.date || '');
+  const g = d.gate1 || {};
+  const wd = has(g['요일']) ? g['요일'] : WD[new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8)).getDay()];
+  add(box, nowLine(d));
+  const h = el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 강의 네 기준 격자`); h.style.fontSize = '18px'; h.style.margin = '0'; add(box, h);
+  add(box, el('div', 'status', (d.stage === 'live' ? (has(d.at) ? `${tLabel(d.at)} 까지 · 판정 전 · ` : '수집 전 · ') : '15:20 까지 · ') + '시각 × 종목, 칸 = 그 회차에 걸려 있었나 · 관찰 전용, 판정에 안 쓴다'));
+
+  // 네 기준 → M[기준][시각][종목명] = 값. 티마 대장은 sectorFlow 의 거래대금1위(개별이슈 카드 제외, 장중 탭과 같음), 이름은 OCR 글자라 코드 없이 종목명으로 맞춘다
+  const KEYS = ['tima', 'lead', 'high', 'inq'];
+  const KN = { tima: '티마 대장', lead: '당일주도주', high: '120일 신고가', inq: '조회순위' };
+  const M = { tima: {}, lead: {}, high: {}, inq: {} };
+  const put = (k, t, nm, v) => { if (!has(nm)) return; const m = (M[k][t] = M[k][t] || {}); m[nm] = v; };
+  arr(d.sectorFlow).forEach(r => {
+    if (r['섹터명'] === '개별이슈') return;
+    const nm = r['거래대금1위']; if (!has(nm)) return;
+    const t = String(r['시각']); const m = (M.tima[t] = M.tima[t] || {}); (m[nm] = m[nm] || []).push(r['섹터명']);
+  });
+  arr(d.condFlow).forEach(r => {
+    const t = String(r['시각']);
+    if (r['조건식'] === '당일주도주_강의') put('lead', t, r['종목명'], r);
+    else if (r['조건식'] === '120일 신고가_강의') put('high', t, r['종목명'], r);
+  });
+  arr(d.inqFlow).forEach(r => put('inq', String(r['시각']), r['종목명'], r));
+  const condT = [...new Set(arr(d.condTimes).map(String))].sort();
+  const T = {
+    tima: [...new Set(Object.keys(M.tima))].sort(),
+    lead: condT, high: condT,
+    inq: [...new Set(Object.keys(M.inq))].sort()
+  };
+  const hit = (k, t, nm) => !!(M[k][t] && M[k][t][nm]);
+
+  // 격자 한 장 : times 열 × names 행, cell(nm, t) → {text, cls, title} 또는 null(빈칸)
+  const mkGrid = (times, names, cell, head) => {
+    const wrapEl = el('div', 'sg'); wrapEl.setAttribute('data-noswipe', '');
+    const nameW = 96;
+    const tb = el('table'); tb.style.minWidth = (nameW + 34 * times.length) + 'px';
+    const cg = el('colgroup'); const c0 = el('col'); c0.style.width = nameW + 'px'; cg.appendChild(c0);
+    times.forEach(() => { const c = el('col'); c.style.width = '34px'; cg.appendChild(c); }); tb.appendChild(cg);
+    const hr = el('tr'); hr.appendChild(el('th', null, head || '')); times.forEach(t => hr.appendChild(el('th', null, tLabel(t)))); tb.appendChild(hr);
+    names.forEach(nm => {
+      const tr = el('tr'); const td0 = el('td', null, nm); td0.title = nm; tr.appendChild(td0);
+      times.forEach(t => { const c = cell(nm, t); const td = el('td', c ? c.cls : null, c ? c.text : ''); if (c && c.title) td.title = c.title; tr.appendChild(td); });
+      tb.appendChild(tr);
+    });
+    add(wrapEl, tb); return wrapEl;
+  };
+  // 행 순서 : 마지막 회차에 있는 것 먼저 → 걸린 회차 많은 순 → 처음 걸린 시각 이른 순
+  const orderOf = (k, times) => {
+    const names = [...new Set(times.flatMap(t => Object.keys(M[k][t] || {})))];
+    const lastT = times[times.length - 1];
+    const hits = nm => times.filter(t => hit(k, t, nm)).length;
+    const first = nm => times.findIndex(t => hit(k, t, nm));
+    return names.sort((a, b) => {
+      const la = hit(k, lastT, a) ? 1 : 0, lb = hit(k, lastT, b) ? 1 : 0; if (la !== lb) return lb - la;
+      const ha = hits(a), hb = hits(b); if (ha !== hb) return hb - ha;
+      return first(a) - first(b);
+    });
+  };
+  const cols = el('div', 'cols'); const c1 = el('div'); const c2 = el('div'); add(box, add(cols, c1, c2));
+
+  // 1) 네 기준 겹침 — 칸 = 그 회차에 걸린 기준 수. 2개 이상 걸린 적 있는 종목만
+  const allT = [...new Set(KEYS.flatMap(k => T[k]))].sort();
+  const crit = (nm, t) => KEYS.filter(k => hit(k, t, nm));
+  const allNames = [...new Set(KEYS.flatMap(k => Object.keys(M[k]).flatMap(t => Object.keys(M[k][t]))))];
+  const maxC = nm => Math.max(0, ...allT.map(t => crit(nm, t).length));
+  const lastAll = allT[allT.length - 1];
+  const firstT2 = nm => allT.find(t => crit(nm, t).length >= 2);
+  const ovNames = allNames.filter(nm => maxC(nm) >= 2).sort((a, b) => {
+    const la = crit(a, lastAll).length, lb = crit(b, lastAll).length; if (la !== lb) return lb - la;
+    const ma = maxC(a), mb = maxC(b); if (ma !== mb) return mb - ma;
+    return allT.indexOf(firstT2(a)) - allT.indexOf(firstT2(b));
+  });
+  add(c1, el('div', 'label', '네 기준 겹침 (칸 = 그 회차에 걸린 기준 수)'));
+  const ovCard = el('div', 'card');
+  if (!allT.length) add(ovCard, el('div', 'empty', '이날은 시계열 기록 없음'));
+  else {
+    const lead = el('div', 'sg-lead');
+    const nowHit = ovNames.filter(nm => crit(nm, lastAll).length >= 2);
+    add(lead, el('span', 'sub', `${tLabel(lastAll)} 에 2개 이상 : `));
+    if (!nowHit.length) add(lead, el('span', 'muted', '없음'));
+    nowHit.forEach((nm, i) => { if (i) lead.appendChild(document.createTextNode(' · ')); add(lead, el('b', null, nm), el('span', null, ` ${crit(nm, lastAll).length}개 (${tLabel(firstT2(nm))} 부터)`)); });
+    add(ovCard, lead);
+    if (!ovNames.length) add(ovCard, el('div', 'empty', '2개 이상 겹친 종목 없음'));
+    else add(ovCard, mkGrid(allT, ovNames, (nm, t) => { const c = crit(nm, t); return c.length ? { text: String(c.length), cls: 'l' + c.length, title: c.map(k => KN[k]).join(' · ') } : null; }, '종목'));
+    add(ovCard, el('div', 'sg-leg', '기준 = 티마 대장 · 당일주도주_강의 · 120일 신고가_강의 · 조회순위 20위. 4 = 넷 다 · 빈칸 = 하나도 없음 (그 회차에 기록이 없는 기준은 0 으로 센다). 몇 개에 걸렸는가는 관찰이지 판정 조건이 아니다'));
+  }
+  add(c1, ovCard);
+
+  // 2) 티마 대장 — 카드(섹터)마다 누적 거래대금 1위
+  add(c1, el('div', 'label', '티마 대장 (카드별 누적 거래대금 1위)'));
+  const timaCard = el('div', 'card');
+  if (!T.tima.length) add(timaCard, el('div', 'empty', '티마 기록 없음'));
+  else {
+    add(timaCard, mkGrid(T.tima, orderOf('tima', T.tima), (nm, t) => { const s = M.tima[t] && M.tima[t][nm]; return s ? { text: '●' + (s.length > 1 ? s.length : ''), cls: 'dot', title: s.join(' · ') } : null; }, '종목'));
+    add(timaCard, el('div', 'sg-leg', '● = 그 회차 티마 카드 한 장의 대장 (●2 = 카드 두 장) · 개별이슈 카드 제외 · 이름은 OCR 글자 그대로'));
+  }
+  add(c1, timaCard);
+
+  // 3) 당일주도주_강의 / 4) 120일 신고가_강의 — 영웅문 조건검색 (칸 = 그 회차 등락률, 반올림)
+  const pctCell = k => (nm, t) => {
+    const r = M[k][t] && M[k][t][nm]; if (!r) return null;
+    const v = num(r['등락률']); const rv = v === null ? null : Math.round(v);
+    return { text: rv === null ? '●' : (rv > 0 ? '+' : '') + rv, cls: v > 0 ? 'up' : (v < 0 ? 'down' : null), title: `${r['등락률']}%` + (has(r['현재가']) ? ` · ${r['현재가']}원` : '') };
+  };
+  const condGrid = (k, title, parent) => {
+    add(parent, el('div', 'label', title));
+    const card = el('div', 'card');
+    if (!condT.length) add(card, el('div', 'empty', '조건검색 기록 없음 (9/14 부터)'));
+    else {
+      const names = orderOf(k, condT);
+      if (!names.length) add(card, el('div', 'empty', '걸린 종목 없음'));
+      else add(card, mkGrid(condT, names, pctCell(k), '종목'));
+      add(card, el('div', 'sg-leg', '칸 = 그 회차에 검색식에 걸림, 숫자는 등락률(반올림) · 빈칸 = 안 걸림 · 영웅문 조건식 그대로, 화면 기준 없음'));
+    }
+    add(parent, card);
+  };
+  condGrid('lead', '당일주도주_강의 (조건검색)', c1);
+  condGrid('high', '120일 신고가_강의 (조건검색)', c2);
+
+  // 5) 실시간 조회순위 — 1시간마다 찍은 1분 스냅샷 (6-18 ④)
+  add(c2, el('div', 'label', '조회순위 (키움 실시간 조회 20위)'));
+  const inqCard = el('div', 'card');
+  if (!T.inq.length) add(inqCard, el('div', 'empty', '조회순위 기록 없음 (9/11 부터)'));
+  else {
+    add(inqCard, el('div', 'note', '1시간마다 찍은 1분 스냅샷 — 회차 사이에 잠깐 치고 올라온 종목은 여기 안 잡힌다. 오래 걸려 있는 종목을 보는 표다'));
+    const lastI = T.inq[T.inq.length - 1];
+    const rk = (nm, t) => { const r = M.inq[t] && M.inq[t][nm]; return r ? (num(r['조회순위']) ?? 99) : 99; };
+    const best = nm => Math.min(...T.inq.map(t => rk(nm, t)));
+    const allI = [...new Set(T.inq.flatMap(t => Object.keys(M.inq[t] || {})))].sort((a, b) => {
+      const la = rk(a, lastI), lb = rk(b, lastI); if (la !== lb) return la - lb;
+      const ha = T.inq.filter(t => hit('inq', t, a)).length, hb = T.inq.filter(t => hit('inq', t, b)).length; if (ha !== hb) return hb - ha;
+      return best(a) - best(b);
+    });
+    const inqCell = (nm, t) => { const r = M.inq[t] && M.inq[t][nm]; if (!r) return null; const v = num(r['조회순위']); return { text: r['조회순위'], cls: v !== null && v <= 5 ? 'top' : null, title: `${r['조회순위']}위 · ${r['등락률']}%` }; };
+    const main = allI.filter(nm => best(nm) <= 10), rest = allI.filter(nm => best(nm) > 10);
+    add(inqCard, mkGrid(T.inq, main, inqCell, '종목'));
+    if (rest.length) {
+      const det = el('details'); add(det, el('summary', null, `11~20위에만 든 종목 ${rest.length}개 보기`));
+      add(det, mkGrid(T.inq, rest, inqCell, '종목')); add(inqCard, det);
+    }
+    add(inqCard, el('div', 'sg-leg', '숫자 = 그 회차 조회순위 (굵게 = 5위 안) · 빈칸 = 20위 밖 · 8시대 회차는 장 전'));
+  }
+  add(c2, inqCard);
+  add(box, el('div', 'foot', `관찰 전용 — 기준 넷 다 강의 원문(대조표) 그대로, 겹침 수는 판정 조건이 아님 · 생성 ${d.generated || '—'}`));
+}
+
 /* ── 복기 탭 (9/13) ─────────────────────────────────────────
    data/review_sample.json 을 그린다. 지금은 가짜 자료이고, 실제 체결 자료가 생기면 같은 모양의 파일로 바꾼다.
    아래에서 읽는 칸만 화면에 나온다(허용 목록) — 금액·수량·손익 원화·추정자산·주문번호·계좌번호는 읽지 않는다. */
@@ -862,7 +1032,7 @@ function renderReview(rv) {
 
 let DATES = [];
 let CUR = 'close';
-const HERO = { live: ['장중', '관찰 전용 — 9~10시는 보기만'], close: ['마감', '15:20 KRX 기준 · NXT 제외'], verify: ['검증', '표본 30개가 쌓인 뒤 만듭니다'], review: ['복기', ''] };
+const HERO = { live: ['장중', '관찰 전용 — 9~10시는 보기만'], close: ['마감', '15:20 KRX 기준 · NXT 제외'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 15:20 까지'], verify: ['검증', '표본 30개가 쌓인 뒤 만듭니다'], review: ['복기', ''] };
 function setHero(tab) {
   document.getElementById('heroTitle').textContent = HERO[tab][0];
   document.getElementById('heroSub').textContent = tab === 'review' ? REVIEW_SUB : HERO[tab][1];
@@ -891,9 +1061,10 @@ function renderDatebar(cur) {
 async function loadDate(ymd, dates) {
   let d;
   try { d = await getJson(ymd ? `data/${ymd}.json` : 'data/latest.json'); }
-  catch (e) { ['close', 'live'].forEach(id => { const b = document.getElementById(id); b.innerHTML = ''; add(b, el('div', 'empty', '데이터를 못 불러왔습니다 : ' + e.message)); }); return; }
+  catch (e) { ['close', 'live', 'series'].forEach(id => { const b = document.getElementById(id); b.innerHTML = ''; add(b, el('div', 'empty', '데이터를 못 불러왔습니다 : ' + e.message)); }); return; }
   try { renderClose(d, dates); } catch (e) { add(document.getElementById('close'), el('div', 'empty', '마감 화면 오류 : ' + e.message)); }
   try { renderLive(d); } catch (e) { add(document.getElementById('live'), el('div', 'empty', '장중 화면 오류 : ' + e.message)); }
+  try { renderSeries(d); } catch (e) { add(document.getElementById('series'), el('div', 'empty', '시계열 화면 오류 : ' + e.message)); }
   renderDatebar(String(d.date || ''));
   // 8-3 ① : 처음 열었을 때 최근 자료가 판정 전(장중) 이면 장중 탭부터. 그 뒤 탭 이동은 사용자 몫 (5분 뒤 다시 불러와도 안 바꿈)
   if (!FIRST_SHOWN) { FIRST_SHOWN = true; if (d.stage === 'live' && !ymd) switchTab('live', null); }
@@ -905,7 +1076,7 @@ const HERO_TABS = HERO_EL.querySelector('.tabs');
 const STICK = document.getElementById('stick');
 STICK.firstElementChild.appendChild(HERO_TABS.cloneNode(true));
 
-const TAB_ORDER = ['live', 'close', 'verify', 'review'];
+const TAB_ORDER = ['live', 'close', 'series', 'verify', 'review'];
 // how : 'stick' = 고정 막대에서 누름 / 'swipe' = 좌우로 밈 — 둘 다 새 탭의 처음이 막대 바로 아래에 오게
 function switchTab(tab, how) {
   CUR = tab;
