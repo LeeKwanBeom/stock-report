@@ -105,6 +105,7 @@ label.chk.top{align-items:flex-start}label.chk.top input{margin-top:3px;flex:non
 .gblk{padding:6px 0}.gblk+.gblk{border-top:1px solid var(--line2);margin-top:4px}
 .gblk h3{font-size:12.5px;font-weight:800;color:var(--wine);margin:2px 0 4px}.gblk h3 em{font-style:normal;font-weight:400;color:var(--muted)}
 .gblk .sub{font-size:11.5px;padding:2px 0 2px 25px}
+.idxline{font-size:12px;margin:2px 0 10px}.idxline .seg{white-space:nowrap}.idxline .up,.idxline .down{font-weight:700}
 /* 9/14 목업 B — 피뢰침 카드 (8-3 ②, 시안 pirochim_mockup.html). 카드·칩·색은 어종 카드 그대로, 아래는 피뢰침에만 있는 조각 */
 .meta{font-size:12px;color:var(--muted);font-weight:400}
 .facts{font-size:12px;color:var(--muted);margin:-4px 0 4px;font-variant-numeric:tabular-nums}
@@ -321,6 +322,23 @@ function renderClose(d, dates) {
     const m = el('div', 'metric'); add(m, el('div', 'k', k), el('div', 'v', has(v) ? v + u : '—')); m4.appendChild(m);
   });
   add(c1, m4);
+  // 8-3 ⑤ 지수 위치 (9/14 밤, `지수선` 세션) — gate_log v1.2 의 코스피 5·20일선(키움 ka20006 지수 일봉, 과거 소급).
+  //   값·위/아래 는 CSV 그대로(이평위치·5일선대비%·20일선대비%), 통과 기준 없음 — 관문1 옆 참고 한 줄. 5·20일선이 없는 날은 줄 자체를 안 그린다
+  if (has(g['코스피5일선']) || has(g['코스피20일선'])) {
+    const ix = el('div', 'sub idxline');
+    const pos = String(g['이평위치'] || '').split('/');
+    const fmtI = v => { const n = num(v); return n === null ? String(v) : n.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    const pctT = v => has(v) ? ` (${num(v) > 0 ? '+' : ''}${v}%)` : '';
+    add(ix, el('span', null, `코스피 ${has(g['코스피종가']) ? fmtI(g['코스피종가']) : '—'}`));
+    [['5일선', g['코스피5일선'], g['5일선대비%'], pos[0]], ['20일선', g['코스피20일선'], g['20일선대비%'], pos[1]]].forEach(([k, ma, pct, p]) => {
+      if (!has(ma)) return;
+      const side = /아래/.test(p || '') ? '아래' : (/위/.test(p || '') ? '위' : '');
+      const seg = el('span', 'seg');   // 이평 하나는 한 덩어리(nowrap). 덩어리 사이 공백은 밖에 두어 거기서만 줄이 바뀌게 (375px 실측)
+      add(seg, el('span', null, `· ${k} ${fmtI(ma)} `), el('span', side === '위' ? 'up' : (side === '아래' ? 'down' : 'muted'), (side || '') + pctT(pct)));
+      add(ix, document.createTextNode(' '), seg);
+    });
+    add(c1, ix);
+  }
 
   const judge = arr(d.judge1520);
   const stockMap = {}; arr(d.stocks).forEach(s => { stockMap[s['섹터명']] = arr(s['종목']); });
