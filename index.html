@@ -101,6 +101,26 @@ label.chk.top{align-items:flex-start}label.chk.top input{margin-top:3px;flex:non
 .gblk{padding:6px 0}.gblk+.gblk{border-top:1px solid var(--line2);margin-top:4px}
 .gblk h3{font-size:12.5px;font-weight:800;color:var(--wine);margin:2px 0 4px}.gblk h3 em{font-style:normal;font-weight:400;color:var(--muted)}
 .gblk .sub{font-size:11.5px;padding:2px 0 2px 25px}
+/* 9/14 목업 B — 피뢰침 카드 (8-3 ②, 시안 pirochim_mockup.html). 카드·칩·색은 어종 카드 그대로, 아래는 피뢰침에만 있는 조각 */
+.meta{font-size:12px;color:var(--muted);font-weight:400}
+.facts{font-size:12px;color:var(--muted);margin:-4px 0 4px;font-variant-numeric:tabular-nums}
+.guide{margin-top:8px;font-size:12px;color:var(--sub)}
+.cond{margin:2px 0 4px}
+.cond div{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-top:1px solid var(--line2);font-size:13px}
+.cond div:first-child{border-top:0}
+.cond .k{color:var(--sub);width:80px;flex:none}.cond .v{font-variant-numeric:tabular-nums}
+.cond .mark{margin-left:auto;font-size:12px;color:var(--ok);font-weight:700}.cond .mark.x{color:var(--bad)}
+.state{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:13px;color:var(--muted);margin-bottom:10px}
+.state.fail{border-left:4px solid var(--alert);padding-left:11px;color:var(--text)}
+.state.fail b{color:var(--alert);font-weight:800}
+.state.fail .why{display:block;font-size:12px;margin-top:2px;color:var(--sub)}
+details.more{margin:0 0 10px}
+details.more summary{cursor:pointer;font-size:12.5px;color:var(--sub);padding:7px 2px;list-style:none}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::before{content:"▸ ";color:var(--muted)}
+details.more[open] summary::before{content:"▾ "}
+details.more .card{margin-top:6px}
+details.more .card strong{font-size:14.5px}
 .links{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 2px}
 .links .who{font-size:12px;color:var(--ink2);font-weight:700;margin-right:2px}
 .links a{font-size:11.5px;padding:3px 10px;border-radius:14px;border:1px solid var(--line);background:var(--card2);color:var(--wine);text-decoration:none;font-weight:700}
@@ -305,8 +325,11 @@ function renderClose(d, dates) {
     const chips = el('div', 'chips');
     [['집중도', r['집중도%'], '%'], ['모멘텀', r['모멘텀'], ''], ['2따', r['2따스코어'], ''], ['유입', r['유입패턴'], ''], ['대장견인', r['대장견인'], ''], ['연속', r['연속'], '']]
       .forEach(([k, v, u]) => { if (has(v)) chips.appendChild(el('span', 'chip', `${k} ${v}${u}`)); });
-    add(card, chips);
     const rows = stockMap[r['섹터명']] || [];
+    const lead = rows.find(s => s['종목명'] === r['대장']) || rows[0];   // 8-3 ⑧ 대장 현재가로 1억 = 몇 주 (목업 B). 종목별 값은 관문6 첫 블록
+    const leadSh = lead ? sharesPer1eok(lead['현재가']) : null;
+    if (leadSh !== null) chips.appendChild(el('span', 'chip', `1억 = 약 ${leadSh.toLocaleString()}주`));
+    add(card, chips);
     let filled = 0;
     rows.forEach((s, i) => {
       const row = el('div', 'row');
@@ -333,6 +356,72 @@ function renderClose(d, dates) {
     add(c1, el('div', 'status', `14:00 후보 : ${c14.length ? c14.join(', ') : '없음'} ${same ? '(15:20 과 같음)' : '(15:20 과 다름)'}`));
   }
 
+  // 8-3 ② 피뢰침 (9/14 목업 B) — 종베 후보 카드 바로 아래, 같은 카드·칩·색 규칙 (시안 pirochim_mockup.html). 15:20 판정만.
+  //   후보 = 칩 카드 / 미달 = "▸ 미달 n개 보기" 안에 조건 표(어느 조건이 미달인지가 핵심) / 대상없음 = 회색 한 줄 /
+  //   조회실패 = 주황 왼쪽 막대 (F1 수정의 의미 — 진짜 대상없음과 구분). 빈 날에도 구역은 감추지 않는다. 옛 JSON(version 3) 이면 "자료 없음".
+  //   판정 기준(고가 +10% · 고가대비 −15% · 1000억)은 close-judge 가 이미 적용한 '미달' 칸을 그대로 보여줄 뿐, 여기서 다시 계산하지 않는다.
+  const piroAll = (d.pirochim === undefined || d.pirochim === null) ? null : arr(d.pirochim);
+  const piroCands = piroAll ? piroAll.filter(p => p['판정'] === '후보') : [];
+  const piroMiss = piroAll ? piroAll.filter(p => p['판정'] === '미달') : [];
+  const piroEtc = piroAll ? piroAll.filter(p => p['판정'] !== '후보' && p['판정'] !== '미달') : [];
+  const pl = el('div', 'label', piroCands.length ? '피뢰침 · 전전일주도주' : '피뢰침 · 전전일주도주 — 없음');
+  add(pl, el('span', 'muted', '15:20 판정만')); add(c1, pl);
+  const mmdd = y => { const s = String(y || ''); return s.length === 8 ? `${+s.slice(4, 6)}/${+s.slice(6, 8)}` : s; };
+  const signPct = v => { const n = num(v); return n === null ? '—' : (n > 0 ? '+' : (n < 0 ? '−' : '')) + Math.abs(n).toFixed(2) + '%'; };
+  const eokText = v => { const n = num(v); return n === null ? (has(v) ? String(v) : '—') : n.toLocaleString() + '억'; };
+  const piroHead = p => {
+    const top = el('div', 'head'); const lt = el('div');
+    add(lt, el('strong', null, p['종목'] || '—'), el('span', 'meta', ` ${p['코드'] || ''} · 기준일 ${mmdd(p['기준일'])} ${p['기준일섹터'] || ''}`));
+    return add(top, lt);
+  };
+  piroCands.forEach(p => {
+    const card = el('div', 'card cand');
+    const top = piroHead(p); add(top, el('span', 'badge cand', '후보 · ' + (p['유형'] || '피뢰침'))); add(card, top);
+    const chips = el('div', 'chips');
+    add(chips, el('span', 'chip', '고가 ' + signPct(p['오늘고가%'])), el('span', 'chip', '고가 대비 ' + signPct(p['고가대비%'])), el('span', 'chip', eokText(p['거래대금억'])));
+    const sh = sharesPer1eok(p['현재가']); if (sh !== null) chips.appendChild(el('span', 'chip', `1억 = 약 ${sh.toLocaleString()}주`));   // 8-3 ⑧
+    add(card, chips);
+    const facts = [];
+    if (has(p['기준일상한가'])) facts.push('기준일 상한가 ' + p['기준일상한가']);
+    if (num(p['기준일종가']) !== null) facts.push('기준일 종가 ' + num(p['기준일종가']).toLocaleString() + '원');
+    if (num(p['현재가']) !== null) facts.push('현재가 ' + num(p['현재가']).toLocaleString() + '원' + (has(p['현재가출처']) ? ' (' + p['현재가출처'] + ')' : ''));
+    if (facts.length) add(card, el('div', 'facts', facts.join(' · ')));
+    const res = arr(d.result).find(r => r['종목'] === p['종목']);
+    if (res && has(res['D1종가%'])) { const dl = el('div', 'facts'); add(dl, el('span', 'sub', 'D+1 '), pctEl(res['D1종가%'])); add(card, dl); }
+    add(card, el('div', 'note', '악재가 없는지 사람이 확인 — 기준일 상한가 이후 ~ 오늘 15:20, 특히 어제 장 마감 후 공시'));
+    add(card, el('div', 'guide', '목표 4% · 추매 없이 10시 안에 손절 · 15분봉 종가 부근, 피뢰침 라인 · 미리 사면 안 됨'));
+    if (has(p['비고'])) add(card, el('div', 'guide', '비고 ' + p['비고']));
+    add(c1, card);
+  });
+  if (piroMiss.length) {
+    const det = el('details', 'more'); add(det, el('summary', null, `미달 ${piroMiss.length}개 보기`));
+    piroMiss.forEach(p => {
+      const miss = String(p['미달'] || '').split(';');
+      const card = el('div', 'card');
+      const top = piroHead(p); add(top, el('span', 'meta', p['유형'] || '')); add(card, top);
+      const cond = el('div', 'cond');
+      [['오늘 고가', signPct(p['오늘고가%']), '고가+10%', '+10% 미달'], ['고가 대비', signPct(p['고가대비%']), '고가대비-15%', '−15% 미달'], ['거래대금', eokText(p['거래대금억']), '1000억', '1,000억 미달']]
+        .forEach(([k, v, key, why]) => { const bad = miss.some(t => t.indexOf(key) >= 0); const r = el('div'); add(r, el('span', 'k', k), el('span', 'v', v), el('span', 'mark' + (bad ? ' x' : ''), bad ? why : '충족')); cond.appendChild(r); });
+      add(card, cond);
+      if (has(p['비고'])) add(card, el('div', 'guide', '비고 ' + p['비고']));
+      det.appendChild(card);
+    });
+    add(c1, det);
+  }
+  piroEtc.forEach(p => {
+    const memo = String(p['비고'] || '');
+    if (p['판정'] === '조회실패') {
+      const parts = memo.split(';'); const failTok = parts.find(t => t.startsWith('일봉실패')) || '';
+      const nFail = failTok.replace('일봉실패', '') || '?';
+      const s = el('div', 'state fail');
+      add(s, el('span', null, '조회실패 — 일봉 '), el('b', null, nFail + '건'), el('span', null, ' 실패' + (parts.filter(t => t !== failTok).length ? ' · ' + parts.filter(t => t !== failTok).join(' · ') : '')));
+      add(s, el('span', 'why', '표본이 오염됐을 수 있습니다. 이 날은 "대상없음" 과 구분해서 봐야 합니다'));
+      add(c1, s);
+    } else add(c1, el('div', 'state', `${p['판정'] || '—'}${memo ? ' — ' + memo : ''}`));
+  });
+  if (!piroAll) add(c1, el('div', 'state', '피뢰침 자료 없음 — 이 날짜 JSON 에 pirochim 이 없습니다 (version 3 이전)'));
+  else if (!piroAll.length) add(c1, el('div', 'state', '피뢰침 자료 없음 — pirochim CSV 가 비어 있습니다'));
+
   add(c2, el('div', 'label', '섹터 판정'));
   const list = el('div', 'list');
   judge.slice().sort((a, b) => (num(b['집중도%']) ?? 0) - (num(a['집중도%']) ?? 0)).forEach(r => {
@@ -348,6 +437,7 @@ function renderClose(d, dates) {
   add(c2, el('div', 'label', '사기 전 확인 — 관문6'));
   const chk = el('div', 'card');
   const candStocks = []; cands.forEach(r => (stockMap[r['섹터명']] || []).forEach(s => candStocks.push(s)));
+  piroCands.forEach(p => candStocks.push({ '종목명': p['종목'], '종목코드': p['코드'], '현재가': p['현재가'] }));   // 피뢰침 후보도 1억 계산·뉴스 링크 (목업 B)
   function gblk(title, em, items) {
     const b = el('div', 'gblk'); const h = el('h3', null, title); if (em) add(h, el('em', null, ' ' + em)); add(b, h);
     items.forEach(([t, hint]) => {
@@ -359,7 +449,7 @@ function renderClose(d, dates) {
   const b1 = gblk('진입 전 확인', '— 미달이면 배제', [['호가 한 칸당 1억 이상인가', '미달이면 종목 배제 (C10)']]);
   const eok = candStocks.filter(s => sharesPer1eok(s['현재가']) !== null);   // 8-3 ⑧ — 현재가가 JSON 에 들어온 뒤부터 (목업 B)
   if (eok.length) eok.forEach(s => add(b1, el('div', 'sub', `${s['종목명']} ${num(s['현재가']).toLocaleString()}원 → 1억 = 약 ${sharesPer1eok(s['현재가']).toLocaleString()}주`)));
-  else if (cands.length) add(b1, el('div', 'sub muted', '1억 = 몇 주 : 현재가가 자료에 들어오면 종목별로 표시'));
+  else if (candStocks.length) add(b1, el('div', 'sub muted', '1억 = 몇 주 : 현재가가 자료에 들어오면 종목별로 표시'));
   const b2 = gblk('매수 자리 정하기', null, [
     ['돼지 물량 자리를 확인했나', '(E6)'],
     ['일봉 위치를 차트로 확인했나', '신고가 Y/N 만 보지 말고 (7-9) · 신고가·앞산을 뚫는 날인가, 그날 거래대금이 평소보다 크게 실렸나']]);
