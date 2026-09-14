@@ -575,7 +575,10 @@ function newsLinks(name, ymd) {
   const q = encodeURIComponent(name); const de = ymdToDate(ymd);
   const wk = new Date(de); wk.setDate(wk.getDate() - 7);
   const naver = ds => `https://search.naver.com/search.naver?where=news&query=${q}&sort=1&pd=3&ds=${dot(ds)}&de=${dot(de)}`;
-  [['최근 소식', naver(wk)], ['어제부터', naver(prevTradingDay(ymd))], ['공시', `https://dart.fss.or.kr/dsab007/main.do?option=corp&textCrpNm=${q}&autoSearch=Y`]]
+  // 9/14 밤 사용자 요청 : 네이버는 본문에 종목명이 스쳐도 나온다(공식 가이드에 제목만 옵션 없음) → 구글 뉴스 intitle: 로 "제목에 종목명" 만. 최근 1주, 최신순. 네이버 링크는 그대로 둔다
+  const gdate = t => `${t.getMonth() + 1}/${t.getDate()}/${t.getFullYear()}`;
+  const google = `https://www.google.com/search?q=${encodeURIComponent('intitle:' + name)}&tbm=nws&tbs=cdr:1,cd_min:${gdate(wk)},cd_max:${gdate(de)},sbd:1`;
+  [['최근 소식', naver(wk)], ['제목만', google], ['어제부터', naver(prevTradingDay(ymd))], ['공시', `https://dart.fss.or.kr/dsab007/main.do?option=corp&textCrpNm=${q}&autoSearch=Y`]]
     .forEach(([t, u]) => { const x = el('a', null, t); x.href = u; x.target = '_blank'; x.rel = 'noopener'; box.appendChild(x); });
   return box;
 }
