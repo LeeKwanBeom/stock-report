@@ -387,6 +387,7 @@ function renderClose(d, dates) {
     if (r['연속양봉부담'] === 'Y') chips.appendChild(el('span', 'chip warn', '연속양봉 부담'));
     if (has(r['겹침'])) chips.appendChild(el('span', 'chip', `겹침 ${r['겹침']}`));
     if (has(r['대장시장순위'])) chips.appendChild(el('span', 'chip', r['대장시장순위'] === '100위밖' ? '대장 대금 100위 밖' : `대장 대금 ${r['대장시장순위']}위`));   // 종목 행에 두면 폰 너비에서 줄이 넘친다
+    const vr = volRatioOf(d, r['대장코드']); if (vr) chips.appendChild(volChip(vr, '대장 대금 '));   // 8-0★ E 거래대금배수 (JSON v7) — 숫자만, 기준 없음
     const rows = stockMap[r['섹터명']] || [];
     const lead = rows.find(s => s['종목명'] === r['대장']) || rows[0];   // 8-3 ⑧ 대장 현재가로 1억 = 몇 주 (목업 B). 종목별 값은 관문6 첫 블록
     const leadSh = lead ? sharesPer1eok(lead['현재가']) : null;
@@ -446,6 +447,7 @@ function renderClose(d, dates) {
     const chips = el('div', 'chips');
     add(chips, el('span', 'chip', '고가 ' + signPct(p['오늘고가%'])), el('span', 'chip', '고가 대비 ' + signPct(p['고가대비%'])), el('span', 'chip', eokText(p['거래대금억'])));
     const sh = sharesPer1eok(p['현재가']); if (sh !== null) chips.appendChild(el('span', 'chip', `1억 = 약 ${sh.toLocaleString()}주`));   // 8-3 ⑧
+    const pvr = volRatioOf(d, p['코드']); if (pvr) chips.appendChild(volChip(pvr, '대금 '));   // 8-0★ E
     add(card, chips);
     const facts = [];
     if (has(p['기준일상한가'])) facts.push('기준일 상한가 ' + p['기준일상한가']);
@@ -469,6 +471,7 @@ function renderClose(d, dates) {
       [['오늘 고가', signPct(p['오늘고가%']), '고가+10%', '+10% 미달'], ['고가 대비', signPct(p['고가대비%']), '고가대비-15%', '−15% 미달'], ['거래대금', eokText(p['거래대금억']), '1000억', '1,000억 미달']]
         .forEach(([k, v, key, why]) => { const bad = miss.some(t => t.indexOf(key) >= 0); const r = el('div'); add(r, el('span', 'k', k), el('span', 'v', v), el('span', 'mark' + (bad ? ' x' : ''), bad ? why : '충족')); cond.appendChild(r); });
       add(card, cond);
+      const mvr = volRatioOf(d, p['코드']); if (mvr) { const mc = el('div', 'chips'); mc.appendChild(volChip(mvr, '대금 ')); add(card, mc); }   // 8-0★ E
       if (has(p['비고'])) add(card, el('div', 'guide', '비고 ' + p['비고']));
       det.appendChild(card);
     });
@@ -602,6 +605,16 @@ function newsLinks(name, ymd) {
 }
 // ---- 8-3 ⑧ 1억 ÷ 현재가, 100주 단위 반올림 (6,610원 → 15,128 → 15,100주). 판정에는 안 들어간다 ----
 function sharesPer1eok(price) { const p = num(price); if (!p || p <= 0) return null; return Math.round(1e8 / p / 100) * 100; }
+// 8-0★ E (9/14 밤) 거래대금배수 — JSON v7 volRatio[코드] = { 일봉거래대금억, 평균20억, 평균일수, 배수 } (pages-export v1.6, ka10081 KRX 일봉, 애프터마켓 포함).
+//   pages-export 가 계산한 '배수' 를 그대로 칩에 적을 뿐이다. "몇 배 이상" 이라는 기준은 강의에 숫자가 없으므로 여기서도 만들지 않는다 (색·경고·정렬 없음, 인계문서 8-4).
+function volRatioOf(d, code) { const m = d && d.volRatio; if (!m || !has(code)) return null; const v = m[String(code).trim()]; return (v && has(v['배수'])) ? v : null; }
+function volChip(vr, prefix) {
+  const days = num(vr['평균일수']); const dayTxt = (days !== null && days < 20) ? `${days}일` : '20일';
+  const c = el('span', 'chip', `${prefix || ''}평소의 ${vr['배수']}배 · ${dayTxt}`);
+  const f = v => { const n = num(v); return n === null ? '—' : n.toLocaleString(); };
+  c.title = `일봉 거래대금 ${f(vr['일봉거래대금억'])}억 ÷ 앞 ${dayTxt} 평균 ${f(vr['평균20억'])}억 (KRX 일봉, 애프터마켓 포함) · 기준 없음`;
+  return c;
+}
 
 function tLabel(t) { t = String(t); return t.slice(2) === '00' ? (+t.slice(0, 2)) + '시' : (+t.slice(0, 2)) + ':' + t.slice(2); }
 
