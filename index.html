@@ -90,6 +90,10 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line2)}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 9px}
 .chip{font-size:11px;padding:3px 9px;border-radius:14px;background:var(--chip);color:var(--chipInk)}
+/* 8-3 ② 후보 카드 펼치기 (9/14 밤) : 주의 칩(비중 축소·JBT·연속양봉 부담) = 주황, 종목 트랙 = 작은 회색 */
+.chip.warn{background:var(--warnBg);color:var(--warn)}
+.trk{font-size:10px;color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
+.d1{font-size:11.5px;white-space:nowrap}
 .note{font-size:12.5px;line-height:1.6;padding:9px 11px;border-radius:10px;background:var(--warnBg);color:var(--warn);border:1px solid var(--warnLine);margin-top:8px}
 .up{color:var(--up)}.down{color:var(--down)}.muted{color:var(--muted)}.sub{color:var(--sub)}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}.acc{color:var(--brand);font-weight:700}
 .list{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 14px;box-shadow:var(--shadow)}
@@ -326,27 +330,44 @@ function renderClose(d, dates) {
 
   add(c1, el('div', 'label', cands.length ? '종베 후보' : '종베 후보 — 없음'));
   const roles = ['대장', '2등', '3등', '4등'];
+  // 8-3 ② 후보 카드 펼치기 (9/14 밤, `후보카드` 세션) — 판정 v2.0 이 judge CSV 에 이미 쓴 기록 칸(인계문서 4절 표)을 칩·표시로 펼친다.
+  //   순위(결정 3) · 관망(결정 2, 관문1 불통과여도 후보를 막지 않음) · 신고가20/120 과 비중 축소(결정 1) · JBT · 연속양봉부담(4강 Tip) · 겹침(1강 네 가지) ·
+  //   모멘텀 양수구간 · 종목 트랙 · 대장 시장순위 · 관문2~4 근거 한 줄. 값은 그대로 보여줄 뿐 여기서 다시 계산하지 않는다 (임계값 없음).
   cands.forEach(r => {
     const card = el('div', 'card cand');
     const top = el('div', 'head');
-    add(top, el('strong', null, r['섹터명']), el('span', 'badge cand', '후보 · 어종'));
+    const ttl = el('div'); add(ttl, el('strong', null, r['섹터명']));
+    if (has(r['순위'])) add(ttl, el('span', 'flag', r['순위']));
+    if (r['관망'] === 'Y') add(ttl, el('span', 'flag warn', '관망 · 관문1 불통과'));
+    add(top, ttl, el('span', 'badge cand', '후보 · 어종'));
     add(card, top);
     const chips = el('div', 'chips');
     [['집중도', r['집중도%'], '%'], ['모멘텀', r['모멘텀'], ''], ['2따', r['2따스코어'], ''], ['유입', r['유입패턴'], ''], ['대장견인', r['대장견인'], ''], ['연속', r['연속'], '']]
       .forEach(([k, v, u]) => { if (has(v)) chips.appendChild(el('span', 'chip', `${k} ${v}${u}`)); });
+    if (has(r['모멘텀양수구간'])) chips.appendChild(el('span', 'chip', `양수구간 ${r['모멘텀양수구간']}`));
+    if (has(r['대장신고가20']) || has(r['대장신고가120'])) chips.appendChild(el('span', 'chip', `신고가 20일 ${r['대장신고가20'] || '—'} · 120일 ${r['대장신고가120'] || '—'}`));
+    if (has(r['비중'])) chips.appendChild(el('span', 'chip warn', `비중 ${r['비중']}`));
+    if (r['JBT'] === 'Y') chips.appendChild(el('span', 'chip warn', 'JBT'));
+    if (r['연속양봉부담'] === 'Y') chips.appendChild(el('span', 'chip warn', '연속양봉 부담'));
+    if (has(r['겹침'])) chips.appendChild(el('span', 'chip', `겹침 ${r['겹침']}`));
+    if (has(r['대장시장순위'])) chips.appendChild(el('span', 'chip', r['대장시장순위'] === '100위밖' ? '대장 대금 100위 밖' : `대장 대금 ${r['대장시장순위']}위`));   // 종목 행에 두면 폰 너비에서 줄이 넘친다
     const rows = stockMap[r['섹터명']] || [];
     const lead = rows.find(s => s['종목명'] === r['대장']) || rows[0];   // 8-3 ⑧ 대장 현재가로 1억 = 몇 주 (목업 B). 종목별 값은 관문6 첫 블록
     const leadSh = lead ? sharesPer1eok(lead['현재가']) : null;
     if (leadSh !== null) chips.appendChild(el('span', 'chip', `1억 = 약 ${leadSh.toLocaleString()}주`));
     add(card, chips);
+    const basis = ['관문2', '관문3', '관문4'].filter(k => has(r[k])).map(k => `${k} ${r[k]}`);
+    if (basis.length) add(card, el('div', 'facts', `근거 ${basis.join(' · ')}` + (has(r['플래그']) ? ` · 플래그 ${r['플래그']}` : '')));
     let filled = 0;
     rows.forEach((s, i) => {
       const row = el('div', 'row');
-      const nm = el('span'); add(nm, el('span', 'sub', (roles[i] || '') + ' '), el('span', s['종목명'] === r['대장'] ? 'lead1' : null, s['종목명']));
+      const isLead = s['종목명'] === r['대장'];
+      const nm = el('span'); add(nm, el('span', 'sub', (roles[i] || '') + ' '), el('span', isLead ? 'lead1' : null, s['종목명']));
+      if (has(s['트랙'])) add(nm, el('span', 'trk', s['트랙']));
       if (has(inqMap[String(s['종목코드'])])) add(nm, el('span', 'flag', '조회 ' + inqMap[String(s['종목코드'])] + '위'));
       const rt = el('span'); add(rt, el('span', null, (s['누적억'] || '—') + '억 '), pctEl(s['등락률']));
       const res = resMap[r['섹터명'] + '|' + s['종목명']];
-      if (res && has(res['D1종가%'])) { filled++; add(rt, el('span', 'sub', ' → D+1 '), pctEl(res['D1종가%'])); }
+      if (res && has(res['D1종가%'])) { filled++; const d1 = el('span', 'd1'); add(d1, el('span', 'sub', ' → D+1 '), pctEl(res['D1종가%'])); add(rt, d1); }   // 시안의 .d1 : 작게·한 덩어리로 (폰 너비에서 대장 행 줄넘김 완화)
       add(card, add(row, nm, rt));
     });
     if (!rows.length) add(card, el('div', 'muted', '종목 표 없음 (stock_delta 확인)'));
