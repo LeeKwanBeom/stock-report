@@ -58,6 +58,23 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 .hsub{margin-top:5px;font-size:12.5px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
 .hq{margin-top:14px;font-size:13.5px;line-height:1.5;padding:11px 13px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.10)}
 .hq b{font-weight:700;color:#fff}
+/* 8-3 ⑩ 도움말 (9/15) : 머리의 작은 ? → 그 탭의 표시 뜻이 내용 맨 위에 펼쳐진다. 뜻은 대조표 번호로 잇고 기준 숫자는 적지 않는다 */
+.hrow{display:flex;align-items:center;gap:10px}
+.hbtn{flex:none;width:24px;height:24px;border-radius:50%;border:1.5px solid rgba(255,255,255,.7);background:rgba(0,0,0,.15);color:#fff;font:inherit;font-size:13px;font-weight:800;line-height:1;cursor:pointer;padding:0}
+.hbtn[aria-expanded="true"]{background:#fff;color:#7a0c17;border-color:#fff}
+.help{background:var(--card);border:1.5px solid var(--roseDash);border-radius:16px;padding:12px 14px 10px;margin:0 0 14px;box-shadow:var(--shadow);font-size:12.5px;line-height:1.6}
+.help-h{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.help-h b{font-size:14px;font-weight:800;color:var(--wine);flex:1}
+.help-h button{padding:4px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card2);color:var(--wine);font:inherit;font-size:12px;cursor:pointer}
+.help-lead{color:var(--sub);margin:0 0 6px}
+.help-g{font-size:11px;font-weight:800;color:var(--wine);letter-spacing:.4px;margin:12px 0 2px;padding-bottom:2px;border-bottom:1px solid var(--rule)}
+.help-r{display:grid;grid-template-columns:104px 1fr;gap:8px;padding:5px 0;border-top:1px solid var(--line2)}
+.help-g + .help-r,.help summary + .help-r{border-top:0}
+.help-r b{font-weight:700;color:var(--text)}
+.help-r span{color:var(--ink2)}
+.help details{margin-top:10px}
+.help details summary{font-size:12.5px;font-weight:700;color:var(--wine);padding:6px 0;cursor:pointer}
+.help-foot{font-size:11px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--rule)}
 /* 9/13 : 1px 이라도 스크롤하면 탭 막대를 위에 고정. 탭 위치와 배경(머리 높이만큼 늘인 같은 그라데이션)을 머리와 똑같이 맞춰 튀지 않게 */
 .stick{position:fixed;top:0;left:0;right:0;z-index:20;color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 6px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 44px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);background-repeat:no-repeat;background-size:100% var(--heroH, 100%);visibility:hidden}
 .stick.show{visibility:visible}
@@ -263,13 +280,14 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
       <button data-tab="verify">검증</button>
       <button data-tab="review">복기</button>
     </div>
-    <h1 id="heroTitle">마감</h1>
+    <div class="hrow"><h1 id="heroTitle">마감</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button></div>
     <div class="hsub" id="heroSub">15:20 KRX 기준 · NXT 제외</div>
     <div class="hq" id="heroQ" hidden>손실이 났을 때 — <b>기준이 틀렸나, 내가 안 지켰나</b></div>
   </div>
 </header>
 <div class="stick" id="stick" aria-hidden="true"><div class="wrap"></div></div>
 <div class="wrap">
+  <div id="help" class="help" hidden></div>
   <div class="datebar" id="datebar" hidden></div>
   <section id="live" hidden><div class="empty">장중 페이지는 다음 단계에서 만듭니다</div></section>
   <section id="close"><div class="empty">불러오는 중</div></section>
@@ -1060,6 +1078,143 @@ function renderReview(rv) {
   if (CUR === 'review') setHero('review');
 }
 
+/* ── 도움말 (9/15, 8-3 ⑩) ─────────────────────────────────────────
+   "폰 화면의 이 표시가 무슨 뜻이고 보고 나서 뭘 하나" 만 답한다. 규칙이 강의 어디서 왔나는 강의기준_대조표(M·T·D·C·P·E·S·U 번호),
+   종목을 어떻게 고르나는 종목선정_종베기준.pdf 가 답한다. 기준 숫자(임계값)는 대조표·판정 CSV 가 원본이라 여기에는 새로 적지 않는다. */
+const HELP = {
+  live: { title: '장중 탭 읽는 법', lead: '관찰 전용. 판정은 여기서 하지 않고, 후보는 마감 탭에 15:50 한 번 나온다.', groups: [
+    ['맨 위 줄', [
+      ['지금 / 자료', '지금 = 폰 시계와 장 구분(장 전 · 장중 · 종가 동시호가 · 애프터마켓 …). 자료 = 보고 있는 날짜의 자료가 몇 시 회차까지인지와 수집 시각. 장중에 자료가 오래 묵으면 주황, 평일인데 오늘 자료가 없으면 빨강, 지난 날짜를 일부러 보는 중이면 회색.'],
+      ['n시 까지 · 판정 전', '장중 갱신은 매시 07분쯤. 판정 뒤에는 15:20 까지의 흐름이 남는다.']]],
+    ['섹터 모멘텀 흐름', [
+      ['막대 (빨강 / 파랑)', '티마 카드(섹터)마다 회차별 모멘텀 = 그 구간에 들어온 돈의 비중 − 누적 비중(%p). 빨강 = 양수(돈이 더 들어오는 중, 가속), 파랑 = 음수(아침에 끝난 테마, 감속). 막대 길이는 09시 이후 최대값 기준. 이슈가 살아있나(T6) · 무게추가 어디로 가나(T5)를 보는 자리.'],
+      ['섹터 이름 옆 %', '집중도 = 그 카드 상위 4종목 거래대금 ÷ 시장 총거래대금. "시장의 돈이 어디 있나"(M7). 정렬에만 쓰고 기준값은 없다.'],
+      ['가속 · 감속 · 양수 n/m', '마지막 회차 모멘텀의 부호와, 기록된 회차 중 양수였던 횟수. 판정은 15:20 한 구간 값만 쓴다 — 하루 흐름은 판정에 안 들어간다.'],
+      ['카드 2장 13시', '같은 회차 티마에 같은 이름 카드가 두 장 있었다(섹터 금액 큰 쪽을 씀).'],
+      ['괴리', '거래대금 1위와 등락률 1위가 다른 종목. 대장은 거래대금 1위(D2 실질적 대장)이고, 사람이 차트로 확인한다(관문4).'],
+      ['▾ 종목 순위 보기', '섹터를 누르면 회차별 카드 안 누적 거래대금 순위표. 빨간 칸 = 1위 · ₩ = 그 구간 돈이 가장 많이 들어온 종목 · — = 카드 4종목에 없음. "대장 변천" = 1위가 바뀐 흐름(D3 1·2등 체인지 유의).'],
+      ['15:20 에 없는 카드', '마지막 회차 카드에서 사라진 섹터. 테마 종료 · 이름 바뀜 · OCR 오독 중 하나.']]],
+    ['조회순위 해답지', [
+      ['n. 종목명 · 대금 n위', '키움 실시간 종목조회 순위 20위(D7 — 1~3위로 튀어나온 종목, 5위 안 꾸준히). 대금 n위 = 같은 회차 KRX 거래대금 100위 안 순위.'],
+      ['선행', '조회 5위 안인데 거래대금 20위 밖 — 관심이 돈보다 앞선 종목. 관찰 표시일 뿐 판정에 안 쓴다.'],
+      ['100위 밖 n개', '조회 20위 중 거래대금 100위 밖인 종목 수.']]],
+    ['보고 나서', [
+      ['9~10시', '보기만(M8 — 가장 손실이 많이 나는 구간). 장중 매매 판단을 이 탭으로 하지 않는다.'],
+      ['오후', '어느 섹터가 가속 중인지 눈에 익혀 두고, 후보는 마감 탭에서 본다.']]]] },
+  close: { title: '마감 탭 읽는 법', lead: '15:20 KRX 기준(NXT 제외)의 종베 판정. 15:50 은 계산하는 시각일 뿐이다. 검증 기간에는 기록만 하고 매매하지 않는다.', groups: [
+    ['머리', [
+      ['m/d (요일) 15:20 판정', '판정 시각. 오른쪽 배지는 비고(만기일 등).'],
+      ['수집 · OCR 경고 · push', '수집 = 마지막 수집 시각, OCR 경고 = 티마 읽기 경고 수, push = 이 화면이 올라간 시각. OK 가 아니면 빨강 — 화면이 최신이 아닐 수 있다.'],
+      ['판정 전', '장중 자료만 있는 날은 후보 · 관문1 을 그리지 않는다. "후보 없음" 으로 읽지 말 것.']]],
+    ['관문1 오늘 할 장인가', [
+      ['통과 / 불통과 · 걸린조건', '시장 판단(M1 · M2). 네 숫자 중 어느 것이 걸렸는지. 불통과여도 후보는 나오고 "관망" 이 붙는다(M3).'],
+      ['상한가', '오늘 상한가 종목 수 — 상따장 구별(M2).'],
+      ['상승비율', 'KRX 거래대금 100위 중 오른 종목의 비율.'],
+      ['B트랙 · B비중', '100위 안 B트랙(시총 기준 소형, D9) 종목 수와 거래대금 비중 — 대장은 B트랙에서 찾는다.'],
+      ['코스피 · 5일선 · 20일선', '지수가 이평선 위(빨강) / 아래(파랑) 인가와 차이 %(M6). 참고 한 줄, 통과 기준 없음.'],
+      ['기준값', '네 숫자의 기준값은 판정 CSV · 대조표에만 있다. 이 도움말에는 적지 않는다.']]],
+    ['종베 후보 카드 (어종)', [
+      ['후보 · 어종', '관문2(모멘텀 양수) → 관문3(2따) → 관문4(대장)를 지난 섹터. 어종 = 당일주도주 종베(C1).'],
+      ['1순위 · 관망', '후보가 둘 이상이면 집중도 순 순위. 관망 = 관문1 불통과인데 후보.'],
+      ['집중도 · 모멘텀', '집중도 = 카드 4종목 거래대금의 시장 비중(M7). 모멘텀 = 15:00→15:20 구간 유입 비중 − 누적 비중(T6 이슈가 살아있나).'],
+      ['2따', '카드 4종목 중 크게 오른 종목 수 — 2등이 따라오는가(T1 현슈대이따 · T3).'],
+      ['유입 · 대장견인 · 양수구간', '유입 패턴, 대장이 섹터를 끌었는지, 오늘 모멘텀이 양수였던 구간. 기록 칸.'],
+      ['연속', '직전 거래일에도 같은 이름 카드가 있었다(T11 기간). OCR 이름이 다르면 끊긴다.'],
+      ['신고가 20일 · 120일', '대장의 15:20 현재가가 앞 20 · 120 거래일 종가 최대를 넘었나(C2 · C3). Y/N 만 보지 말고 차트로(관문6).'],
+      ['겹침', '강의 네 기준(티마 대장 · 당일주도주 · 120일 신고가 · 조회순위, C5) 중 몇 개에 걸렸나. 시계열 탭과 같은 수.'],
+      ['대장 대금 n위 · 평소의 n배', '대장의 KRX 거래대금 순위(D8)와, 오늘 일봉 거래대금 ÷ 앞 20일 평균. 숫자만, 기준 없음.'],
+      ['1억 = 약 n주', '대장 현재가로 1억 원이 몇 주인지 — 호가 한 칸 유동성 확인용(C10).'],
+      ['주황 칩', '후보를 막지 않는 주의. 비중 = 신고가가 아니라 비중 축소 · JBT = 그냥 사는 매매 유형 · 연속양봉 부담 = 4강 Tip.'],
+      ['대장 · 2등 · 3등 · 4등', '티마 카드 4종목. 대장(빨강 굵게) = 거래대금 1위(관문4). 누적 거래대금(억) · 등락률, 조회 n위 = 실시간 조회순위.'],
+      ['→ D+1', '다음 거래일 결과. 20:05 뒤 채워진다. 채점은 D 종가 매수 → D+1 10:00 까지 한 가지(S1 · S9).'],
+      ['괴리 (주황 안내)', '등락 1위 ≠ 거래대금 1위. 거래대금 1위를 대장으로 두고(D2) 사람이 차트 확인.'],
+      ['14:00 후보', '14:00 판정과 15:20 이 같은지. 참고만.']]],
+    ['피뢰침 · 전전일주도주', [
+      ['후보 · 피뢰침', '어제(또는 전전일) 대장이 오늘 크게 올랐다가 고가에서 밀린 종목(P1). 15:20 판정만.'],
+      ['고가 · 고가 대비 · 거래대금', '세 조건(P2)의 값. 미달 카드는 어느 조건이 미달인지 표시. 기준값은 판정 CSV · 대조표.'],
+      ['기준일 · 기준일 섹터', '그 종목이 대장이었던 날과 그날의 섹터.'],
+      ['조회실패 (주황 막대)', '일봉을 못 받아 판정을 못 한 날. "대상없음" 과 다르다 — 표본이 오염됐을 수 있다.'],
+      ['악재 · 매매 원칙 줄', '악재가 없어야 한다(P4)는 사람 몫. 진입 · 매도 원칙은 P5 · P6.']]],
+    ['섹터 판정', [
+      ['섹터명 % · 모멘텀 · 2따 · 판정', '모든 카드의 집중도 순 목록. 판정 = 후보 / 배경(모멘텀 음수) / 관문3제외(2따 부족) / 대장없음 / 개별이슈.']]],
+    ['사기 전 확인 — 관문6', [
+      ['세 층 순서', '① 진입 전 배제(호가 한 칸 유동성 C10 — 미달이면 종목 배제) → ② 매수 자리(돼지 물량 E6 · 일봉 위치와 앞산 C2) → ③ 사람 판단(3레벨 뉴스 T2 · 재료 T6 · 악재 P4 · 내일 이벤트 · 괴리 캡처 · 재료 D-day E5).'],
+      ['체크 상자', '저장되지 않는다. 그 자리에서 확인하는 순서표.'],
+      ['뉴스 링크', '최근 소식 = 판정일 앞 1주 · 제목만 = 제목에 종목명이 있는 뉴스 · 어제부터 = 직전 거래일 ~ 판정일(악재 구간) · 공시 = DART. 링크만, 본문은 수집하지 않는다.']]],
+    ['보고 나서', [
+      ['검증 기간', '후보가 있어도 매매하지 않는다. 관문6 을 사람이 하고, 다음날 20:05 뒤 → D+1 칸을 본다.'],
+      ['표본', '15:20 후보 섹터 1개 = 표본 1(관문6 에서 사람이 제외한 것은 표본 아님). 표본 30개 + 무결성 2주 뒤 실매매 전환.']]]] },
+  series: { title: '시계열 탭 읽는 법', lead: '강의가 말한 주도주 선정 네 가지(C5 — 티마 · 검색식 · 거래대금 · 실시간조회)를 시각 × 종목 격자로. 관찰 전용, 판정에 안 쓴다.', groups: [
+    ['격자 읽기', [
+      ['칸', '그 회차에 그 기준에 걸려 있었나. 빈칸 = 안 걸림. 행 순서 = 마지막 회차에 있는 것 → 걸린 회차 많은 순 → 처음 걸린 시각.'],
+      ['넓은 표', '옆으로 스크롤. 표 위에서 좌우로 밀면 탭 이동이 아니라 표 스크롤이다.']]],
+    ['다섯 장', [
+      ['네 기준 겹침', '칸 숫자 = 그 회차에 걸린 기준 수(진할수록 많음). 2개 이상 걸린 적 있는 종목만. 몇 개인가는 관찰이지 판정 조건이 아니다.'],
+      ['티마 대장 ●', '그 회차 티마 카드 한 장의 누적 거래대금 1위(●2 = 카드 두 장). 개별이슈 카드 제외, 이름은 OCR 글자 그대로.'],
+      ['당일주도주_강의', '영웅문 조건검색(C4 거래대금 + 등락률)에 걸린 종목. 숫자 = 등락률 반올림.'],
+      ['120일 신고가_강의', '영웅문 조건검색(C3)에 걸린 종목. 숫자 = 등락률 반올림.'],
+      ['조회순위', '1시간마다 찍은 1분 스냅샷(D7). 숫자 = 순위, 굵게 = 5위 안. 회차 사이에 잠깐 오른 종목은 안 잡힌다 — 오래 걸려 있는 종목을 보는 표.']]],
+    ['보고 나서', [
+      ['겹침이 많은 종목', '마감 탭 후보 카드의 "겹침" 칩과 같은 수. 후보가 아닌데 넷에 다 걸린 종목이 있으면 그 이유만 기록한다(월 1회 점검 재료, 기준은 안 바꾼다).']]]] },
+  verify: { title: '검증 탭 읽는 법', lead: '표본이 쌓인 뒤 만든다. 지금은 자리만.', groups: [
+    ['무엇이 표본인가', [
+      ['표본 1', '15:20 후보 섹터 1개. 관문6 에서 사람이 제외한 것은 표본이 아니다.'],
+      ['채점', '한 가지만 — D 종가(동시호가) 매수 → D+1 10:00 봉까지 고가가 목표에 닿았나(S1 · S9). 횡보 관망 · 추매 · NXT 는 채점에서 뺀다(S3 · S4 기록만).'],
+      ['전환 조건', '표본 30개 + 무결성 오류 0 이 2주 연속. 날짜가 아니라 표본이 기준.']]]] },
+  review: { title: '복기 탭 읽는 법', lead: '실매매 뒤, 손실이 났을 때 "기준이 틀렸나, 내가 안 지켰나" 를 가르는 탭. 검증 기간에는 체결이 없어 "실매매 전" 만 보인다. 시안 보기 = 전부 가짜 매매.', groups: [
+    ['누적', [
+      ['기준 준수율', '규칙을 다 지킨 매매 ÷ 전체.'],
+      ['연속 손실', '손실 매매가 이어진 건수. 쉬는 날 판단은 계좌 규칙(대조표 8절).'],
+      ['지킨 / 어긴 매매 평균 수익률', '수수료 · 세금을 뺀 수익률의 평균. 두 값이 벌어지면 기준은 맞고 실행이 문제였다는 뜻.']]],
+    ['네 칸', [
+      ['지킴 × 수익 = 정상', '기준대로 하고 벌었다.'],
+      ['지킴 × 손실 = 기준 점검', '기준대로 했는데 잃었다 → 기준이 틀렸나(월 1회 점검 재료).'],
+      ['어김 × 수익 = 운', '안 지켰는데 벌었다 → 가장 위험. 습관이 된다.'],
+      ['어김 × 손실 = 실행 문제', '안 지켰고 잃었다 → 내가 안 지켰나.'],
+      ['어긴 유형 막대', '어긴 규칙별 건수.']]],
+    ['매매 카드', [
+      ['왼쪽 띠 · 배지', '네 칸 분류. 점선 = 기준 점검.'],
+      ['칩', '판정(후보 · 피뢰침 · 배경) · 역할(대장 · 2등 …) · 트랙 등 그날 판정 기록. 빨강 칩 = 어김과 관련.'],
+      ['매수 · 매도 · 수익률 · 비중', '매수 · 매도 시각(가중평균). 수익률 = 순손익 ÷ 매수합(수수료 · 세금 뺀 값). 비중 = 매수 금액 ÷ 매수 직전 추정자산(U1). 추정자산이 없으면 ❓.'],
+      ['기준대로였다면', '판정 · 채점 자료(15:20 후보 · 10시 채점)와 실제 매매를 대조한 줄.'],
+      ['규칙 체크 ✓ ✕ – ?', '✓ 지킴 · ✕ 어김 · – 해당 없음 · ? 사람 확인 필요. 종목(후보였나) · 매수 시각(E2) · 비중(U1) · 추매(U2 시각 · 금액, 피뢰침은 U3 금지) · 매도(익일 오전 S9, 목표 S1 · S6) · 계좌 규칙.'],
+      ['예외', '당일 매도 · 이틀 이상 보유 · 보유 중 · NXT 프리마켓 추매는 칩만 붙고 누적 · 네 칸에서 뺀다.']]],
+    ['공개 범위', [
+      ['올리는 것 / 안 올리는 것', '종목 · 시각 · 수익률 % · 비중 % · 규칙 체크 · 네 칸만. 금액 · 수량 · 손익 원화 · 추정자산 · 주문번호 · 계좌번호는 이 화면에 없다.']]]] }
+};
+const HELP_COMMON = [
+  ['하루 루틴 — 언제 무엇을 보나', [
+    ['09:10', '장중 탭. 맨 위 "지금 / 자료" 가 오늘 · 최근 회차인지(빨강 · 주황 없음) 확인. 모멘텀 · 조회순위는 보기만(M8).'],
+    ['15:55', '마감 탭. 상태 줄 push OK → 관문1 → 후보 · 피뢰침 카드 → 후보가 있으면 관문6 세 층을 순서대로. 검증 기간에는 여기서 끝(기록만).'],
+    ['20:00 뒤', '20:05 채점이 끝나면 마감 탭 후보 카드의 → D+1 칸. 실매매 뒤에는 복기 탭.'],
+    ['지난 날짜', '날짜 줄 ◀ ▶ 또는 목록으로. 복기 탭에는 날짜 줄이 없다(누적).']]],
+  ['탭 고정 · 좌우 밀기 · 색', [
+    ['탭 막대 고정', '조금이라도 스크롤하면 탭 막대가 맨 위에 붙는다. 거기서 탭을 누르면 새 탭의 처음이 막대 바로 아래에 온다.'],
+    ['좌우 밀기', '화면을 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭. 화면 가장자리는 폰의 뒤로 가기라 무시. 넓은 표(시계열 격자 · 종목 순위표) 위에서는 표가 옆으로 스크롤된다.'],
+    ['새로고침', '홈 화면 앱은 5분 넘게 떠나 있다 돌아오면 자료를 다시 불러온다. 맨 위 "지금" 시계는 1분마다 갱신.'],
+    ['색', '빨강 = 상승 · 가속 · 대장 · 1위, 파랑 = 하락 · 감속(HTS 원색). 주황 = 주의(괴리 · 비고 · push 실패 · 오래된 자료). 크림슨 · 연분홍 배지 = 정보.']]]
+];
+const HELP_FOOT = '뜻은 강의기준_대조표 번호(M 시장 · T 테마 · D 대장 · C 어종 · P 피뢰침 · E 진입 · S 매도 · U 계좌)로 잇는다. 기준 숫자는 대조표 · 판정 CSV 가 원본이라 여기에는 새로 적지 않는다.';
+let HELP_OPEN = false;
+function renderHelp(tab) {
+  const box = document.getElementById('help'); box.innerHTML = '';
+  const h = HELP[tab]; if (!h) { box.hidden = true; return; }
+  const head = el('div', 'help-h'); const x = el('button', null, '닫기'); x.onclick = () => toggleHelp(false);
+  add(head, el('b', null, h.title), x); add(box, head);
+  if (h.lead) add(box, el('div', 'help-lead', h.lead));
+  const rows = (parent, list) => list.forEach(([t, m]) => { const r = el('div', 'help-r'); add(r, el('b', null, t), el('span', null, m)); parent.appendChild(r); });
+  h.groups.forEach(([g, list]) => { add(box, el('div', 'help-g', g)); rows(box, list); });
+  HELP_COMMON.forEach(([g, list]) => { const det = el('details'); add(det, el('summary', null, g)); rows(det, list); add(box, det); });
+  add(box, el('div', 'help-foot', HELP_FOOT));
+  box.hidden = false;
+}
+function toggleHelp(on) {
+  HELP_OPEN = on === undefined ? !HELP_OPEN : !!on;
+  document.getElementById('helpBtn').setAttribute('aria-expanded', HELP_OPEN ? 'true' : 'false');
+  if (HELP_OPEN) renderHelp(CUR); else document.getElementById('help').hidden = true;
+}
+document.getElementById('helpBtn').onclick = () => toggleHelp();
+
 let DATES = [];
 let CUR = 'close';
 const HERO = { live: ['장중', '관찰 전용 — 9~10시는 보기만'], close: ['마감', '15:20 KRX 기준 · NXT 제외'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 15:20 까지'], verify: ['검증', '표본 30개가 쌓인 뒤 만듭니다'], review: ['복기', ''] };
@@ -1113,6 +1268,7 @@ function switchTab(tab, how) {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x.dataset.tab === CUR));
   TAB_ORDER.forEach(id => { document.getElementById(id).hidden = id !== CUR; });
   setHero(CUR);
+  if (HELP_OPEN) renderHelp(CUR);   // 8-3 ⑩ 도움말이 열려 있으면 새 탭 내용으로
   const bar = document.getElementById('datebar');
   if (bar.childElementCount) bar.hidden = CUR === 'review';
   const top = HERO_EL.offsetHeight - STICK.offsetHeight;
