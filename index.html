@@ -133,6 +133,8 @@ details.more .card strong{font-size:14.5px}
 .nowline b{font-weight:800;color:var(--ink2)}.nowline .warn{color:var(--alert);font-weight:700}
 .foot{font-size:11.5px;color:var(--muted);text-align:center;margin-top:22px;padding-top:14px;border-top:1px solid var(--rule)}
 .empty{padding:24px 0;text-align:center;color:var(--muted)}
+.rv-btnrow{text-align:center;margin:4px 0 22px}
+.rv-btn{padding:8px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--wine);font:inherit;font-size:12.5px;cursor:pointer}
 .axis,.bars,.vals{display:grid;gap:3px;align-items:center;text-align:center}
 .axis{font-size:10px;color:var(--muted);margin:2px 0 2px}
 .vals{font-size:10px;color:var(--sub);margin-top:2px;font-variant-numeric:tabular-nums}
@@ -939,8 +941,9 @@ function renderSeries(d) {
   add(box, el('div', 'foot', `관찰 전용 — 기준 넷 다 강의 원문(대조표) 그대로, 겹침 수는 판정 조건이 아님 · 생성 ${d.generated || '—'}`));
 }
 
-/* ── 복기 탭 (9/13) ─────────────────────────────────────────
-   data/review_sample.json 을 그린다. 지금은 가짜 자료이고, 실제 체결 자료가 생기면 같은 모양의 파일로 바꾼다.
+/* ── 복기 탭 (9/13 시안 · 9/15 실자료 연결) ─────────────────────
+   data/review.json 을 그린다 — pages-export.ps1 v1.8 이 PC 의 비공개 체결 원본(review-build.ps1)에서 허용 목록 칸만 골라 만든 파일.
+   매매 0건이면 "실매매 전" 과 "시안 보기" 버튼(data/review_sample.json, 가짜 매매)만 보인다.
    아래에서 읽는 칸만 화면에 나온다(허용 목록) — 금액·수량·손익 원화·추정자산·주문번호·계좌번호는 읽지 않는다. */
 const RV_BADGE = { chk: '◆ 기준 점검', ok: '● 정상', luck: '▲ 운 · 가장 위험', exec: '✕ 실행 문제' };
 const RV_MARK = { y: '✓', n: '✕', na: '–', q: '?' };
@@ -960,8 +963,22 @@ function rvSign(v) { const n = num(v); return n === null || n === 0 ? '' : (n > 
 function renderReview(rv) {
   const box = document.getElementById('review'); box.innerHTML = '';
   const trades = arr(rv.trades);
-  REVIEW_SUB = `${rv.period || ''} · 매매 ${trades.length}건 · D 매수 → D+1 매도`;
+  const rvBtn = (label, path) => {
+    const b = el('button', 'rv-btn', label);
+    b.onclick = async () => { try { renderReview(await getJson(path)); } catch (e) { b.textContent = '못 불러왔습니다 : ' + e.message; } };
+    return add(el('div', 'rv-btnrow'), b);
+  };
+  if (!trades.length && !rv.sample) {
+    // 9/15 : 실매매 전(검증 기간) — 체결 기록이 없으면 빈 상태만. 시안은 버튼으로 따로 본다
+    REVIEW_SUB = '실매매 전 · 체결 기록 없음';
+    add(box, el('div', 'empty', '실매매 전 — 체결 기록이 없습니다. 검증 기간에는 종이 채점만 합니다 (표본 30개 + 무결성 2주 뒤 전환).'));
+    add(box, rvBtn('시안 보기 (매매는 전부 가짜)', 'data/review_sample.json'));
+    if (CUR === 'review') setHero('review');
+    return;
+  }
+  REVIEW_SUB = `${rv.period || ''}${rv.period ? ' · ' : ''}매매 ${trades.length}건 · D 매수 → D+1 매도${rv.sample ? ' · 시안' : ''}`;
   add(box, rvSegs(el('div', 'rv-note'), rv.note));
+  if (rv.sample) add(box, rvBtn('실제 자료로 돌아가기', 'data/review.json'));
 
   const cols = el('div', 'cols'); const s1 = el('section'); const s2 = el('section'); add(box, add(cols, s1, s2));
   const sec = (title, cnt, extra) => { const h = el('div', 'rv-sec' + (extra ? ' ' + extra : '')); add(h, el('h2', null, title), el('span', 'c', cnt), el('span', 'ln')); return h; };
@@ -1010,7 +1027,7 @@ function renderReview(rv) {
     const kind = RV_BADGE[t.kind] ? t.kind : 'ok';
     const card = el('article', 'rv-trade ' + kind);
     const th = el('div', 'rv-th');
-    add(th, el('span', 'nm', t.name), el('span', 'mt', `${t.dates || ''} · ${t.track || ''}트랙`), el('span', 'rv-badge b-' + kind, RV_BADGE[kind]));
+    add(th, el('span', 'nm', t.name), el('span', 'mt', `${t.dates || ''}${t.track ? ' · ' + t.track + '트랙' : ''}`), el('span', 'rv-badge b-' + kind, RV_BADGE[kind]));
     add(card, th);
     const chips = el('div', 'rv-chips');
     arr(t.chips).forEach(c => chips.appendChild(el('span', 'rv-chip' + (c[1] === 'red' ? ' red' : ''), c[0])));
@@ -1150,7 +1167,7 @@ async function loadAll() {
   try { dates = arr((await getJson('data/dates.json')).dates); } catch (e) { }
   DATES = dates.map(String).sort().reverse();
   loadDate(viewing && DATES.includes(viewing) ? viewing : null, DATES);
-  try { renderReview(await getJson('data/review_sample.json')); }
+  try { renderReview(await getJson('data/review.json')); }   // 9/15 : 실자료 (pages-export v1.8). 시안은 화면의 버튼으로
   catch (e) { const b = document.getElementById('review'); b.innerHTML = ''; add(b, el('div', 'empty', '복기 자료를 못 불러왔습니다 : ' + e.message)); }
 }
 loadAll();
