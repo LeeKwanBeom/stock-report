@@ -670,6 +670,14 @@ function tLabel(t) { t = String(t); return t.slice(2) === '00' ? (+t.slice(0, 2)
 // 9/15 저녁 (저녁화면) : 저녁 회차(16:00~20:02)는 같은 표에 이어 붙이고 16:00 앞에 점선 — 첫 애프터마켓 열 = 시각 ≥ 1600 인 첫 열. 15:40(장후 시간외 종가)은 점선 왼쪽
 function isAft1(times, i) { return String(times[i]) >= '1600' && (i === 0 || String(times[i - 1]) < '1600'); }
 function lastFlowT(d) { const ts = arr(d.sectorFlow).map(r => String(r['시각'])).sort(); return ts.length ? ts[ts.length - 1] : ''; }
+// 9/15 저녁 사용자 결정 : 열 머리글의 저녁 시각(15:30 이후)은 짧게 — 1540 → 15½ · 1800 → 18 · 1950 → 19½ · 2002 → 20 (열 13개가 폰 너비에서 붙어 보이던 것). 낮 열과 문장(상태 줄)은 tLabel 그대로
+function tShort(t) {
+  t = String(t); if (t < '1530') return tLabel(t);
+  const h = +t.slice(0, 2), m = +t.slice(2);
+  if (m <= 5) return String(h);
+  if (m >= 25 && m <= 55) return h + '½';
+  return tLabel(t);
+}
 
 function renderLive(d) {
   const box = document.getElementById('live'); box.innerHTML = '';
@@ -708,7 +716,7 @@ function renderLive(d) {
     const byConc = (a, b) => (num((bySec[b][lastT] || {})['집중도%']) ?? -1) - (num((bySec[a][lastT] || {})['집중도%']) ?? -1);
     const liveNames = Object.keys(bySec).filter(n => bySec[n][lastT]).sort(byConc);
     const goneNames = Object.keys(bySec).filter(n => !bySec[n][lastT]);
-    const mkAxis = () => { const ax = el('div', 'axis'); ax.style.gridTemplateColumns = gridCols; times.forEach((t, i) => ax.appendChild(el('span', isAft1(times, i) ? 'aft1' : null, tLabel(t)))); return ax; };
+    const mkAxis = () => { const ax = el('div', 'axis'); ax.style.gridTemplateColumns = gridCols; times.forEach((t, i) => ax.appendChild(el('span', isAft1(times, i) ? 'aft1' : null, tShort(t)))); return ax; };
     const stockMapL = {}; arr(d.stocks).forEach(s => { stockMapL[s['섹터명']] = arr(s['종목']); });
     const stBy = {};
     arr(d.stockFlow).forEach(r => {
@@ -743,7 +751,7 @@ function renderLive(d) {
       add(box, lead);
       const tb = el('table'); const cg = el('colgroup');
       const c0 = el('col'); c0.style.width = '30%'; cg.appendChild(c0); tms.forEach(() => cg.appendChild(el('col'))); tb.appendChild(cg);
-      const hr = el('tr'); hr.appendChild(el('th')); tms.forEach((tt, i) => hr.appendChild(el('th', isAft1(tms, i) ? 'aft1' : null, tLabel(tt)))); tb.appendChild(hr);
+      const hr = el('tr'); hr.appendChild(el('th')); tms.forEach((tt, i) => hr.appendChild(el('th', isAft1(tms, i) ? 'aft1' : null, tShort(tt)))); tb.appendChild(hr);
       names.forEach(nm => {
         const tr = el('tr'); const tdn = el('td', 'nm', nm);
         const cd = tms.map(tt => (sb[tt][nm] || {})['종목코드']).find(Boolean); if (isPref(cd)) tdn.appendChild(el('span', 'flag warn', '우선주'));   // 9/15 저녁
@@ -894,7 +902,7 @@ function renderSeries(d) {
     const tb = el('table'); tb.style.minWidth = (nameW + 34 * times.length) + 'px';
     const cg = el('colgroup'); const c0 = el('col'); c0.style.width = nameW + 'px'; cg.appendChild(c0);
     times.forEach(() => { const c = el('col'); c.style.width = '34px'; cg.appendChild(c); }); tb.appendChild(cg);
-    const hr = el('tr'); hr.appendChild(el('th', null, head || '')); times.forEach((t, i) => hr.appendChild(el('th', isAft1(times, i) ? 'aft1' : null, tLabel(t)))); tb.appendChild(hr);
+    const hr = el('tr'); hr.appendChild(el('th', null, head || '')); times.forEach((t, i) => hr.appendChild(el('th', isAft1(times, i) ? 'aft1' : null, tShort(t)))); tb.appendChild(hr);
     names.forEach(nm => {
       const tr = el('tr'); const td0 = el('td', null, nm); td0.title = nm; add(td0, kMark(d, NC[nm])); tr.appendChild(td0);   // (k) 9/15 저녁
       times.forEach((t, i) => { const c = cell(nm, t); const td = el('td', ((c && c.cls) ? c.cls : '') + (isAft1(times, i) ? ' aft1' : ''), c ? c.text : ''); if (c && c.title) td.title = c.title; tr.appendChild(td); });   // 9/15 저녁 : 16:00 앞 점선
@@ -1134,7 +1142,7 @@ const HELP_SEC = {
     ['괴리', '거래대금 1위와 등락률 1위가 다른 종목. 대장은 거래대금 1위(D2 실질적 대장)이고, 사람이 차트로 확인한다(관문4).'],
     ['▾ 종목 순위 보기', '섹터를 누르면 회차별 카드 안 누적 거래대금 순위표. 빨간 칸 = 1위 · ₩ = 그 구간 돈이 가장 많이 들어온 종목 · — = 카드 4종목에 없음. "대장 변천" = 1위가 바뀐 흐름(D3 1·2등 체인지 유의). 우선주(주황) = 매매하지 않는 종목(사용자 결정 9/15), 표시만. (k) = KRX 전용(NXT 불가) — 다음날 매도 09:00 부터, 없으면 NXT 도 되는 종목이라 08:00 부터.'],
     ['15:20 에 없는 카드', '마지막 회차 카드에서 사라진 섹터. 테마 종료 · 이름 바뀜 · OCR 오독 중 하나.'],
-    ['점선 (16:00 앞)', '점선 오른쪽 = KRX 애프터마켓(16:00~20:00, 9/14 개설) 회차. 15:40 은 장후 시간외 종가라 점선 왼쪽. 같은 계산(KRX 스냅 금액 · 총거래대금 분모)이지만 판정은 15:20 한 구간뿐 — 저녁 흐름은 관찰만(사용자 결정 9/15).']],
+    ['점선 (16:00 앞) · 15½ 18 19½ 20', '점선 오른쪽 = KRX 애프터마켓(16:00~20:00, 9/14 개설) 회차. 저녁 열 머리글은 짧게 — 15½ = 15:40 · 19½ = 19:50 · 20 = 20:02. 15:40 은 장후 시간외 종가라 점선 왼쪽. 같은 계산(KRX 스냅 금액 · 총거래대금 분모)이지만 판정은 15:20 한 구간뿐 — 저녁 흐름은 관찰만(사용자 결정 9/15).']],
   'live.inq': [
     ['n. 종목명 · 대금 n위', '키움 실시간 종목조회 순위 20위(D7 — 1~3위로 튀어나온 종목, 5위 안 꾸준히). 대금 n위 = 같은 회차 KRX 거래대금 100위 안 순위.'],
     ['선행', '조회 5위 안인데 거래대금 20위 밖 — 관심이 돈보다 앞선 종목. 관찰 표시일 뿐 판정에 안 쓴다.'],
