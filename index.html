@@ -167,6 +167,7 @@ details.more .card strong{font-size:14.5px}
 .bar i.p{bottom:50%;background:var(--up)}.bar i.n{top:50%;background:var(--down)}
 .flag{font-size:10.5px;padding:1px 7px;border-radius:10px;background:var(--rose);color:var(--wine);margin-left:4px}
 .flag.warn{background:var(--warnBg);color:var(--warn)}
+.kmk{font-size:10.5px;color:var(--muted);margin-left:3px;font-weight:400}
 .gapline{font-size:11px;color:var(--muted);margin-top:4px}
 .hint{font-size:11px;color:var(--wine);margin-top:6px}
 .secblk.tap{cursor:pointer}
@@ -431,6 +432,7 @@ function renderClose(d, dates) {
       if (has(s['트랙'])) add(nm, el('span', 'trk', s['트랙']));
       if (has(inqMap[String(s['종목코드'])])) add(nm, el('span', 'flag', '조회 ' + inqMap[String(s['종목코드'])] + '위'));
       if (isPref(s['종목코드'])) add(nm, el('span', 'flag warn', '우선주'));
+      add(nm, kMark(d, s['종목코드']));   // 9/15 저녁 (k) = KRX 전용
       const rt = el('span'); add(rt, el('span', null, (s['누적억'] || '—') + '억 '), pctEl(s['등락률']));
       const res = resMap[r['섹터명'] + '|' + s['종목명']];
       if (res && has(res['D1종가%'])) { filled++; const d1 = el('span', 'd1'); add(d1, el('span', 'sub', ' → D+1 '), pctEl(res['D1종가%'])); add(rt, d1); }   // 시안의 .d1 : 작게·한 덩어리로 (폰 너비에서 대장 행 줄넘김 완화)
@@ -467,7 +469,7 @@ function renderClose(d, dates) {
   const eokText = v => { const n = num(v); return n === null ? (has(v) ? String(v) : '—') : n.toLocaleString() + '억'; };
   const piroHead = p => {
     const top = el('div', 'head'); const lt = el('div');
-    add(lt, el('strong', null, p['종목'] || '—'), el('span', 'meta', ` ${p['코드'] || ''} · 기준일 ${mmdd(p['기준일'])} ${p['기준일섹터'] || ''}`));
+    add(lt, el('strong', null, p['종목'] || '—'), kMark(d, p['코드']), el('span', 'meta', ` ${p['코드'] || ''} · 기준일 ${mmdd(p['기준일'])} ${p['기준일섹터'] || ''}`));   // (k) 9/15 저녁
     return add(top, lt);
   };
   piroCands.forEach(p => {
@@ -547,7 +549,7 @@ function renderClose(d, dates) {
   }
   const b1 = gblk('진입 전 확인', '— 미달이면 배제', [['호가 한 칸당 1억 이상인가', '미달이면 종목 배제 (C10)']]);
   const eok = candStocks.filter(s => sharesPer1eok(s['현재가']) !== null);   // 8-3 ⑧ — 현재가가 JSON 에 들어온 뒤부터 (목업 B)
-  if (eok.length) eok.forEach(s => add(b1, el('div', 'sub', `${s['종목명']} ${num(s['현재가']).toLocaleString()}원 → 1억 = 약 ${sharesPer1eok(s['현재가']).toLocaleString()}주`)));
+  if (eok.length) eok.forEach(s => { const ln = el('div', 'sub', `${s['종목명']} ${num(s['현재가']).toLocaleString()}원 → 1억 = 약 ${sharesPer1eok(s['현재가']).toLocaleString()}주`); add(ln, kMark(d, s['종목코드'])); add(b1, ln); });   // (k) 9/15 저녁
   else if (candStocks.length) add(b1, el('div', 'sub muted', '1억 = 몇 주 : 현재가가 자료에 들어오면 종목별로 표시'));
   const b2 = gblk('매수 자리 정하기', null, [
     ['돼지 물량 자리를 확인했나', '(E6)'],
@@ -563,6 +565,16 @@ function renderClose(d, dates) {
 // ---- 우선주 표시 (9/15 저녁, 사용자 결정 : 우선주는 매매하지 않는다) ----
 //   KRX 종목코드 끝자리 0 = 보통주, 그 밖 = 우선주(5·7·9 등). 표시만 — 판정은 거르지 않는다(검색식 제외 설정 거래정지·정리매매·ETF·ETN 에도 우선주는 없음, 인계문서 3-2). 임계값 없음.
 function isPref(code) { const s = String(code || '').trim(); return /^\d{6}$/.test(s) && !s.endsWith('0'); }
+
+// ---- (k) KRX 전용 표시 (9/15 저녁, 사용자 결정) ----
+//   JSON v8 의 krxOnly(종목마스터 nxtEnable = N 인 코드 목록)에 있으면 종목명 옆 (k). NXT 거래 불가 → 다음날 매도는 09:00 부터.
+//   표시가 없으면 NXT 도 되는 종목이라 08:00 프리마켓부터 봐야 한다. 마스터에 없는 종목(신규상장 · 갱신 전)은 목록에 없어 표시 없음 — 모르는 종목을 (k) 로 찍지 않는다.
+//   표시만 — 판정 · 채점 무관. 옛 JSON(v7 이전)은 krxOnly 가 없어 아무 데도 안 붙는다.
+function kMark(d, code) {
+  const s = String(code || '').trim(); if (!/^\d{6}$/.test(s)) return null;
+  if (!d.__krxOnly) d.__krxOnly = new Set(arr(d.krxOnly).map(String));
+  return d.__krxOnly.has(s) ? el('span', 'kmk', '(k)') : null;
+}
 
 // ---- 8-3 ③ 맨 위 "지금 / 자료" 한 줄 (9/14) ----
 //   지금 = 폰 시계 (날짜·요일·시:분·장 구분), 자료 = 보고 있는 날짜 JSON 의 판정 시각·수집 시각·몇 분 전.
@@ -730,6 +742,7 @@ function renderLive(d) {
       names.forEach(nm => {
         const tr = el('tr'); const tdn = el('td', 'nm', nm);
         const cd = tms.map(tt => (sb[tt][nm] || {})['종목코드']).find(Boolean); if (isPref(cd)) tdn.appendChild(el('span', 'flag warn', '우선주'));   // 9/15 저녁
+        add(tdn, kMark(d, cd));   // (k) 9/15 저녁
         tr.appendChild(tdn);
         tms.forEach(tt => {
           const i = ranked[tt].indexOf(nm);
@@ -807,6 +820,7 @@ function renderLive(d) {
       const row = el('div', 'row');
       const nm = el('span'); add(nm, el('span', 'sub', r['조회순위'] + '. '), el('span', null, r['종목명']));
       if (r['구분'] === 'ETF') add(nm, el('span', 'muted', ' ETF'));
+      add(nm, kMark(d, r['코드']));   // (k) 9/15 저녁
       const rk = num(r['거래대금순위']);
       if ((num(r['조회순위']) ?? 99) <= 5 && (rk === null || rk > 20)) add(nm, el('span', 'flag', '선행'));
       const rt = el('span'); add(rt, pctEl(r['등락률']), el('span', 'sub', rk === null ? ' · 대금 100위 밖' : ` · 대금 ${rk}위`));
@@ -854,6 +868,11 @@ function renderSeries(d) {
     else if (r['조건식'] === '120일 신고가_강의') put('high', t, r['종목명'], r);
   });
   arr(d.inqFlow).forEach(r => put('inq', String(r['시각']), r['종목명'], r));
+  // (k) 9/15 저녁 : 격자 행은 이름뿐이라 종목명 → 코드 를 cond · inq · 티마 종목 행에서 모은다. 티마 대장(OCR 이름)만 걸린 종목은 코드가 없어 표시 없음
+  const NC = {};
+  const putNC = (nm, cd) => { if (has(nm) && has(cd) && !NC[nm]) NC[nm] = cd; };
+  arr(d.condFlow).forEach(r => putNC(r['종목명'], r['코드'])); arr(d.inqFlow).forEach(r => putNC(r['종목명'], r['코드']));
+  arr(d.stockFlow).forEach(r => putNC(r['종목명'], r['종목코드'])); arr(d.stocks).forEach(s => arr(s['종목']).forEach(r => putNC(r['종목명'], r['종목코드'])));
   const condT = [...new Set(arr(d.condTimes).map(String))].sort();
   const T = {
     tima: [...new Set(Object.keys(M.tima))].sort(),
@@ -871,7 +890,7 @@ function renderSeries(d) {
     times.forEach(() => { const c = el('col'); c.style.width = '34px'; cg.appendChild(c); }); tb.appendChild(cg);
     const hr = el('tr'); hr.appendChild(el('th', null, head || '')); times.forEach(t => hr.appendChild(el('th', null, tLabel(t)))); tb.appendChild(hr);
     names.forEach(nm => {
-      const tr = el('tr'); const td0 = el('td', null, nm); td0.title = nm; tr.appendChild(td0);
+      const tr = el('tr'); const td0 = el('td', null, nm); td0.title = nm; add(td0, kMark(d, NC[nm])); tr.appendChild(td0);   // (k) 9/15 저녁
       times.forEach(t => { const c = cell(nm, t); const td = el('td', c ? c.cls : null, c ? c.text : ''); if (c && c.title) td.title = c.title; tr.appendChild(td); });
       tb.appendChild(tr);
     });
@@ -1107,12 +1126,13 @@ const HELP_SEC = {
     ['가속 · 감속 · 양수 n/m', '마지막 회차 모멘텀의 부호와, 기록된 회차 중 양수였던 횟수. 판정은 15:20 한 구간 값만 쓴다 — 하루 흐름은 판정에 안 들어간다.'],
     ['카드 2장 13시', '같은 회차 티마에 같은 이름 카드가 두 장 있었다(섹터 금액 큰 쪽을 씀).'],
     ['괴리', '거래대금 1위와 등락률 1위가 다른 종목. 대장은 거래대금 1위(D2 실질적 대장)이고, 사람이 차트로 확인한다(관문4).'],
-    ['▾ 종목 순위 보기', '섹터를 누르면 회차별 카드 안 누적 거래대금 순위표. 빨간 칸 = 1위 · ₩ = 그 구간 돈이 가장 많이 들어온 종목 · — = 카드 4종목에 없음. "대장 변천" = 1위가 바뀐 흐름(D3 1·2등 체인지 유의). 우선주(주황) = 매매하지 않는 종목(사용자 결정 9/15), 표시만.'],
+    ['▾ 종목 순위 보기', '섹터를 누르면 회차별 카드 안 누적 거래대금 순위표. 빨간 칸 = 1위 · ₩ = 그 구간 돈이 가장 많이 들어온 종목 · — = 카드 4종목에 없음. "대장 변천" = 1위가 바뀐 흐름(D3 1·2등 체인지 유의). 우선주(주황) = 매매하지 않는 종목(사용자 결정 9/15), 표시만. (k) = KRX 전용(NXT 불가) — 다음날 매도 09:00 부터, 없으면 NXT 도 되는 종목이라 08:00 부터.'],
     ['15:20 에 없는 카드', '마지막 회차 카드에서 사라진 섹터. 테마 종료 · 이름 바뀜 · OCR 오독 중 하나.']],
   'live.inq': [
     ['n. 종목명 · 대금 n위', '키움 실시간 종목조회 순위 20위(D7 — 1~3위로 튀어나온 종목, 5위 안 꾸준히). 대금 n위 = 같은 회차 KRX 거래대금 100위 안 순위.'],
     ['선행', '조회 5위 안인데 거래대금 20위 밖 — 관심이 돈보다 앞선 종목. 관찰 표시일 뿐 판정에 안 쓴다.'],
-    ['100위 밖 n개', '조회 20위 중 거래대금 100위 밖인 종목 수.']],
+    ['100위 밖 n개', '조회 20위 중 거래대금 100위 밖인 종목 수.'],
+    ['(k)', 'KRX 전용 종목(NXT 거래 불가). 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목 — 08:00 프리마켓부터 봐야 한다(사용자 결정 9/15). 종목마스터(주 1회 갱신)에 없는 종목은 표시 없음.']],
   'close.gate1': [
     ['통과 / 불통과 · 걸린조건', '시장 판단(M1 · M2). 네 숫자 중 어느 것이 걸렸는지. 불통과여도 후보는 나오고 "관망" 이 붙는다(M3).'],
     ['상한가', '오늘 상한가 종목 수 — 상따장 구별(M2).'],
@@ -1133,6 +1153,7 @@ const HELP_SEC = {
     ['1억 = 약 n주', '대장 현재가로 1억 원이 몇 주인지 — 호가 한 칸 유동성 확인용(C10).'],
     ['주황 칩', '후보를 막지 않는 주의. 비중 = 신고가가 아니라 비중 축소 · JBT = 그냥 사는 매매 유형 · 연속양봉 부담 = 4강 Tip.'],
     ['우선주 (주황)', '종목코드 끝자리가 0 이 아닌 종목. 사용자 결정(9/15) : 우선주는 매매하지 않는다. 판정은 거르지 않고 표시만 — 검색식 제외(거래정지 · 정리매매 · ETF · ETN)에도 우선주는 없다.'],
+    ['(k)', 'KRX 전용 종목(NXT 거래 불가). 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목 — 08:00 프리마켓부터 봐야 한다(사용자 결정 9/15). 종목마스터(주 1회 갱신)에 없는 종목은 표시 없음. 판정 · 채점 무관.'],
     ['대장 · 2등 · 3등 · 4등', '티마 카드 4종목. 대장(빨강 굵게) = 거래대금 1위(관문4). 누적 거래대금(억) · 등락률, 조회 n위 = 실시간 조회순위.'],
     ['→ D+1', '다음 거래일 결과. 20:05 뒤 채워진다. 채점은 D 종가 매수 → D+1 10:00 까지 한 가지(S1 · S9).'],
     ['괴리 (주황 안내)', '등락 1위 ≠ 거래대금 1위. 거래대금 1위를 대장으로 두고(D2) 사람이 차트 확인.'],
@@ -1142,18 +1163,20 @@ const HELP_SEC = {
     ['고가 · 고가 대비 · 거래대금', '세 조건(P2)의 값. 미달 카드는 어느 조건이 미달인지 표시. 기준값은 판정 CSV · 대조표.'],
     ['기준일 · 기준일 섹터', '그 종목이 대장이었던 날과 그날의 섹터.'],
     ['조회실패 (주황 막대)', '일봉을 못 받아 판정을 못 한 날. "대상없음" 과 다르다 — 표본이 오염됐을 수 있다.'],
-    ['악재 · 매매 원칙 줄', '악재가 없어야 한다(P4)는 사람 몫. 진입 · 매도 원칙은 P5 · P6.']],
+    ['악재 · 매매 원칙 줄', '악재가 없어야 한다(P4)는 사람 몫. 진입 · 매도 원칙은 P5 · P6.'],
+    ['(k)', '종목명 옆 (k) = KRX 전용(NXT 불가) — 다음날 매도 09:00 부터. 없으면 NXT 도 되는 종목이라 08:00 부터.']],
   'close.judge': [
     ['섹터명 % · 모멘텀 · 2따 · 판정', '모든 카드의 집중도 순 목록. 판정 = 후보 / 배경(모멘텀 음수) / 관문3제외(2따 부족) / 대장없음 / 개별이슈.']],
   'close.gate6': [
     ['세 층 순서', '① 진입 전 배제(호가 한 칸 유동성 C10 — 미달이면 종목 배제) → ② 매수 자리(돼지 물량 E6 · 일봉 위치와 앞산 C2) → ③ 사람 판단(3레벨 뉴스 T2 · 재료 T6 · 악재 P4 · 내일 이벤트 · 괴리 캡처 · 재료 D-day E5).'],
     ['체크 상자', '저장되지 않는다. 그 자리에서 확인하는 순서표.'],
-    ['1억 = 약 n주', '후보 종목마다 현재가로 1억 원이 몇 주인지 — 호가 한 칸 유동성(C10) 확인용.'],
+    ['1억 = 약 n주', '후보 종목마다 현재가로 1억 원이 몇 주인지 — 호가 한 칸 유동성(C10) 확인용. 이름 옆 (k) = KRX 전용(NXT 불가, 다음날 매도 09:00 부터).'],
     ['뉴스 링크', '최근 소식 = 판정일 앞 1주 · 제목만 = 제목에 종목명이 있는 뉴스 · 어제부터 = 직전 거래일 ~ 판정일(악재 구간) · 공시 = DART. 링크만, 본문은 수집하지 않는다.']],
   'series.overlap': [
     ['칸 숫자', '그 회차에 걸린 기준 수(진할수록 많음). 2개 이상 걸린 적 있는 종목만. 몇 개인가는 관찰이지 판정 조건이 아니다.'],
     ['n시에 2개 이상', '마지막 회차에 두 기준 넘게 걸린 종목과 언제부터인지.'],
-    ['마감 탭과의 관계', '후보 카드의 "겹침" 칩과 같은 수. 후보가 아닌데 넷에 다 걸린 종목이 있으면 그 이유만 기록한다(월 1회 점검 재료, 기준은 안 바꾼다).']],
+    ['마감 탭과의 관계', '후보 카드의 "겹침" 칩과 같은 수. 후보가 아닌데 넷에 다 걸린 종목이 있으면 그 이유만 기록한다(월 1회 점검 재료, 기준은 안 바꾼다).'],
+    ['(k) — 격자 다섯 장 공통', 'KRX 전용 종목(NXT 불가). 다음날 매도 09:00 부터, 없으면 NXT 도 되는 종목이라 08:00 부터. 이름은 조건검색 · 조회순위 · 티마 종목 행의 코드로 맞춘다 — 티마 대장(OCR 이름)에만 걸린 종목은 코드가 없어 표시 없음.']],
   'series.tima': [
     ['●', '그 회차 티마 카드 한 장의 누적 거래대금 1위(●2 = 카드 두 장). 개별이슈 카드 제외, 이름은 OCR 글자 그대로.']],
   'series.lead': [
