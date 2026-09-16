@@ -140,6 +140,7 @@ label.chk.top{align-items:flex-start}label.chk.top input{margin-top:3px;flex:non
 .cond .mark{margin-left:auto;font-size:12px;color:var(--ok);font-weight:700}.cond .mark.x{color:var(--bad)}
 .state{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:13px;color:var(--muted);margin-bottom:10px}
 .state.fail{border-left:4px solid var(--alert);padding-left:11px;color:var(--text)}
+.state.prov{border-left:4px solid var(--warn);padding-left:11px;background:var(--warnBg);border-color:var(--warnLine);color:var(--warn);font-weight:800}
 .state.fail b{color:var(--alert);font-weight:800}
 .state.fail .why{display:block;font-size:12px;margin-top:2px;color:var(--sub)}
 details.more{margin:0 0 10px}
@@ -335,13 +336,31 @@ function renderClose(d, dates) {
   const wd = has(g['요일']) ? g['요일'] : WD[new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8)).getDay()];
 
   add(box, nowLine(d));   // 8-3 ③ 지금 / 자료
+  const stockMap = {}; arr(d.stocks).forEach(s => { stockMap[s['섹터명']] = arr(s['종목']); });
+  const resMap = {}; arr(d.result).forEach(r => { resMap[r['섹터'] + '|' + r['종목']] = r; });
+  const inqMap = {}; arr(d.inq).forEach(r => { inqMap[String(r['코드'])] = r['조회순위']; });
+  const j1450 = arr(d.judge1450);   // 9/16 `1450회차` : 14:57 에 14:50 자료로 미리 돌린 잠정 판정 (JSON v9, pages-export v2.1). 없으면 빈 배열
   // 8-3 ① 장중 갱신 (9/14) — 판정 전 JSON(stage 'live') 이면 후보·관문1 을 그리지 않는다.
   //   "후보 없음" 으로 읽히면 안 되기 때문 (4절 : 종베 후보는 마감 탭에만, 판정은 15:50 에 한 번). 장중 자료는 장중 탭.
   if (d.stage === 'live') {
-    add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 판정 전`));
+    if (!j1450.length) {
+      add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 판정 전`));
+      box.lastChild.style.fontSize = '18px'; box.lastChild.style.margin = '0';
+      add(box, el('div', 'state', `종베 판정은 15:50 에 한 번 나옵니다 (15:20 KRX 기준). 지금은 ${has(d.at) ? tLabel(d.at) + ' 까지의 ' : ''}장중 자료만 있습니다 — 장중 탭에서 보세요`));
+      add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 생성 ${d.generated || '—'}`));
+      return;
+    }
+    // 9/16 잠정 14:50 (사용자 결정 : 노란 띠 + 같은 후보 카드, 첫 탭은 그대로 장중) — 14:57~15:50 사이. 15:50 뒤에는 stage 'close' 라 이 분기를 안 탄다.
+    //   관문1·피뢰침·관문6·섹터 판정 표는 그리지 않는다 (15:50 확정 자료). 표본은 15:20 판정만 — 여기 후보는 표본이 아니다 (인계문서 8-5 27번).
+    add(box, el('div', 'state prov', '⏳ 잠정 14:50 · 15:50 확정 전 · 표본 아님'));
+    add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 14:50 잠정`));
     box.lastChild.style.fontSize = '18px'; box.lastChild.style.margin = '0';
-    add(box, el('div', 'state', `종베 판정은 15:50 에 한 번 나옵니다 (15:20 KRX 기준). 지금은 ${has(d.at) ? tLabel(d.at) + ' 까지의 ' : ''}장중 자료만 있습니다 — 장중 탭에서 보세요`));
-    add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 생성 ${d.generated || '—'}`));
+    add(box, el('div', 'status', '관문1 — (15:50 기록) · 14:50 자료로 미리 돌린 판정이라 15:50 확정과 다를 수 있다 · 피뢰침은 15:20 판정만'));
+    const c1p = el('div'); add(box, c1p);
+    const pc = j1450.filter(r => r['판정'] === '후보');
+    add(c1p, labelWith(pc.length ? '종베 후보 (잠정)' : '종베 후보 (잠정) — 없음', 'close.cand'));
+    candCards(c1p, pc);
+    add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 잠정 14:50 · 생성 ${d.generated || '—'}`));
     return;
   }
   const head = el('div', 'head');
@@ -389,12 +408,12 @@ function renderClose(d, dates) {
   }
 
   const judge = arr(d.judge1520);
-  const stockMap = {}; arr(d.stocks).forEach(s => { stockMap[s['섹터명']] = arr(s['종목']); });
-  const resMap = {}; arr(d.result).forEach(r => { resMap[r['섹터'] + '|' + r['종목']] = r; });
-  const inqMap = {}; arr(d.inq).forEach(r => { inqMap[String(r['코드'])] = r['조회순위']; });
   const cands = judge.filter(r => r['판정'] === '후보');
 
   add(c1, labelWith(cands.length ? '종베 후보' : '종베 후보 — 없음', 'close.cand'));
+  candCards(c1, cands);
+  // 후보 카드 본체 — 9/16 함수로 묶음 : 15:20 확정과 14:50 잠정(위 live 분기)이 같은 카드를 그린다. 내용은 9/14 후보카드 그대로
+  function candCards(c1, cands) {
   const roles = ['대장', '2등', '3등', '4등'];
   // 8-3 ② 후보 카드 펼치기 (9/14 밤, `후보카드` 세션) — 판정 v2.0 이 judge CSV 에 이미 쓴 기록 칸(인계문서 4절 표)을 칩·표시로 펼친다.
   //   순위(결정 3) · 관망(결정 2, 관문1 불통과여도 후보를 막지 않음) · 신고가20/120 과 비중 축소(결정 1) · JBT · 연속양봉부담(4강 Tip) · 겹침(1강 네 가지) ·
@@ -448,12 +467,19 @@ function renderClose(d, dates) {
     if (rows.length && !filled) add(card, el('div', 'muted', 'D+1 결과는 다음 거래일 20:05 이후'));
     add(c1, card);
   });
+  }
 
   const j14 = arr(d.judge1400);
   if (j14.length) {
     const c14 = j14.filter(r => r['판정'] === '후보').map(r => r['섹터명']);
     const same = c14.join() === cands.map(r => r['섹터명']).join();
     add(c1, el('div', 'status', `14:00 후보 : ${c14.length ? c14.join(', ') : '없음'} ${same ? '(15:20 과 같음)' : '(15:20 과 다름)'}`));
+  }
+  // 9/16 14:50 잠정 후보 ↔ 15:20 확정 (섹터 집합 비교 = judge-match.ps1 의 judge_match.csv 와 같은 뜻). 15:50 뒤 확정 화면에 한 줄
+  if (j1450.length) {
+    const c1450 = j1450.filter(r => r['판정'] === '후보').map(r => r['섹터명']);
+    const same1450 = c1450.slice().sort().join() === cands.map(r => r['섹터명']).sort().join();
+    add(c1, el('div', 'status', `14:50 후보 : ${c1450.length ? c1450.join(', ') : '없음'} ${same1450 ? '(15:20 과 같음)' : '(15:20 과 다름)'}`));
   }
 
   // 8-3 ② 피뢰침 (9/14 목업 B) — 종베 후보 카드 바로 아래, 같은 카드·칩·색 규칙 (시안 pirochim_mockup.html). 15:20 판정만.
@@ -1223,7 +1249,8 @@ const HELP = {
     ['머리', [
       ['m/d (요일) 15:20 판정', '판정 시각. 오른쪽 배지는 비고(만기일 등).'],
       ['수집 · OCR 경고 · push', '수집 = 마지막 수집 시각, OCR 경고 = 티마 읽기 경고 수, push = 이 화면이 올라간 시각. OK 가 아니면 빨강 — 화면이 최신이 아닐 수 있다.'],
-      ['판정 전', '장중 자료만 있는 날은 후보 · 관문1 을 그리지 않는다. "후보 없음" 으로 읽지 말 것.']]],
+      ['판정 전', '장중 자료만 있는 날은 후보 · 관문1 을 그리지 않는다. "후보 없음" 으로 읽지 말 것.'],
+      ['잠정 14:50 (노란 띠)', '14:57 에 14:50 자료로 미리 돌린 판정. 15:50 확정과 다를 수 있고 표본이 아니다. 확정 뒤에는 "14:50 후보 : … (15:20 과 같음/다름)" 한 줄로 남고, 일치 여부는 매일 기록된다(judge_match).']]],
     ['보고 나서', [
       ['검증 기간', '후보가 있어도 매매하지 않는다. 관문6 을 사람이 하고, 다음날 20:05 뒤 → D+1 칸을 본다.'],
       ['표본', '15:20 후보 섹터 1개 = 표본 1(관문6 에서 사람이 제외한 것은 표본 아님). 표본 30개 + 무결성 2주 뒤 실매매 전환.']]]] },
