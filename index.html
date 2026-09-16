@@ -117,6 +117,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
 .chip.warn{background:var(--warnBg);color:var(--warn)}
 .trk{font-size:10px;color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
 .d1{font-size:11.5px;white-space:nowrap}
+.tenmark{font-weight:800}.tenmark.ok{color:var(--ok)}.tenmark.x{color:var(--bad)}   /* 9/16 조기채점 : 10시 +4% 도달 ✓ · 미달 ✕ */
 .note{font-size:12.5px;line-height:1.6;padding:9px 11px;border-radius:10px;background:var(--warnBg);color:var(--warn);border:1px solid var(--warnLine);margin-top:8px}
 .up{color:var(--up)}.down{color:var(--down)}.muted{color:var(--muted)}.sub{color:var(--sub)}.ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}.acc{color:var(--brand);font-weight:700}
 .list{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 14px;box-shadow:var(--shadow)}
@@ -317,6 +318,20 @@ function pctEl(s) {
   if (v === null) return el('span', 'muted', '—');
   return el('span', v > 0 ? 'up' : (v < 0 ? 'down' : ''), (v > 0 ? '+' : '') + v.toFixed(2) + '%');
 }
+// 9/16 `조기채점` : D+1 결과 조각 — "→ 10시 고가 +2.08% ✕ · D+1 종가 −4.74%" (사용자 승인 형식). 10시 7칸은 D+1 10:07 StockLive 회차(next-day -TenOnly)가, D+1 종가는 20:05 가 채운다.
+//   result_log 의 D1_10시고가% · 목표4%_10시(Y/N = 10:00 봉까지 고가 +4% 도달) · D1종가%. 둘 다 없으면 null (호출한 쪽이 "결과 대기" 문구). 채점 기준 S1 · S9 그대로, 표시만
+function d1Frag(res, cls) {
+  if (!res) return null;
+  const ten = has(res['D1_10시고가%']), cl = has(res['D1종가%']);
+  if (!ten && !cl) return null;
+  const f = el('span', cls || 'd1');
+  if (ten) {
+    const ok = res['목표4%_10시'] === 'Y';
+    add(f, el('span', 'sub', ' → 10시 고가 '), pctEl(res['D1_10시고가%']), el('span', 'tenmark' + (ok ? ' ok' : ' x'), ok ? ' ✓' : ' ✕'));
+  }
+  if (cl) add(f, el('span', 'sub', (ten ? ' · ' : ' → ') + 'D+1 종가 '), pctEl(res['D1종가%']));
+  return f;
+}
 function shortTime(s) {
   if (!has(s)) return '—';
   const today = new Date(); const pad = n => String(n).padStart(2, '0');
@@ -456,7 +471,7 @@ function renderClose(d, dates) {
       add(nm, kMark(d, s['종목코드']));   // 9/15 저녁 (k) = KRX 전용
       const rt = el('span'); add(rt, el('span', null, (s['누적억'] || '—') + '억 '), pctEl(s['등락률']));
       const res = resMap[r['섹터명'] + '|' + s['종목명']];
-      if (res && has(res['D1종가%'])) { filled++; const d1 = el('span', 'd1'); add(d1, el('span', 'sub', ' → D+1 '), pctEl(res['D1종가%'])); add(rt, d1); }   // 시안의 .d1 : 작게·한 덩어리로 (폰 너비에서 대장 행 줄넘김 완화)
+      const d1 = d1Frag(res); if (d1) { filled++; add(rt, d1); }   // 시안의 .d1 : 작게·한 덩어리로 (폰 너비에서 대장 행 줄넘김 완화). 9/16 : 10시 고가 ✓✕ + D+1 종가
       add(card, add(row, nm, rt));
     });
     if (!rows.length) add(card, el('div', 'muted', '종목 표 없음 (stock_delta 확인)'));
@@ -464,7 +479,7 @@ function renderClose(d, dates) {
       const hi = rows.slice().sort((a, b) => (num(b['등락률']) ?? -999) - (num(a['등락률']) ?? -999))[0];
       add(card, el('div', 'note', `괴리 — 등락 1위 ${hi['종목명']} ${hi['등락률']}%. 거래대금 1위를 대장으로, 차트로 확인`));
     }
-    if (rows.length && !filled) add(card, el('div', 'muted', 'D+1 결과는 다음 거래일 20:05 이후'));
+    if (rows.length && !filled) add(card, el('div', 'muted', 'D+1 결과 — 10시 고가는 다음 거래일 10:07 뒤, 종가는 20:05 뒤'));
     add(c1, card);
   });
   }
@@ -515,7 +530,7 @@ function renderClose(d, dates) {
     if (num(p['현재가']) !== null) facts.push('현재가 ' + num(p['현재가']).toLocaleString() + '원' + (has(p['현재가출처']) ? ' (' + p['현재가출처'] + ')' : ''));
     if (facts.length) add(card, el('div', 'facts', facts.join(' · ')));
     const res = arr(d.result).find(r => r['종목'] === p['종목']);
-    if (res && has(res['D1종가%'])) { const dl = el('div', 'facts'); add(dl, el('span', 'sub', 'D+1 '), pctEl(res['D1종가%'])); add(card, dl); }
+    const dl = d1Frag(res, 'facts'); if (dl) add(card, dl);   // 9/16 : 10시 고가 ✓✕ + D+1 종가 (후보 카드와 같은 조각)
     add(card, el('div', 'note', '악재가 없는지 사람이 확인 — 기준일 상한가 이후 ~ 오늘 15:20, 특히 어제 장 마감 후 공시'));
     add(card, el('div', 'guide', '목표 4% · 추매 없이 10시 안에 손절 · 15분봉 종가 부근, 피뢰침 라인 · 미리 사면 안 됨'));
     if (has(p['비고'])) add(card, el('div', 'guide', '비고 ' + p['비고']));
@@ -1190,7 +1205,7 @@ const HELP_SEC = {
     ['우선주 (주황)', '종목코드 끝자리가 0 이 아닌 종목. 사용자 결정(9/15) : 우선주는 매매하지 않는다. 판정은 거르지 않고 표시만 — 검색식 제외(거래정지 · 정리매매 · ETF · ETN)에도 우선주는 없다.'],
     ['(k)', 'KRX 전용 종목(NXT 거래 불가). 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목 — 08:00 프리마켓부터 봐야 한다(사용자 결정 9/15). 종목마스터(주 1회 갱신)에 없는 종목은 표시 없음. 판정 · 채점 무관.'],
     ['대장 · 2등 · 3등 · 4등', '티마 카드 4종목. 대장(빨강 굵게) = 거래대금 1위(관문4). 누적 거래대금(억) · 등락률, 조회 n위 = 실시간 조회순위.'],
-    ['→ D+1', '다음 거래일 결과. 20:05 뒤 채워진다. 채점은 D 종가 매수 → D+1 10:00 까지 한 가지(S1 · S9).'],
+    ['→ 10시 고가 ✓ ✕ · D+1 종가', '다음 거래일 결과. 10시 고가(D 종가 대비, 10:00 봉까지)와 ✓ = +4% 도달 · ✕ = 미달은 D+1 10:07 뒤, D+1 종가는 20:05 뒤 채워진다. 채점은 D 종가 매수 → D+1 10:00 까지 한 가지(S1 · S9) — ✓ ✕ 가 그 채점.'],
     ['괴리 (주황 안내)', '등락 1위 ≠ 거래대금 1위. 거래대금 1위를 대장으로 두고(D2) 사람이 차트 확인.'],
     ['14:00 후보', '14:00 판정과 15:20 이 같은지. 참고만.']],
   'close.piro': [
@@ -1269,7 +1284,7 @@ const HELP_COMMON = [
   ['하루 루틴 — 언제 무엇을 보나', [
     ['09:10', '장중 탭. 맨 위 "지금 / 자료" 가 오늘 · 최근 회차인지(빨강 · 주황 없음) 확인. 모멘텀 · 조회순위는 보기만(M8).'],
     ['15:55', '마감 탭. 상태 줄 push OK → 관문1 → 후보 · 피뢰침 카드 → 후보가 있으면 관문6 세 층을 순서대로. 검증 기간에는 여기서 끝(기록만).'],
-    ['20:00 뒤', '20:05 채점이 끝나면 마감 탭 후보 카드의 → D+1 칸. 실매매 뒤에는 복기 탭.'],
+    ['10:10 · 20:00 뒤', '10:07 회차가 어제 후보 카드에 → 10시 고가 ✓ ✕ (D+1 10시까지 +4% 도달) 를, 20:05 채점이 D+1 종가를 채운다 — 날짜 줄 ◀ 로 어제 마감 탭. 실매매 뒤에는 복기 탭.'],
     ['지난 날짜', '날짜 줄 ◀ ▶ 또는 목록으로. 복기 탭에는 날짜 줄이 없다(누적).']]],
   ['탭 고정 · 좌우 밀기 · 색', [
     ['탭 막대 고정', '조금이라도 스크롤하면 탭 막대가 맨 위에 붙는다. 거기서 탭을 누르면 새 탭의 처음이 막대 바로 아래에 온다.'],
