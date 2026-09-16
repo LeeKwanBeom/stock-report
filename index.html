@@ -162,7 +162,10 @@ details.more .card strong{font-size:14.5px}
 .rv-btn{padding:8px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--wine);font:inherit;font-size:12.5px;cursor:pointer}
 .axis,.bars,.vals{display:grid;gap:3px;align-items:center;text-align:center}
 .axis{font-size:10px;color:var(--muted);margin:2px 0 2px}
-.ax-h,.ax-m{display:block;height:11px;line-height:11px}   /* 9/16 밤 (축머리글) : 축·순위표 머리글 두 줄 — 윗줄 시, 아랫줄 :분(정각은 빈 줄, 높이는 같게) */
+.axis span,.rk th{white-space:nowrap;letter-spacing:-0.2px}   /* 9/16 밤 (축머리글, 사용자 결정 ①) : 축·순위표 머리글 한 줄 위첨자 — 시 + 작은 분(정각은 시만). 자간을 살짝 좁혀 옆 칸과 안 닿게 */
+.ax-m,.rk th sup.ax-m{font-size:7px;font-weight:400;color:inherit;vertical-align:top;line-height:1;position:relative;top:1px;margin-left:0.5px;letter-spacing:-0.3px}   /* .rk sup(₩ 표시용 굵은 10px)보다 우선 */
+.rk table th{font-size:9px;letter-spacing:-0.3px}.rk th sup.ax-m{font-size:6.5px}   /* 순위표는 이름 칸이 있어 한 칸 16~18px → 항상 9px */
+@media (max-width:389px){.axis{font-size:9px}.ax-m{font-size:6.5px}}   /* 가장 좁은 폰(375) : 축 한 칸 17px 라 9px 로 — 15²⁰ 실측 17px */
 .vals{font-size:10px;color:var(--sub);margin-top:2px;font-variant-numeric:tabular-nums}
 .bar{height:40px;position:relative}
 .bar .mid{position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--line)}
@@ -740,8 +743,9 @@ function isAft1(times, i) { return String(times[i]) >= '1600' && (i === 0 || Str
 function lastFlowT(d) { const ts = arr(d.sectorFlow).map(r => String(r['시각'])).sort(); return ts.length ? ts[ts.length - 1] : ''; }
 // 9/15 저녁 사용자 결정(20:3x 정정) : 열 머리글은 "시" 만 뺀다 — 정각은 숫자만(10 · 18), 나머지는 그대로(8:52 · 15:20 · 15:40 · 19:50 · 20:02). 반올림(15½) 안 씀. 문장(상태 줄 · 대장 변천)은 tLabel 그대로
 function tShort(t) { t = String(t); return t.slice(2) === '00' ? String(+t.slice(0, 2)) : (+t.slice(0, 2)) + ':' + t.slice(2); }
-// 9/16 밤 (축머리글) : 섹터 축·순위표 머리글은 두 줄 — 윗줄 시, 아랫줄 :분(정각은 빈 줄). 한 칸 약 22px 에 '15:20' 다섯 글자가 옆 칸과 겹쳤다(15:20·15:40 / 19:50·20:02, 9/17 부터 14:50 도). 시계열 격자(칸 34px)는 tShort 한 줄 그대로
-function tStack(node, t) { t = String(t); add(node, el('span', 'ax-h', String(+t.slice(0, 2))), el('span', 'ax-m', t.slice(2) === '00' ? '' : ':' + t.slice(2))); return node; }
+// 9/16 밤 (축머리글, 사용자 결정 ① 위첨자) : 섹터 축·순위표 머리글은 한 줄 — 시 + 분을 작은 위첨자(정각은 시만 : 10 · 15²⁰ · 20⁰²). 한 칸 약 17~22px 에 '15:20' 다섯 글자가 옆 칸과 겹쳤다(15:20·15:40 / 19:50·20:02, 9/17 부터 14:50 도). 시계열 격자(칸 34px)는 tShort 한 줄 그대로
+// prev 를 주면(순위표 — 이름 칸 때문에 시각 칸이 14~18px) 앞 열과 같은 시의 분 회차는 시를 생략하고 분 위첨자만 : 15 ²⁰ ⁴⁰ · 19 ⁵⁰ · 20⁰² (사용자 결정 9/16 밤)
+function tStack(node, t, prev) { t = String(t); const sameH = prev !== undefined && String(prev).slice(0, 2) === t.slice(0, 2) && t.slice(2) !== '00'; add(node, sameH ? null : el('span', 'ax-h', String(+t.slice(0, 2))), t.slice(2) === '00' ? null : el('sup', 'ax-m', t.slice(2))); return node; }
 
 function renderLive(d) {
   const box = document.getElementById('live'); box.innerHTML = '';
@@ -814,8 +818,8 @@ function renderLive(d) {
       add(lead, el('span', 'sub', '대장 변천 : '), el('span', null, seq.length <= 1 ? `${seq[0] ? seq[0][1] : '—'} ${seq[0] ? tLabel(seq[0][0]) + ' 부터 1위 유지' : ''}` : seq.map(([tt, nm]) => `${tLabel(tt)} ${nm}`).join(' → ')));
       add(box, lead);
       const tb = el('table'); const cg = el('colgroup');
-      const c0 = el('col'); c0.style.width = '30%'; cg.appendChild(c0); tms.forEach(() => cg.appendChild(el('col'))); tb.appendChild(cg);
-      const hr = el('tr'); hr.appendChild(el('th')); tms.forEach((tt, i) => hr.appendChild(tStack(el('th', isAft1(tms, i) ? 'aft1' : null), tt))); tb.appendChild(hr);
+      const c0 = el('col'); c0.style.width = '26%'; /* 9/16 밤 (축머리글) : 30% → 26% — 시각 칸을 넓혀 15²⁰ 15⁴⁰ 이 안 닿게 (이름은 ellipsis) */ cg.appendChild(c0); tms.forEach(() => cg.appendChild(el('col'))); tb.appendChild(cg);
+      const hr = el('tr'); hr.appendChild(el('th')); tms.forEach((tt, i) => hr.appendChild(tStack(el('th', isAft1(tms, i) ? 'aft1' : null), tt, i ? tms[i - 1] : undefined))); tb.appendChild(hr);
       names.forEach(nm => {
         const tr = el('tr'); const tdn = el('td', 'nm', nm);
         const cd = tms.map(tt => (sb[tt][nm] || {})['종목코드']).find(Boolean); if (isPref(cd)) tdn.appendChild(el('span', 'flag warn', '우선주'));   // 9/15 저녁
@@ -1293,9 +1297,9 @@ const HELP_SEC = {
     ['가속 · 감속 · 양수 n/m', '마지막 회차 모멘텀의 부호와, 기록된 회차 중 양수였던 횟수. 판정은 15:20 한 구간 값만 쓴다 — 하루 흐름은 판정에 안 들어간다.'],
     ['카드 2장 13시', '같은 회차 티마에 같은 이름 카드가 두 장 있었다(섹터 금액 큰 쪽을 씀).'],
     ['괴리', '거래대금 1위와 등락률 1위가 다른 종목. 대장은 거래대금 1위(D2 실질적 대장)이고, 사람이 차트로 확인한다(관문4).'],
-    ['▾ 종목 순위 보기', '섹터를 누르면 회차별 카드 안 누적 거래대금 순위표. 빨간 칸 = 1위 · ₩ = 그 구간 돈이 가장 많이 들어온 종목 · — = 카드 4종목에 없음. "대장 변천" = 1위가 바뀐 흐름(D3 1·2등 체인지 유의). 우선주(주황) = 매매하지 않는 종목(사용자 결정 9/15), 표시만. (k) = KRX 전용(NXT 불가) — 다음날 매도 09:00 부터, 없으면 NXT 도 되는 종목이라 08:00 부터.'],
+    ['▾ 종목 순위 보기', '섹터를 누르면 회차별 카드 안 누적 거래대금 순위표. 빨간 칸 = 1위 · ₩ = 그 구간 돈이 가장 많이 들어온 종목 · — = 카드 4종목에 없음. "대장 변천" = 1위가 바뀐 흐름(D3 1·2등 체인지 유의). 우선주(주황) = 매매하지 않는 종목(사용자 결정 9/15), 표시만. (k) = KRX 전용(NXT 불가) — 다음날 매도 09:00 부터, 없으면 NXT 도 되는 종목이라 08:00 부터. 머리글은 이름 칸 때문에 좁아서 같은 시가 이어지면 분 위첨자만(15 ²⁰ ⁴⁰ = 15:00·15:20·15:40).'],
     ['15:20 에 없는 카드', '마지막 회차 카드에서 사라진 섹터. 테마 종료 · 이름 바뀜 · OCR 오독 중 하나.'],
-    ['점선 (16:00 앞) · 머리글 두 줄', '점선 오른쪽 = KRX 애프터마켓(16:00~20:00, 9/14 개설) 회차. 열 머리글은 두 줄 — 윗줄 시, 아랫줄 :분(정각은 아랫줄 비움 : 10 · 18, 15:20 은 15 위에 :20). 한 줄로 쓰면 15:20·15:40 이 겹쳐서(9/16 밤). 15:40 은 장후 시간외 종가라 점선 왼쪽. 같은 계산(통합 스냅 금액 · 통합 상위100 분모 — 9/17 부터)이지만 판정은 15:20 한 구간뿐 — 저녁 흐름은 관찰만(사용자 결정 9/15).']],
+    ['점선 (16:00 앞) · 머리글 15²⁰', '점선 오른쪽 = KRX 애프터마켓(16:00~20:00, 9/14 개설) 회차. 열 머리글은 시 + 작은 위첨자 분 — 정각은 시만(10 · 18), 나머지는 15²⁰ · 15⁴⁰ · 19⁵⁰ · 20⁰²(= 15:20 …). 15:20 을 그대로 쓰면 옆 칸과 겹쳐서(9/16 밤, 사용자 결정). 15:40 은 장후 시간외 종가라 점선 왼쪽. 같은 계산(통합 스냅 금액 · 통합 상위100 분모 — 9/17 부터)이지만 판정은 15:20 한 구간뿐 — 저녁 흐름은 관찰만(사용자 결정 9/15).']],
   'live.inq': [
     ['n. 종목명 · 대금 n위', '키움 실시간 종목조회 순위 20위(D7 — 1~3위로 튀어나온 종목, 5위 안 꾸준히). 대금 n위 = 같은 회차 KRX+NXT 통합 거래대금 100위 안 순위(9/17 부터. 9/16 까지는 KRX).'],
     ['선행', '조회 5위 안인데 거래대금 20위 밖 — 관심이 돈보다 앞선 종목. 관찰 표시일 뿐 판정에 안 쓴다.'],
