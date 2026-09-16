@@ -174,6 +174,7 @@ details.more .card strong{font-size:14.5px}
 .flag{font-size:10.5px;padding:1px 7px;border-radius:10px;background:var(--rose);color:var(--wine);margin-left:4px}
 .flag.warn{background:var(--warnBg);color:var(--warn)}
 .kmk{font-size:10.5px;color:var(--muted);margin-left:3px;font-weight:400}
+.iq-rk{font-size:10.5px;padding:1px 7px;border-radius:10px;background:var(--chip);color:var(--chipInk);margin:0 5px 0 7px;white-space:nowrap}   /* 9/17 조회순위 해답지 : 거래대금 순위 칩 (사용자 결정 ②) — 전역 .chip 과 이름 안 겹치게 iq- 접두사 */
 .gapline{font-size:11px;color:var(--muted);margin-top:4px}
 .hint{font-size:11px;color:var(--wine);margin-top:6px}
 .secblk.tap{cursor:pointer}
@@ -905,7 +906,9 @@ function renderLive(d) {
       const rk = num(r['거래대금순위']);
       if ((num(r['조회순위']) ?? 99) <= 5 && (rk === null || rk > 20)) add(nm, el('span', 'flag', '선행'));
       const eok = num(r['거래대금억']);   /* 9/17 사용자 결정 ② : '대금' 글자 빼고 순위 + 금액(억). 뜻은 도움말 ? 에 */
-      const rt = el('span'); add(rt, pctEl(r['등락률']), el('span', 'sub', rk === null ? ' · 대금 100위 밖' : ` · ${rk}위` + (eok === null ? '' : ` ${eok.toLocaleString()}억`)));
+      /* 9/17 사용자 결정 ② (2차) : 순위는 칩, 금액은 본문 글자 — 'n위 n억' 숫자 두 개가 붙어 한 덩어리로 읽히던 것을 가름 */
+      const rt = el('span'); add(rt, pctEl(r['등락률']), el('span', 'iq-rk', rk === null ? '100위 밖' : `${rk}위`));
+      if (rk !== null && eok !== null) add(rt, el('span', 'sub', `${eok.toLocaleString()}억`));
       return add(row, nm, rt);
     };
     const list2 = el('div', 'list');
@@ -1302,7 +1305,7 @@ const HELP_SEC = {
     ['15:20 에 없는 카드', '마지막 회차 카드에서 사라진 섹터. 테마 종료 · 이름 바뀜 · OCR 오독 중 하나.'],
     ['점선 (16:00 앞) · 머리글 15²⁰', '점선 오른쪽 = KRX 애프터마켓(16:00~20:00, 9/14 개설) 회차. 열 머리글은 시 + 작은 위첨자 분 — 정각은 시만(10 · 18), 나머지는 15²⁰ · 15⁴⁰ · 19⁵⁰ · 20⁰²(= 15:20 …). 15:20 을 그대로 쓰면 옆 칸과 겹쳐서(9/16 밤, 사용자 결정). 15:40 은 장후 시간외 종가라 점선 왼쪽. 같은 계산(통합 스냅 금액 · 통합 상위100 분모 — 9/17 부터)이지만 판정은 15:20 한 구간뿐 — 저녁 흐름은 관찰만(사용자 결정 9/15).']],
   'live.inq': [
-    ['n. 종목명 · n위 n억', '키움 실시간 종목조회 순위 20위(D7 — 1~3위로 튀어나온 종목, 5위 안 꾸준히). 오른쪽 n위 n억 = 같은 회차 KRX+NXT 통합 거래대금 100위 안 순위와 누적 거래대금(9/17 부터. 9/16 까지는 KRX). "상위" 의 숫자 기준은 없다 — 금액을 보고 사람이 가린다(C 기준 없음). 100위 밖은 금액 없음.'],
+    ['n. 종목명 · [n위] n억', '키움 실시간 종목조회 순위 20위(D7 — 1~3위로 튀어나온 종목, 5위 안 꾸준히). 오른쪽 칩 [n위] 와 n억 = 같은 회차 KRX+NXT 통합 거래대금 100위 안 순위와 누적 거래대금(9/17 부터. 9/16 까지는 KRX). "상위" 의 숫자 기준은 없다 — 금액을 보고 사람이 가린다(C 기준 없음). 100위 밖은 금액 없음.'],
     ['선행', '조회 5위 안인데 거래대금 20위 밖 — 관심이 돈보다 앞선 종목. 관찰 표시일 뿐 판정에 안 쓴다.'],
     ['100위 밖 n개', '조회 20위 중 거래대금 100위 밖인 종목 수.'],
     ['(k)', 'KRX 전용 종목(NXT 거래 불가). 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목 — 08:00 프리마켓부터 봐야 한다(사용자 결정 9/15). 종목마스터(주 1회 갱신)에 없는 종목은 표시 없음.']],
