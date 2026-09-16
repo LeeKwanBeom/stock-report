@@ -1287,7 +1287,7 @@ document.getElementById('helpBtn').onclick = () => toggleHelp();
 
 let DATES = [];
 let CUR = 'close';
-const HERO = { live: ['장중', '관찰 전용 — 9~10시는 보기만'], close: ['마감', '15:20 KRX 기준 · NXT 제외'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 15:20 까지'], verify: ['검증', '표본 30개가 쌓인 뒤 만듭니다'], review: ['복기', ''] };
+const HERO = { live: ['장중', '관찰 전용 — 9~10시는 보기만'], close: ['마감', '15:20 KRX 기준 · NXT 제외'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], verify: ['검증', '표본 30개가 쌓인 뒤 만듭니다'], review: ['복기', ''] };
 function setHero(tab) {
   document.getElementById('heroTitle').textContent = HERO[tab][0];
   document.getElementById('heroSub').textContent = tab === 'review' ? REVIEW_SUB : HERO[tab][1];
