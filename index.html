@@ -29,6 +29,7 @@
   --warn:#7a4a06;--warnBg:#faeeda;--warnLine:#ecd3a8;--alert:#b45309;--ok:#2f6b12;--bad:#c1121f;
   --shadow:0 2px 10px rgba(110,11,20,.05);
   --heroA:#7a0c17;--heroFade:rgba(122,12,23,0);--heroB:#c1121f;--heroC:#e5383b;--heroShadow:0 6px 18px rgba(122,12,23,.18);
+  --ixM1:#d9480f;--ixM2:#1098ad;--ixM3:#9c36b5;   /* 9/17 지수차트 이평 20·60·120 — 밝은·어두운 카드 배경 둘 다 색각 분리 검증 통과한 값이라 다크에서도 같은 값 */
 }
 @media (prefers-color-scheme:dark){:root{
   --bg:#140b0d;--card:#1f1215;--card2:#26171b;--soft:#23151a;--line:#3a2529;--line2:#33222a;--rule:#3a2529;
@@ -192,6 +193,38 @@ details.more .card strong{font-size:14.5px}
 .lead1{color:var(--up);font-weight:800}
 .rk .leg{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
 .secblk{padding:10px 0;border-top:1px solid var(--line2)}
+/* 지수 5분봉 선 차트 (9/17 지수차트, 사용자 결정 1A 2A 3A) — 장중 탭 맨 위. 접두사 ix-. 선은 SVG(가로세로 따로 늘어남, 굵기는 고정), 글자는 HTML 을 % 위치로 */
+.ix-card{padding:11px 12px 9px}
+.ix-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px}
+.ix-name{font-size:13px;font-weight:800;color:var(--wine)}
+.ix-last{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.ix-diff{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--sub)}
+.ix-diff.ix-up{color:var(--up)}
+.ix-diff.ix-dn{color:var(--down)}
+.ix-leg{display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));align-items:center;gap:1px 8px;max-width:430px;margin:4px 0 7px;font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ix-k{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.ix-sw{display:inline-block;width:12px;height:0;border-top:2px solid var(--text)}
+.ix-sw.ix-m1{border-top-color:var(--ixM1)}
+.ix-sw.ix-m2{border-top-color:var(--ixM2)}
+.ix-sw.ix-m3{border-top-color:var(--ixM3)}
+.ix-kv{color:var(--text);font-weight:600}
+.ix-when{color:var(--text);font-weight:800}
+.ix-plot{position:relative;height:118px;margin-right:56px;touch-action:pan-y;cursor:crosshair;-webkit-user-select:none;user-select:none}
+.ix-plot svg{display:block;width:100%;height:100%;overflow:visible}
+.ix-plot path,.ix-plot line{fill:none;vector-effect:non-scaling-stroke}
+.ix-grid{stroke:var(--line2);stroke-width:1}
+.ix-day{stroke:var(--rule);stroke-width:1}
+.ix-lastl{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.ix-l0{stroke:var(--text);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.ix-l1{stroke:var(--ixM1);stroke-width:1.2;stroke-linejoin:round}
+.ix-l2{stroke:var(--ixM2);stroke-width:1.2;stroke-linejoin:round}
+.ix-l3{stroke:var(--ixM3);stroke-width:1.2;stroke-linejoin:round}
+.ix-cross{stroke:var(--sub);stroke-width:1;visibility:hidden}
+.ix-y,.ix-tag{position:absolute;left:100%;transform:translateY(-50%);font-size:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ix-y{margin-left:6px;color:var(--muted)}
+.ix-tag{margin-left:3px;padding:1px 3px;border-radius:4px;background:var(--cocoa);color:var(--onFill);font-weight:700}
+.ix-x{display:grid;margin:4px 56px 0 0;font-size:10px;color:var(--muted);text-align:center}
+.ix-x b{color:var(--text);font-weight:700}
 details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 /* 시계열 탭 (9/14 밤, 8-3 ④) — 시각 × 종목 격자. 옆으로 스크롤(data-noswipe), 첫 열 고정 */
 .sg{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:4px}
@@ -756,6 +789,133 @@ function tShort(t) { t = String(t); return t.slice(2) === '00' ? String(+t.slice
 // prev 를 주면(순위표 — 이름 칸 때문에 시각 칸이 14~18px) 앞 열과 같은 시의 분 회차는 시를 생략하고 분 위첨자만 : 15 ²⁰ ⁴⁰ · 19 ⁵⁰ · 20⁰² (사용자 결정 9/16 밤)
 function tStack(node, t, prev) { t = String(t); const sameH = prev !== undefined && String(prev).slice(0, 2) === t.slice(0, 2) && t.slice(2) !== '00'; add(node, sameH ? null : el('span', 'ax-h', String(+t.slice(0, 2))), t.slice(2) === '00' ? null : el('sup', 'ax-m', t.slice(2))); return node; }
 
+/* ── 지수 5분봉 선 차트 (9/17 `지수차트`, 사용자 결정 1A 두 지수 위아래 · 2A 이평 20·60·120 · 3A 오늘 + 앞 2거래일) ──────────
+   자료 = pages-export v2.4 의 indexChart (index-chart.ps1 — 키움 ka20005 KRX 지수 5분봉. t·c·ma* 는 쉼표로 이은 문자열, 값은 100배 정수).
+   보기만 하는 그림 — 판정·채점과 무관, 기준값 없음. 가로 = 하루를 같은 폭으로(09:00~15:30 고정 칸, 오늘은 왼쪽부터 자란다),
+   세로 = 그 기간 지수·이평의 최소~최대. 지수선은 날짜 경계에서 끊고(밤사이 갭), 이평선은 잇는다(날짜를 넘어 계산한 값이라). */
+const IX_MA = [['ma20', '20', 1], ['ma60', '60', 2], ['ma120', '120', 3]];
+const IX_W = 1000, IX_H = 100, IX_PAD = 0.02;
+function ixNums(s) { return String(s === undefined || s === null ? '' : s).split(',').map(v => (v === '' ? null : +v / 100)); }
+function ixMin(t) { return +t.slice(0, 2) * 60 + +t.slice(2); }
+function ixFmt(v, dec) { return v === null || v === undefined || isNaN(v) ? '—' : v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+function ixSvg(tag, cls, attrs) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  if (cls) e.setAttribute('class', cls);
+  Object.keys(attrs || {}).forEach(k => e.setAttribute(k, attrs[k]));
+  return e;
+}
+function ixTicks(lo, hi) {
+  const span = hi - lo; if (!(span > 0)) return { step: 1, list: [] };
+  const raw = span / 5; const p = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 5, 10].map(m => m * p).find(s => s >= raw) || 10 * p;
+  const list = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) list.push(+v.toFixed(6));
+  return { step, list };
+}
+function indexChartBlock(d) {
+  const ic = d.indexChart; const list = ic ? arr(ic.series).filter(s => s && has(s.c) && arr(s.days).length) : [];
+  if (!list.length) return null;
+  const wrap = el('div', 'ix-wrap');
+  const lastT = list.map(s => String(s.lastT || '')).sort().pop();
+  add(wrap, labelWith(`지수 5분봉${has(lastT) ? ' · ' + tLabel(lastT) + ' 봉까지' : ''}`, 'live.index'));
+  list.forEach(s => add(wrap, ixCard(s)));
+  return wrap;
+}
+function ixCard(s) {
+  const card = el('div', 'card ix-card');
+  const t = String(s.t || '').split(','); const c = ixNums(s.c);
+  const mas = IX_MA.map(([key]) => ixNums(s[key]));
+  const days = arr(s.days).map(String); const per = arr(s.n).map(Number);
+  /* 봉마다 (날짜 번호, 분) */
+  const dayOf = []; per.forEach((k, di) => { for (let j = 0; j < k; j++) dayOf.push(di); });
+  const mins = t.map(ixMin);
+  const m0 = Math.min(540, ...mins), m1 = Math.max(930, ...mins);   /* 09:00~15:30 고정 칸. 수능일처럼 시간이 밀린 날은 자료에 맞춰 넓힌다 */
+  const nDay = Math.max(1, days.length);
+  const xOf = i => ((dayOf[i] + IX_PAD + (1 - 2 * IX_PAD) * ((mins[i] - m0) / (m1 - m0))) / nDay) * IX_W;
+  const vals = c.concat(...mas).filter(v => v !== null && !isNaN(v));
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const padV = (hi - lo || 1) * 0.07; lo -= padV; hi += padV;
+  const yOf = v => (1 - (v - lo) / (hi - lo)) * IX_H;
+  const pathOf = (arrV, breakDay) => {
+    let p = ''; let open = false;
+    arrV.forEach((v, i) => {
+      if (v === null || isNaN(v) || i >= dayOf.length) { open = false; return; }
+      if (breakDay && i > 0 && dayOf[i] !== dayOf[i - 1]) open = false;
+      p += (open ? 'L' : 'M') + xOf(i).toFixed(1) + ' ' + yOf(v).toFixed(2); open = true;
+    });
+    return p;
+  };
+
+  /* 제목 줄 : 이름 · 마지막 값 · 전일 대비 */
+  const diff = num(s.diff) ?? 0; const pct = num(s.pct) ?? 0;
+  const head = el('div', 'ix-head');
+  add(head, el('b', 'ix-name', s.name), el('span', 'ix-last', ixFmt(num(s.last), 2)),
+    el('span', 'ix-diff' + (diff > 0 ? ' ix-up' : diff < 0 ? ' ix-dn' : ''), `${diff > 0 ? '▲' : diff < 0 ? '▼' : ''}${ixFmt(Math.abs(diff), 2)} (${pct > 0 ? '+' : ''}${pct.toFixed(2)}%)`));
+  add(card, head);
+
+  /* 범례(윗줄) + 값(아랫줄) : 평소에는 마지막 봉의 값, 손가락을 대면 그 봉의 값. 두 줄을 늘 차지해서 짚을 때 그림이 밀리지 않는다 */
+  const leg = el('div', 'ix-leg'); const when = el('span', 'ix-when'); add(leg, el('span'));
+  const kv = [];
+  [['지수', 0]].concat(IX_MA.map(([, name, n]) => [name, n])).forEach(([name, n]) => {
+    const k = el('span', 'ix-k'); kv.push(el('span', 'ix-kv'));
+    add(k, el('i', 'ix-sw' + (n ? ' ix-m' + n : '')), el('span', null, name)); add(leg, k);
+  });
+  add(leg, when, ...kv);
+  add(card, leg);
+
+  /* 그림 */
+  const plot = el('div', 'ix-plot');
+  const svg = ixSvg('svg', null, { viewBox: `0 0 ${IX_W} ${IX_H}`, preserveAspectRatio: 'none', role: 'img',
+    'aria-label': `${s.name} 5분봉 선 차트 ${days.map(dayLabelIx).join(' · ')} · 마지막 ${ixFmt(num(s.last), 2)}` });
+  const tk = ixTicks(lo, hi); const lastV = c.length ? c[c.length - 1] : null; const lastY = lastV === null ? null : yOf(lastV);
+  tk.list.forEach(v => svg.appendChild(ixSvg('line', 'ix-grid', { x1: 0, x2: IX_W, y1: yOf(v).toFixed(2), y2: yOf(v).toFixed(2) })));
+  for (let di = 1; di < nDay; di++) svg.appendChild(ixSvg('line', 'ix-day', { x1: (di / nDay) * IX_W, x2: (di / nDay) * IX_W, y1: 0, y2: IX_H }));
+  if (lastY !== null) svg.appendChild(ixSvg('line', 'ix-lastl', { x1: 0, x2: IX_W, y1: lastY.toFixed(2), y2: lastY.toFixed(2) }));
+  IX_MA.slice().reverse().forEach(([, , n]) => svg.appendChild(ixSvg('path', 'ix-l' + n, { d: pathOf(mas[n - 1], false) })));
+  svg.appendChild(ixSvg('path', 'ix-l0', { d: pathOf(c, true) }));
+  const cross = ixSvg('line', 'ix-cross', { x1: 0, x2: 0, y1: 0, y2: IX_H }); svg.appendChild(cross);
+  add(plot, svg);
+  const dec = tk.step < 1 ? 1 : 0;
+  tk.list.forEach(v => {
+    if (lastY !== null && Math.abs(yOf(v) - lastY) < 11) return;   /* 마지막 값 표와 겹치는 눈금 글자는 뺀다 */
+    const y = el('div', 'ix-y', ixFmt(v, dec)); y.style.top = yOf(v).toFixed(2) + '%'; add(plot, y);
+  });
+  if (lastY !== null) { const tag = el('div', 'ix-tag', ixFmt(lastV, 2)); tag.style.top = lastY.toFixed(2) + '%'; add(plot, tag); }
+  add(card, plot);
+
+  /* 가로축 : 날짜 (하루 = 같은 폭) */
+  const xs = el('div', 'ix-x'); xs.style.gridTemplateColumns = `repeat(${nDay}, minmax(0,1fr))`;
+  days.forEach((ymd, di) => add(xs, el(di === nDay - 1 ? 'b' : 'span', null, dayLabelIx(ymd))));
+  add(card, xs);
+
+  /* 손가락·마우스 : 가장 가까운 봉의 값을 범례 자리에 */
+  const show = (i, touching) => {
+    cross.setAttribute('x1', xOf(i).toFixed(1)); cross.setAttribute('x2', xOf(i).toFixed(1)); cross.style.visibility = touching ? 'visible' : 'hidden';
+    const ymd = days[dayOf[i]] || '';
+    when.textContent = `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} ${t[i].slice(0, 2)}:${t[i].slice(2)}`;
+    kv[0].textContent = ixFmt(c[i], 2);
+    IX_MA.forEach(([, , n]) => { kv[n].textContent = ixFmt(mas[n - 1][i], 2); });
+  };
+  const nBar = Math.min(c.length, dayOf.length);
+  const clear = () => { if (nBar > 0) show(nBar - 1, false); };
+  const onMove = e => {
+    const r = plot.getBoundingClientRect(); if (!(r.width > 0) || !nBar) return;
+    const x = Math.min(IX_W, Math.max(0, ((e.clientX - r.left) / r.width) * IX_W));
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < nBar; i++) { const dx = Math.abs(xOf(i) - x); if (dx < bd) { bd = dx; best = i; } }
+    show(best, true);
+  };
+  clear();
+  plot.addEventListener('pointerdown', onMove); plot.addEventListener('pointermove', onMove);
+  plot.addEventListener('pointerleave', clear); plot.addEventListener('pointercancel', clear);
+  return card;
+}
+function dayLabelIx(ymd) {
+  ymd = String(ymd); if (ymd.length !== 8) return ymd;
+  const wd = WD[new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8)).getDay()];
+  const now = new Date(); const today = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+  return `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd})${ymd === today ? ' 오늘' : ''}`;
+}
+
 function renderLive(d) {
   const box = document.getElementById('live'); box.innerHTML = '';
   const ymd = String(d.date || '');
@@ -768,6 +928,7 @@ function renderLive(d) {
   add(box, el('div', 'status', d.stage === 'live'
     ? (has(d.at) ? `${tLabel(d.at)} 까지 · 판정 전 · 관찰 전용, 후보는 마감 탭 (15:50) · 매시 07분쯤 갱신` : '오늘 장중 자료 수집 전 · 매시 07분쯤 갱신')
     : (lastFlowT(d) > '1530' ? `${tLabel(lastFlowT(d))} 까지 · 16:00 부터 애프터마켓 (점선 오른쪽, 판정과 무관) · 관찰 전용, 후보는 마감 탭` : '15:20 까지 · 관찰 전용, 후보는 마감 탭')));   // 9/15 저녁 : 저녁 회차가 있으면
+  add(box, indexChartBlock(d));   // 9/17 지수차트 (1A 2A 3A) : 코스피·코스닥 5분봉 선 차트. indexChart 가 없는 날짜(9/16 이전)는 안 그린다
 
   const flow = arr(d.sectorFlow).filter(r => r['섹터명'] !== '개별이슈');
   const cols = el('div', 'cols'); const c1 = el('div'); const c2 = el('div'); add(box, add(cols, c1, c2));
@@ -1305,6 +1466,13 @@ function renderReview(rv) {
    종목을 어떻게 고르나는 종목선정_종베기준.pdf 가 답한다. 기준 숫자(임계값)는 대조표·판정 CSV 가 원본이라 여기에는 새로 적지 않는다.
    두 층 : ① 구역 제목 옆 ? (HELP_SEC — 그 구역의 표시 → 뜻, 제목 바로 아래 펼침) ② 머리 ? (HELP — 이 탭이 무엇인가 · 보고 나서 · 공통 루틴·조작). */
 const HELP_SEC = {
+  'live.index': [
+    ['검은 선', 'KRX 지수(코스피 · 코스닥) 5분봉 종가를 이은 선. 가로는 하루를 같은 폭으로(09:00~15:30) — 오늘은 왼쪽부터 자란다. 날짜가 바뀌는 자리에서는 선을 잇지 않는다(밤사이 갭). 티마 시장종합 탭 지수 차트와 같은 지수(9/17 값 대조).'],
+    ['20 · 60 · 120', '5분봉 이동평균선 — 봉 20개(100분) · 60개(5시간) · 120개(10시간, 약 하루 반). 날짜를 넘어 이어서 계산한다.'],
+    ['점선 · 오른쪽 짙은 숫자', '마지막 봉의 값. 제목 줄 ▲▼ 는 전일 종가 대비.'],
+    ['범례 아래 숫자 줄', '평소에는 마지막 봉의 시각과 지수 · 이평 값. 그림을 짚고 옆으로 움직이면 세로선이 선 그 봉의 값으로 바뀌고, 손을 떼면 마지막 봉으로 돌아간다.'],
+    ['몇 시 봉까지', '실시간이 아니다 — 폰 화면 회차(매시 07분쯤 · 14:57 · 15:27)에 받은 봉까지. 15:30 종가 봉은 16:07 회차부터 실린다.'],
+    ['판정과 무관', '보기만 하는 그림. 판정 · 채점에 안 들어가고 기준값도 없다 — 시장 판단은 마감 탭 관문1(M1 · M2)과 그 참고 줄(M6).']],
   'live.flow': [
     ['막대 (빨강 / 파랑)', '티마 카드(섹터)마다 회차별 모멘텀 = 그 구간에 들어온 돈의 비중 − 누적 비중(%p). 빨강 = 양수(돈이 더 들어오는 중, 가속), 파랑 = 음수(아침에 끝난 테마, 감속). 막대 길이는 09:00~15:20 최대값 기준 — 15:40(종가 단일가 유입) · 저녁 막대는 같은 눈금이라 넘치면 꽉 찬 막대. 이슈가 살아있나(T6) · 무게추가 어디로 가나(T5)를 보는 자리.'],
     ['섹터 이름 옆 %', '집중도 = 그 카드 상위 4종목 거래대금 ÷ KRX+NXT 통합 상위100 주식 합 (9/17 부터. 9/16 까지는 KRX 거래대금 ÷ KRX 시장 총거래대금이라 숫자가 작다). "시장의 돈이 어디 있나"(M7). 정렬에만 쓰고 기준값은 없다.'],
