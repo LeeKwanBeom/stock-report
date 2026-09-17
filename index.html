@@ -398,7 +398,8 @@ function renderClose(d, dates) {
       return;
     }
     // 9/16 잠정 14:50 (사용자 결정 : 노란 띠 + 같은 후보 카드, 첫 탭은 그대로 장중) — 14:57~15:50 사이. 15:50 뒤에는 stage 'close' 라 이 분기를 안 탄다.
-    //   관문1·피뢰침·관문6·섹터 판정 표는 그리지 않는다 (15:50 확정 자료). 표본은 15:20 판정만 — 여기 후보는 표본이 아니다 (인계문서 8-5 27번).
+    //   관문1·피뢰침·관문6 은 그리지 않는다 (15:50 확정 자료). 표본은 15:20 판정만 — 여기 후보는 표본이 아니다 (인계문서 8-5 27번).
+    //   9/17 사용자 결정 A : 섹터 판정 목록은 후보 유무와 상관없이 항상 (14:50 자료) — "후보 없음" 인 날 왜 없는지가 그 자리에서 보이게. 확정 화면과 같은 judgeList
     add(box, el('div', 'state prov', '⏳ 잠정 14:50 · 15:50 확정 전 · 표본 아님'));
     add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 14:50 잠정`));
     box.lastChild.style.fontSize = '18px'; box.lastChild.style.margin = '0';
@@ -407,6 +408,8 @@ function renderClose(d, dates) {
     const pc = j1450.filter(r => r['판정'] === '후보');
     add(c1p, labelWith(pc.length ? '종베 후보 (잠정)' : '종베 후보 (잠정) — 없음', 'close.cand'));
     candCards(c1p, pc);
+    add(c1p, labelWith('섹터 판정 (잠정)', 'close.judge'));
+    judgeList(c1p, j1450);
     add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 잠정 14:50 · 생성 ${d.generated || '—'}`));
     return;
   }
@@ -599,15 +602,19 @@ function renderClose(d, dates) {
   else if (!piroAll.length) add(c1, el('div', 'state', '피뢰침 자료 없음 — pirochim CSV 가 비어 있습니다'));
 
   add(c2, labelWith('섹터 판정', 'close.judge'));
-  const list = el('div', 'list');
-  judge.slice().sort((a, b) => (num(b['집중도%']) ?? 0) - (num(a['집중도%']) ?? 0)).forEach(r => {
-    const row = el('div', 'row');
-    const nm = el('span'); add(nm, el('span', null, r['섹터명'] + ' '), el('span', 'muted', has(r['집중도%']) ? r['집중도%'] + '%' : ''));
-    const rt = el('span', 'sub', `모멘텀 ${r['모멘텀'] ?? '—'} · 2따 ${r['2따스코어'] ?? '—'} · `);
-    add(rt, el('span', r['판정'] === '후보' ? 'acc' : null, r['판정'] || '—'));
-    add(list, add(row, nm, rt));
-  });
-  add(c2, list);
+  judgeList(c2, judge);
+  // 섹터 판정 목록 본체 — 9/17 함수로 묶음 : 15:20 확정과 14:50 잠정(위 live 분기)이 같은 목록을 그린다. 내용은 그대로
+  function judgeList(parent, rows) {
+    const list = el('div', 'list');
+    rows.slice().sort((a, b) => (num(b['집중도%']) ?? 0) - (num(a['집중도%']) ?? 0)).forEach(r => {
+      const row = el('div', 'row');
+      const nm = el('span'); add(nm, el('span', null, r['섹터명'] + ' '), el('span', 'muted', has(r['집중도%']) ? r['집중도%'] + '%' : ''));
+      const rt = el('span', 'sub', `모멘텀 ${r['모멘텀'] ?? '—'} · 2따 ${r['2따스코어'] ?? '—'} · `);
+      add(rt, el('span', r['판정'] === '후보' ? 'acc' : null, r['판정'] || '—'));
+      add(list, add(row, nm, rt));
+    });
+    add(parent, list);
+  }
 
   // 8-3 ⑦ 관문6 3층 — 배제 조건 / 매수 자리 / 사람 판단을 섞지 않는다. 문구는 인계문서 8-3 ⑦, 모양은 close_mockup_red.html
   add(c2, labelWith('사기 전 확인 — 관문6', 'close.gate6'));
@@ -1405,7 +1412,7 @@ const HELP = {
       ['m/d (요일) 15:20 판정', '판정 시각. 오른쪽 배지는 비고(만기일 등).'],
       ['수집 · OCR 경고 · push', '수집 = 마지막 수집 시각, OCR 경고 = 티마 읽기 경고 수, push = 이 화면이 올라간 시각. OK 가 아니면 빨강 — 화면이 최신이 아닐 수 있다.'],
       ['판정 전', '장중 자료만 있는 날은 후보 · 관문1 을 그리지 않는다. "후보 없음" 으로 읽지 말 것.'],
-      ['잠정 14:50 (노란 띠)', '14:57 에 14:50 자료로 미리 돌린 판정. 15:50 확정과 다를 수 있고 표본이 아니다. 확정 뒤에는 "14:50 후보 : … (15:20 과 같음/다름)" 한 줄로 남고, 일치 여부는 매일 기록된다(judge_match).']]],
+      ['잠정 14:50 (노란 띠)', '14:57 에 14:50 자료로 미리 돌린 판정. 15:50 확정과 다를 수 있고 표본이 아니다. 후보 아래 "섹터 판정 (잠정)" 목록도 14:50 자료 — 후보가 없는 날 어느 섹터가 어디서 빠졌는지 본다. 확정 뒤에는 "14:50 후보 : … (15:20 과 같음/다름)" 한 줄로 남고, 일치 여부는 매일 기록된다(judge_match).']]],
     ['보고 나서', [
       ['검증 기간', '후보가 있어도 매매하지 않는다. 관문6 을 사람이 하고, 다음날 20:05 뒤 → D+1 칸을 본다.'],
       ['표본', '15:20 후보 섹터 1개 = 표본 1(관문6 에서 사람이 제외한 것은 표본 아님). 표본 30개 + 무결성 2주 뒤 실매매 전환.']]]] },
