@@ -915,6 +915,33 @@ function dayLabelIx(ymd) {
   const now = new Date(); const today = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
   return `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd})${ymd === today ? ' 오늘' : ''}`;
 }
+/* ── 지수 차트 5분 갱신 (9/17 `지수5분`, 사용자 요청 "5분봉 차트이니 5분에 한 번씩") ──────────
+   stock-index.ps1 이 장중(09:01~15:41) 5분마다 data/index_live.json(약 16KB, index-chart 출력 그대로) 하나만 따로 올린다.
+   최근 날짜를 보고 있을 때 그 파일을 읽어, 같은 날짜이고 날짜 JSON 의 indexChart 보다 나중에 받은(fetched) 자료면 지수 그림만 바꾼다.
+   화면을 열 때 · 돌아올 때 한 번(force) + 장중에는 1분마다 — 파일은 5분마다 바뀌지만 Pages 반영이 1분쯤 걸려서. 바뀐 게 없으면 아무것도 안 한다.
+   다른 구역은 그대로 회차 자료. 파일이 없거나 못 읽으면 날짜 JSON 의 그림 그대로. */
+let IX_D = null; let IX_BUSY = false;
+function ixInMarket(now) { const m = now.getHours() * 60 + now.getMinutes(); return now.getDay() >= 1 && now.getDay() <= 5 && m >= 9 * 60 && m < 15 * 60 + 50; }
+async function pollIndexLive(force) {
+  const d = IX_D;
+  if (!d || IX_BUSY || document.visibilityState !== 'visible') return;
+  if (DATES.length && DATES[0] !== String(d.date || '')) return;   /* 지난 날짜를 보는 중 */
+  if (!force && !ixInMarket(new Date())) return;
+  IX_BUSY = true;
+  try {
+    const ic = await getJson('data/index_live.json');
+    if (IX_D !== d || !ic || String(ic.date || '') !== String(d.date || '')) return;   /* 그 사이 날짜를 바꿨거나, 다른 날짜 파일(아침 첫 회차 전) */
+    const cur = d.indexChart;
+    if (cur && String(ic.fetched || '') <= String(cur.fetched || '')) return;   /* 날짜 JSON 쪽이 더 새 것 (매시 07분 회차 직후) */
+    d.indexChart = ic;
+    const blk = indexChartBlock(d); if (!blk) return;
+    const old = document.querySelector('#live .ix-wrap');
+    if (old) { const open = !!old.querySelector('.help-inline'); old.replaceWith(blk); if (open) { const q = blk.querySelector('.hq2'); if (q) q.click(); } }   /* ? 를 펴 둔 채였으면 다시 편다 */
+    else { const st = document.querySelector('#live .status'); if (st) st.after(blk); }
+  } catch (e) { /* 파일이 아직 없거나 통신 실패 — 그림 그대로 */ }
+  finally { IX_BUSY = false; }
+}
+setInterval(() => pollIndexLive(false), 60000);
 
 function renderLive(d) {
   const box = document.getElementById('live'); box.innerHTML = '';
@@ -1471,7 +1498,7 @@ const HELP_SEC = {
     ['20 · 60 · 120', '5분봉 이동평균선 — 봉 20개(100분) · 60개(5시간) · 120개(10시간, 약 하루 반). 날짜를 넘어 이어서 계산한다.'],
     ['점선 · 오른쪽 짙은 숫자', '마지막 봉의 값. 제목 줄 ▲▼ 는 전일 종가 대비.'],
     ['범례 아래 숫자 줄', '평소에는 마지막 봉의 시각과 지수 · 이평 값. 그림을 짚고 옆으로 움직이면 세로선이 선 그 봉의 값으로 바뀌고, 손을 떼면 마지막 봉으로 돌아간다.'],
-    ['몇 시 봉까지', '실시간이 아니다 — 폰 화면 회차(매시 07분쯤 · 14:57 · 15:27)에 받은 봉까지. 15:30 종가 봉은 16:07 회차부터 실린다.'],
+    ['몇 시 봉까지', '실시간이 아니다 — 장중(09:01~15:41)에는 5분마다 받은 봉까지. 화면을 열어 두면 1분마다 새 봉이 왔는지 확인해 이 그림만 바꾼다(올라오는 데 1~2분). 다른 구역은 그대로 회차(매시 07분쯤 · 14:57 · 15:27) 자료. 15:30 종가 봉은 장 마감 뒤 회차에 실린다.'],
     ['판정과 무관', '보기만 하는 그림. 판정 · 채점에 안 들어가고 기준값도 없다 — 시장 판단은 마감 탭 관문1(M1 · M2)과 그 참고 줄(M6).']],
   'live.flow': [
     ['막대 (빨강 / 파랑)', '티마 카드(섹터)마다 회차별 모멘텀 = 그 구간에 들어온 돈의 비중 − 누적 비중(%p). 빨강 = 양수(돈이 더 들어오는 중, 가속), 파랑 = 음수(아침에 끝난 테마, 감속). 막대 길이는 09:00~15:20 최대값 기준 — 15:40(종가 단일가 유입) · 저녁 막대는 같은 눈금이라 넘치면 꽉 찬 막대. 이슈가 살아있나(T6) · 무게추가 어디로 가나(T5)를 보는 자리.'],
@@ -1605,7 +1632,7 @@ const HELP_COMMON = [
   ['탭 고정 · 좌우 밀기 · 색', [
     ['탭 막대 고정', '조금이라도 스크롤하면 탭 막대가 맨 위에 붙는다. 거기서 탭을 누르면 새 탭의 처음이 막대 바로 아래에 온다.'],
     ['좌우 밀기', '화면을 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭. 화면 가장자리는 폰의 뒤로 가기라 무시. 넓은 표(시계열 격자 · 종목 순위표) 위에서는 표가 옆으로 스크롤된다.'],
-    ['새로고침', '홈 화면 앱은 5분 넘게 떠나 있다 돌아오면 자료를 다시 불러온다. 맨 위 "지금" 시계는 1분마다 갱신.'],
+    ['새로고침', '홈 화면 앱은 5분 넘게 떠나 있다 돌아오면 자료를 다시 불러온다. 맨 위 "지금" 시계는 1분마다 갱신. 장중 탭 지수 그림만 장중에 5분마다 새 봉으로 바뀐다.'],
     ['색', '빨강 = 상승 · 가속 · 대장 · 1위, 파랑 = 하락 · 감속(HTS 원색). 주황 = 주의(괴리 · 비고 · push 실패 · 오래된 자료). 크림슨 · 연분홍 배지 = 정보.']]]
 ];
 const HELP_FOOT = '뜻은 강의기준_대조표 번호(M 시장 · T 테마 · D 대장 · C 어종 · P 피뢰침 · E 진입 · S 매도 · U 계좌)로 잇는다. 기준 숫자는 대조표 · 판정 CSV 가 원본이라 여기에는 새로 적지 않는다.';
@@ -1681,6 +1708,7 @@ async function loadDate(ymd, dates) {
   AMT_BASIS = d.amtBasis === '통합' ? '통합' : 'KRX';   // 9/16 합산전환 (v9 이전 JSON 은 키가 없어 KRX)
   try { renderClose(d, dates); } catch (e) { add(document.getElementById('close'), el('div', 'empty', '마감 화면 오류 : ' + e.message)); }
   try { renderLive(d); } catch (e) { add(document.getElementById('live'), el('div', 'empty', '장중 화면 오류 : ' + e.message)); }
+  IX_D = d; pollIndexLive(true);   /* 9/17 지수5분 : 5분 회차 파일이 더 새 것이면 지수 그림만 바꾼다 (기다리지 않는다) */
   try { renderSeries(d); } catch (e) { add(document.getElementById('series'), el('div', 'empty', '시계열 화면 오류 : ' + e.message)); }
   renderDatebar(String(d.date || ''));
   setHero(CUR);
@@ -1764,7 +1792,8 @@ async function loadAll() {
 loadAll();
 // 9/13 : 홈 화면 앱(특히 아이폰)은 새로고침 버튼이 없어서, 5분 넘게 떠나 있다 돌아오면 자료를 다시 불러온다
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && Date.now() - LAST_LOAD > 5 * 60 * 1000) loadAll();
+  if (document.visibilityState !== 'visible') return;
+  if (Date.now() - LAST_LOAD > 5 * 60 * 1000) loadAll(); else pollIndexLive(true);   /* 9/17 지수5분 : 5분 안에 돌아왔으면 지수 그림만 확인 */
 });
 </script>
 </body>
