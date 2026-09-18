@@ -152,16 +152,16 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
     <p>하루를 시간순으로 따라가면 된다. 자동으로 도는 것과 내가 손으로 하는 것을 나눠 적었고, 매수는 15:00~15:20 어종 한 가지, 매도는 다음날 10:00 봉까지 +4% 한 가지다. 이 시스템은 조회만 하며 주문 기능이 없다. 주문은 HTS·MTS 에서 직접 낸다.</p>
   </div>
   <div class="stamp">
-    <div class="num">작성 2026-09-18 · 실매매 전환 전</div>
+    <div class="num">작성 2026-09-18 · 1주 연습 9/21 부터 · 300만원 실매매 전환 전</div>
     <div class="big">D → D+1 10:00</div>
     <div class="muted">종가 매수 → 다음날 10시 봉까지 +4%</div>
   </div>
 </header>
 
 <div class="kpis">
-  <div class="kpi now"><span class="l">실매매 시작 조건</span><span class="v">표본 30 + 2주</span><span class="s">후보 표본 30개 · 무결성 오류 0 이 2주 연속. 지금 3/30 · 5/10 거래일</span></div>
-  <div class="kpi"><span class="l">첫 매매</span><span class="v">1주 단위</span><span class="s">1회마다 복기. 실매매 기록과 종이 기록은 분리</span></div>
-  <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">시스템은 조회 전용, 주문 TR 없음. 최선집행(SOR) 설정을 전환 때 재확인</span></div>
+  <div class="kpi now"><span class="l">300만원 실매매 조건</span><span class="v">표본 30 + 2주</span><span class="s">후보 표본 30개 · 무결성 오류 0 이 2주 연속. 지금 3/30 · 5/10 거래일</span></div>
+  <div class="kpi now"><span class="l">1주 연습</span><span class="v">9/21 부터 · 1주 고정</span><span class="s">후보 뜨는 날 어종 1종목 · 계좌 규칙 그대로 · 1회마다 복기. 실매매 기록과 종이 기록은 분리</span></div>
+  <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">시스템은 조회 전용, 주문 TR 없음. 최선집행(SOR) 설정을 첫 1주 매매 전에 재확인</span></div>
   <div class="kpi"><span class="l">판정 기준</span><span class="v">동결 v2.1</span><span class="s">매매 결과로 임계값을 고치지 않는다. 바꾸고 싶으면 이유만 기록</span></div>
 </div>
 
@@ -217,8 +217,8 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 
     <div class="tr auto"><div class="t">20:05</div>
       <div class="h"><span class="tag auto">자동</span>D+1 채점 · 체결 수집 · 복기 갱신</div>
-      <div class="d">어제 후보의 10시 채점을 전부 다시 쓰고, 오늘 체결(조회 TR 3개)을 받아 복기 탭을 만든 뒤 폰 화면에 올린다. 체결 수집이 실패하면 복기는 건너뛴다.</div>
-      <div class="scr"><span class="tag me">나</span> 추정자산 <span class="num">asset.csv</span> 만 손으로 적는다 (비중 50% 계산의 분모).</div></div>
+      <div class="d">어제 후보의 10시 채점을 전부 다시 쓰고, 오늘 체결과 추정자산(조회 TR 4개)을 받아 복기 탭을 만든 뒤 폰 화면에 올린다. 체결 수집이 실패하면 복기는 건너뛴다.</div>
+      <div class="scr"><span class="tag auto">자동</span> 추정자산(비중 50% 의 분모)도 일별추정예탁자산 조회로 받는다. <span class="num">asset.csv</span> 는 손으로 덮어쓸 때만.</div></div>
 
     <div class="tr me"><div class="t">20:10<br>~</div>
       <div class="h"><span class="tag me">나</span>복기 — 기준이 틀렸나, 내가 안 지켰나</div>
@@ -294,15 +294,15 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       <h3>실매매 전에 채워야 할 빈 칸</h3>
       <div class="gap">
         <div class="grow"><span class="id">1</span><span>14:50 잠정 ↔ 15:20 확정 후보 일치율 (judge_match.csv) — 3시 신호의 신뢰도 숫자</span><span class="cond">2일차 · 일치 0/2 (9/17 부터)</span></div>
-        <div class="grow"><span class="id">2</span><span>HTS 최선집행(SOR) 기준 재설정 확인 — 9/14 제도 변경으로 회사 기준으로 초기화됐다</span><span class="cond">전환 때</span></div>
-        <div class="grow"><span class="id">3</span><span>추정자산 asset.csv 첫 입력 — U1 비중 계산의 분모</span><span class="cond">첫 매매 전</span></div>
+        <div class="grow"><span class="id">2</span><span>HTS 최선집행(SOR) 기준 재설정 확인 — 9/14 제도 변경으로 회사 기준으로 초기화됐다. 계좌 300만원 세팅도 같이</span><span class="cond">첫 1주 매매 전 (9/21 15:00)</span></div>
+        <div class="grow"><span class="id">3</span><span>추정자산 자동 수집(kt00002) 첫 실전 — 20:05 로그 trade 줄에 kt00002 행수가 붙는지. U1 비중 계산의 분모</span><span class="cond">9/21 저녁</span></div>
         <div class="grow"><span class="id">4</span><span>매수 시각별 D+1 10시 비교 (15:20 · 15:40 · 19:50 가격)</span><span class="cond">표본 뒤</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<footer>출처 : 인계문서_v10.md 2-3(채점 원칙·계좌 규칙) · 11-3(관문) · 8-5 27번(14:50 잠정) · 강의기준_대조표.md 6절(진입) · 7절(매도·손절) · 8-0(U1~U3) · CLAUDE.md 5절(하루 파이프라인). 강의 기준과 사용자 결정을 시간순으로 옮긴 것이며 새 기준·새 숫자는 없다. 판정 v2.1 은 동결.</footer>
+<footer>출처 : 인계문서_v10.md 2-3(채점 원칙·계좌 규칙) · 11-3(관문) · 8-5 27번(14:50 잠정) · 강의기준_대조표.md 6절(진입) · 7절(매도·손절) · 8-0(U1~U3) · CLAUDE.md 5절(하루 파이프라인). 강의 기준과 사용자 결정을 시간순으로 옮긴 것이며 새 기준·새 숫자는 없다. 판정 v2.1 은 동결. 9/18 밤 사용자 결정 : 1주 연습을 전환 전으로(1주 고정 · 300만원 · 계좌 규칙 그대로), 추정자산 자동 수집.</footer>
 
 </div>
 </body>
