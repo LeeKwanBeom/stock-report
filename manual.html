@@ -152,14 +152,14 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
     <p>하루를 시간순으로 따라가면 된다. 자동으로 도는 것과 내가 손으로 하는 것을 나눠 적었고, 매수는 15:00~15:20 어종 한 가지, 매도는 다음날 10:00 봉까지 +4% 한 가지다. 이 시스템은 조회만 하며 주문 기능이 없다. 주문은 HTS·MTS 에서 직접 낸다.</p>
   </div>
   <div class="stamp">
-    <div class="num">작성 2026-09-17 · 실매매 전환 전</div>
+    <div class="num">작성 2026-09-18 · 실매매 전환 전</div>
     <div class="big">D → D+1 10:00</div>
     <div class="muted">종가 매수 → 다음날 10시 봉까지 +4%</div>
   </div>
 </header>
 
 <div class="kpis">
-  <div class="kpi now"><span class="l">실매매 시작 조건</span><span class="v">표본 30 + 2주</span><span class="s">후보 표본 30개 · 무결성 오류 0 이 2주 연속. 지금 1/30 · 4/10 거래일</span></div>
+  <div class="kpi now"><span class="l">실매매 시작 조건</span><span class="v">표본 30 + 2주</span><span class="s">후보 표본 30개 · 무결성 오류 0 이 2주 연속. 지금 3/30 · 5/10 거래일</span></div>
   <div class="kpi"><span class="l">첫 매매</span><span class="v">1주 단위</span><span class="s">1회마다 복기. 실매매 기록과 종이 기록은 분리</span></div>
   <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">시스템은 조회 전용, 주문 TR 없음. 최선집행(SOR) 설정을 전환 때 재확인</span></div>
   <div class="kpi"><span class="l">판정 기준</span><span class="v">동결 v2.1</span><span class="s">매매 결과로 임계값을 고치지 않는다. 바꾸고 싶으면 이유만 기록</span></div>
@@ -293,7 +293,7 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
     <div class="box">
       <h3>실매매 전에 채워야 할 빈 칸</h3>
       <div class="gap">
-        <div class="grow"><span class="id">1</span><span>14:50 잠정 ↔ 15:20 확정 후보 일치율 (judge_match.csv) — 3시 신호의 신뢰도 숫자</span><span class="cond">1일차 · 일치 0/1 (9/17 부터)</span></div>
+        <div class="grow"><span class="id">1</span><span>14:50 잠정 ↔ 15:20 확정 후보 일치율 (judge_match.csv) — 3시 신호의 신뢰도 숫자</span><span class="cond">2일차 · 일치 0/2 (9/17 부터)</span></div>
         <div class="grow"><span class="id">2</span><span>HTS 최선집행(SOR) 기준 재설정 확인 — 9/14 제도 변경으로 회사 기준으로 초기화됐다</span><span class="cond">전환 때</span></div>
         <div class="grow"><span class="id">3</span><span>추정자산 asset.csv 첫 입력 — U1 비중 계산의 분모</span><span class="cond">첫 매매 전</span></div>
         <div class="grow"><span class="id">4</span><span>매수 시각별 D+1 10시 비교 (15:20 · 15:40 · 19:50 가격)</span><span class="cond">표본 뒤</span></div>
