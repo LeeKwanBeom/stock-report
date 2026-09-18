@@ -58,7 +58,8 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 .hero h1{margin:0;font-size:26px;letter-spacing:-.7px;font-weight:800;line-height:1.1}
 .hsub{margin-top:5px;font-size:12.5px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
 .hsrow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.rm-link{flex:none;margin-top:5px;font-size:12.5px;color:rgba(255,255,255,.72);text-decoration:none;border-bottom:1px dotted rgba(255,255,255,.45)}
+.rm-links{flex:none;margin-top:5px;font-size:12.5px;color:rgba(255,255,255,.72);white-space:nowrap}
+.rm-link{color:rgba(255,255,255,.72);text-decoration:none;border-bottom:1px dotted rgba(255,255,255,.45)}
 .hq{margin-top:14px;font-size:13.5px;line-height:1.5;padding:11px 13px;border-radius:10px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.10)}
 .hq b{font-weight:700;color:#fff}
 /* 8-3 ⑩ 도움말 (9/15) : 머리의 작은 ? → 그 탭의 표시 뜻이 내용 맨 위에 펼쳐진다. 뜻은 대조표 번호로 잇고 기준 숫자는 적지 않는다 */
@@ -359,7 +360,7 @@ details.vf-more[open] summary::before{content:"▾ "}
       <button data-tab="review">복기</button>
     </div>
     <div class="hrow"><h1 id="heroTitle">마감</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button></div>
-    <div class="hsrow"><div class="hsub" id="heroSub">15:20 KRX 기준 · NXT 제외</div><a class="rm-link" href="roadmap.html">로드맵 ↗</a></div>
+    <div class="hsrow"><div class="hsub" id="heroSub">15:20 KRX 기준 · NXT 제외</div><div class="rm-links"><a class="rm-link" href="roadmap.html">로드맵 ↗</a> · <a class="rm-link" href="manual.html">설명서 ↗</a></div></div>
     <div class="hq" id="heroQ" hidden>손실이 났을 때 — <b>기준이 틀렸나, 내가 안 지켰나</b></div>
   </div>
 </header>
