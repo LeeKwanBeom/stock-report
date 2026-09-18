@@ -308,6 +308,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .rv-kv .k{font-size:10.5px;color:var(--muted)}
 .rv-kv .v{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
 .rv-kv .v.rate{font-weight:800}
+.rv-kv .v.sm{font-size:11.5px;font-weight:600;line-height:1.3}   /* 9/19 금액 줄 (배치 A) : 수량 × 단가 · 추정자산 (출처) */
 .rv-base{margin-top:9px;font-size:11.5px;line-height:1.7;color:var(--sub);background:var(--soft);border-radius:10px;padding:8px 10px}
 .rv-base b{color:var(--text);font-weight:700}
 .rv-base b.up{color:var(--up)}.rv-base b.down{color:var(--down)}
@@ -1458,7 +1459,7 @@ function renderReview(rv) {
     const kind = RV_BADGE[t.kind] ? t.kind : 'ok';
     const card = el('article', 'rv-trade ' + kind);
     const th = el('div', 'rv-th');
-    add(th, el('span', 'nm', t.name), el('span', 'mt', `${t.dates || ''}${t.track ? ' · ' + t.track + '트랙' : ''}`), el('span', 'rv-badge b-' + kind, RV_BADGE[kind]));
+    add(th, el('span', 'nm', t.name), el('span', 'mt', `${t.dates || ''}${t.account ? ' · ' + t.account : ''}${t.track ? ' · ' + t.track + '트랙' : ''}`), el('span', 'rv-badge b-' + kind, RV_BADGE[kind]));
     add(card, th);
     const chips = el('div', 'rv-chips');
     arr(t.chips).forEach(c => chips.appendChild(el('span', 'rv-chip' + (c[1] === 'red' ? ' red' : ''), c[0])));
@@ -1467,6 +1468,20 @@ function renderReview(rv) {
     const cellKv = (k, v, cls) => { const c = el('div'); add(c, el('div', 'k', k), el('div', 'v' + (cls ? ' ' + cls : ''), v)); return c; };
     add(kv, cellKv('매수', t.buy || '—'), cellKv('매도', t.sell || '—'), cellKv('수익률', rvPct(t.rate), 'rate ' + rvSign(t.rate)), cellKv('비중', has(t.weight) ? t.weight + '%' : '—'));
     add(card, kv);
+    /* 9/19 사용자 결정 (배치 A) : 금액 두 줄 — pages-export v2.5 가 내보내는 칸이 있을 때만. 계좌는 별칭(account)뿐, 번호 없음 */
+    if (has(t.buyAmt) || has(t.asset)) {
+      const won = v => { const n = num(v); return n === null ? '—' : (n < 0 ? '−' : '') + Math.abs(Math.round(n)).toLocaleString('ko-KR'); };
+      const wonS = v => { const n = num(v); return n === null ? '—' : (n < 0 ? '−' : '+') + Math.abs(Math.round(n)).toLocaleString('ko-KR'); };
+      const qp = (q, p) => (num(q) !== null && num(q) > 0) ? won(q) + '주 × ' + won(p) : '—';
+      const src = s => { s = String(s || ''); if (s.indexOf('api:') === 0 && s.length >= 12) return 'API ' + (+s.slice(8, 10)) + '/' + (+s.slice(10, 12)); if (s === 'manual') return '수동'; return ''; };
+      const kv2 = el('div', 'rv-kv');
+      add(kv2, cellKv('매수 금액', won(t.buyAmt)), cellKv('매도 금액', won(t.sellAmt)), cellKv('순손익', wonS(t.net), 'rate ' + rvSign(t.net)), cellKv('수수료·세금', has(t.fee) ? won(t.fee) + (t.feeKnown ? '' : ' ?') : '—'));
+      add(card, kv2);
+      const kv3 = el('div', 'rv-kv');
+      add(kv3, cellKv('매수 수량 × 단가', qp(t.buyQty, t.buyAvg), 'sm'), cellKv('매도 수량 × 단가', qp(t.sellQty, t.sellAvg), 'sm'), cellKv('추매 금액', won(t.addAmt), 'sm'),
+        cellKv('추정자산', has(t.asset) ? won(t.asset) + (src(t.assetSrc) ? ' (' + src(t.assetSrc) + ')' : '') : '—', 'sm'));
+      add(card, kv3);
+    }
     if (arr(t.base).length) add(card, rvSegs(el('div', 'rv-base'), t.base));
     const rules = el('div', 'rv-rules');
     arr(t.rules).forEach(g => {
@@ -1484,8 +1499,8 @@ function renderReview(rv) {
   });
 
   const foot = el('p', 'rv-foot');
-  add(foot, el('b', null, '공개 항목'), document.createTextNode(' : 종목 · 매수·매도 시각 · 수익률 % · 비중 % · 규칙 체크 · 네 칸 분류'), el('br'),
-    el('b', null, '올리지 않는 것'), document.createTextNode(' : 금액 · 수량 · 손익 원화 · 추정자산 · 주문번호 · 계좌번호'), el('br'),
+  add(foot, el('b', null, '공개 항목'), document.createTextNode(' : 종목 · 계좌 별칭 · 매수·매도 시각 · 수익률 % · 비중 % · 규칙 체크 · 네 칸 분류 · 금액 · 수량 × 단가 · 순손익 · 수수료·세금 · 추매 금액 · 추정자산 (9/18 밤 사용자 결정으로 금액 공개)'), el('br'),
+    el('b', null, '올리지 않는 것'), document.createTextNode(' : 주문번호 · 종목코드 · 계좌번호 (계좌는 별칭만)'), el('br'),
     document.createTextNode('수익률은 수수료·세금을 뺀 값 · 비중은 매수 직전 추정자산 대비 · 후보는 15:20 판정 · 거래대금 KRX+NXT 통합(9/17 부터) · 가격 KRX'));
   add(box, foot);
   if (CUR === 'review') setHero('review');
@@ -1592,10 +1607,11 @@ const HELP_SEC = {
     ['왼쪽 띠 · 배지', '네 칸 분류. 점선 = 기준 점검.'],
     ['칩', '판정(후보 · 피뢰침 · 배경) · 역할(대장 · 2등 …) · 트랙 등 그날 판정 기록. 빨강 칩 = 어김과 관련.'],
     ['매수 · 매도 · 수익률 · 비중', '매수 · 매도 시각(가중평균). 수익률 = 순손익 ÷ 매수합(수수료 · 세금 뺀 값). 비중 = 매수 금액 ÷ 매수 직전 추정자산(U1). 추정자산이 없으면 ❓.'],
+    ['금액 두 줄 (9/19)', '매수 금액 · 매도 금액 · 순손익(수수료 · 세금 뺀 원화) · 수수료·세금(당일매매일지, 없으면 ?) / 매수 · 매도 수량 × 평균 단가 · 추매 금액(D+1 매수) · 추정자산(비중의 분모 — API 날짜 = 키움 일별추정예탁자산 행, 수동 = asset.csv). 카드 머리의 "연습계좌" 는 별칭이고 계좌번호는 어디에도 없다.'],
     ['기준대로였다면', '판정 · 채점 자료(15:20 후보 · 10시 채점)와 실제 매매를 대조한 줄.'],
     ['규칙 체크 ✓ ✕ – ?', '✓ 지킴 · ✕ 어김 · – 해당 없음 · ? 사람 확인 필요. 종목(후보였나) · 매수 시각(E2) · 비중(U1) · 추매(U2 시각 · 금액, 피뢰침은 U3 금지) · 매도(익일 오전 S9 — KRX 09:00~10:00 · NXT 되는 종목은 08:00~10:00, 목표 S1 · S6) · 계좌 규칙.'],
     ['예외', '당일 매도 · 이틀 이상 보유 · 보유 중 · NXT 프리마켓 추매는 칩만 붙고 누적 · 네 칸에서 뺀다.'],
-    ['공개 범위', '종목 · 시각 · 수익률 % · 비중 % · 규칙 체크 · 네 칸만. 금액 · 수량 · 손익 원화 · 추정자산 · 주문번호 · 계좌번호는 이 화면에 없다.']]
+    ['공개 범위', '종목 · 계좌 별칭 · 시각 · 수익률 % · 비중 % · 규칙 체크 · 네 칸 · 금액 · 수량 × 단가 · 순손익 · 수수료 · 추매 금액 · 추정자산 (9/18 밤 사용자 결정으로 금액 공개). 주문번호 · 종목코드 · 계좌번호는 이 화면에 없다.']]
 };
 const HELP = {
   live: { title: '장중 탭', lead: '관찰 전용. 판정은 여기서 하지 않고, 후보는 마감 탭에 15:50 한 번 나온다. 구역별 표시의 뜻은 각 제목 옆 ? 로.', groups: [
