@@ -1064,7 +1064,8 @@ function renderLive(d) {
         if (v !== null && v !== 0) { const bar = el('i', v > 0 ? 'p' : 'n'); bar.style.height = Math.min(19, Math.max(2, Math.round(Math.abs(v) / maxAbs * 19))) + 'px'; b.appendChild(bar); }
         bars.appendChild(b);
         const v1 = v === null ? null : Math.round(v * 10) / 10;
-        vals.appendChild(el('span', isAft1(times, ti) ? 'aft1' : null, v1 === null ? '' : v1.toFixed(1)));
+        const vi = v === null ? null : Math.round(Math.abs(v));   /* 9/19 : 반올림해 10 이 되면 정수만 (9.5 → 10 · 10.3 → 10 · 14.7 → 15), 아니면 소수 한 자리 — 두 자리 값이 옆 칸과 겹치지 않게 (사용자 결정) */
+        vals.appendChild(el('span', isAft1(times, ti) ? 'aft1' : null, v1 === null ? '' : (vi >= 10 ? String(v < 0 ? -vi : vi) : v1.toFixed(1))));
       });
       add(blk, bars, vals);
       if (gapNow) {
