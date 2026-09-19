@@ -349,6 +349,19 @@ details.vf-more summary{cursor:pointer;font-size:12px;color:var(--sub);padding:6
 details.vf-more summary::-webkit-details-marker{display:none}
 details.vf-more summary::before{content:"▸ ";color:var(--muted)}
 details.vf-more[open] summary::before{content:"▾ "}
+/* ── 마감 탭 "최근 거래일" (9/19 사용자 결정 A안 + ✓✕ 보임) — 검증 탭과 같은 verify.json 자료, 후보 없는 날까지 한 줄씩. 줄을 누르면 그 날짜 마감 탭 ── */
+.rc-list{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 12px;margin-bottom:10px}
+.rc-row{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-top:1px solid var(--line2);font-size:12.5px;cursor:pointer}
+.rc-row:first-child{border-top:0}
+.rc-row .d{flex:none;width:50px;color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rc-row.cur .d{color:var(--brand);font-weight:800}
+.rc-row .b{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:2px 12px}
+.rc-row .nm{font-weight:700;white-space:nowrap}
+.rc-row .none,.rc-row .wait{color:var(--muted)}
+.rc-row.krx .nm{font-weight:400;color:var(--sub)}   /* 통합 자 전(KRX 자) — 참고, 표본 아님 */
+.rc-row .chip{margin-left:5px}
+.rc-more{display:flex;justify-content:flex-end;margin:-4px 2px 0}
+.rc-more button{font-size:12px;color:var(--sub);background:none;border:0;padding:4px 2px;cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body>
@@ -432,6 +445,7 @@ function renderClose(d, dates) {
       add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 판정 전`));
       box.lastChild.style.fontSize = '18px'; box.lastChild.style.margin = '0';
       add(box, el('div', 'state', `종베 판정은 15:50 에 한 번 나옵니다 (15:20 KRX 기준). 지금은 ${has(d.at) ? tLabel(d.at) + ' 까지의 ' : ''}장중 자료만 있습니다 — 장중 탭에서 보세요`));
+      add(box, rcBlock(ymd));   // 9/19 최근 거래일 — 마감 탭 맨 아래 공통
       add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 생성 ${d.generated || '—'}`));
       return;
     }
@@ -448,6 +462,7 @@ function renderClose(d, dates) {
     candCards(c1p, pc);
     add(c1p, labelWith('섹터 판정 (잠정)', 'close.judge'));
     judgeList(c1p, j1450);
+    add(box, rcBlock(ymd));   // 9/19 최근 거래일 — 마감 탭 맨 아래 공통 (잠정 후보는 안 들어간다, 15:20 표본만)
     add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 잠정 14:50 · 생성 ${d.generated || '—'}`));
     return;
   }
@@ -688,6 +703,7 @@ function renderClose(d, dates) {
   else add(b3, el('div', 'sub muted', '뉴스·공시 링크는 후보가 있는 날 종목별로 붙습니다'));
   add(chk, b1, b2, b3); add(c2, chk);
 
+  add(box, rcBlock(ymd));   // 9/19 최근 거래일 — 섹터 판정 목록 뒤, 바닥 글 앞 (사용자 결정 A안)
   add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 관문1 표본 ${g['표본일수'] || '—'}일 · 생성 ${d.generated || '—'}`));
 }
 
@@ -1368,9 +1384,52 @@ function vfLists(box, leads, ref) {
     const l = el('div', 'vf-list'); rows.forEach(r => add(l, vfRow(r))); add(det, l); add(box, det);
   });
 }
+/* ── 마감 탭 "최근 거래일" (9/19 `최근거래일` 세션, 사용자 결정 A안 + ✓✕ 보임) ─────────────────────
+   마감 탭 맨 아래(바닥 글 앞)에 최근 RC_DAYS 거래일을 후보 없는 날까지 한 줄씩. 자료는 검증 탭과 같은 verify.json(result_log 후보·대장 행) + dates.json(날짜 목록) — 새 수집·새 칸 없음.
+   ✓ ✕ = 검증 탭과 같은 10시 채점(목표4%_10시), 채점 전 ⏳, 관망 칩. 줄을 누르면 그 날짜 마감 탭(날짜 줄 ◀▶ 와 같은 loadDate). alFrom 전(KRX 자)은 흐리게 — 표본 아님.
+   잠정 14:50 후보는 안 들어간다(15:20 표본만). 판정·채점 무관, 화면만. 인계문서 8-6 "월 달력·날짜별 상태 점" 의 첫 판 — 한 달치 쌓이면 이 목록 위에 달력 칸을 얹는다. */
+const RC_DAYS = 10;
+let VF_ROWS = null, VF_ALFROM = '20260917';   // renderVerify 가 채운다(null = 아직, false = 못 불러옴). verify.json 이 마감 탭보다 늦게 오면 rcRefresh 가 구역만 다시 그린다
+function rcBlock(ymd) {
+  const wrap = el('div', 'rc-wrap'); wrap.dataset.ymd = ymd;
+  add(wrap, labelWith('최근 거래일', 'close.recent'));
+  const lst = el('div', 'rc-list');
+  const days = DATES.slice(0, RC_DAYS);   // DATES 는 최근 순
+  if (VF_ROWS === null) add(lst, el('div', 'empty', '검증 자료 불러오는 중'));
+  else if (VF_ROWS === false) add(lst, el('div', 'empty', '검증 자료를 못 불러와 목록을 못 그립니다'));
+  else if (!days.length) add(lst, el('div', 'empty', '날짜 목록이 없습니다'));
+  else days.forEach(x => {
+    const rows = VF_ROWS.filter(r => String(r['일자']) === x && r['판정'] === '후보' && r['역할'] === '대장');
+    const row = el('div', 'rc-row' + (x === ymd ? ' cur' : '') + (x < VF_ALFROM ? ' krx' : ''));
+    row.setAttribute('role', 'button'); row.tabIndex = 0; row.title = `${vfMd(x)} 마감 탭으로`;
+    const wdx = WD[new Date(+x.slice(0, 4), +x.slice(4, 6) - 1, +x.slice(6, 8)).getDay()];
+    add(row, el('span', 'd', `${vfMd(x)} ${wdx}`));
+    const b = el('div', 'b');
+    if (!rows.length) add(b, el('span', 'none', '없음'));
+    rows.forEach(r => {
+      const it = el('span', 'it'); add(it, el('span', 'nm', `${r['섹터'] || ''} · ${r['종목'] || ''}`));
+      if (r['관망'] === 'Y') add(it, el('span', 'chip warn', '관망'));
+      if (has(r['목표4%_10시'])) { const ok = r['목표4%_10시'] === 'Y'; add(it, el('span', 'tenmark' + (ok ? ' ok' : ' x'), ok ? ' ✓' : ' ✕')); }
+      else add(it, el('span', 'wait', ' ⏳'));
+      add(b, it);
+    });
+    add(row, b);
+    const go = () => { if (x === ymd) return; loadDate(x, DATES); window.scrollTo(0, HERO_EL.offsetHeight - STICK.offsetHeight); };
+    row.onclick = go; row.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+    add(lst, row);
+  });
+  add(wrap, lst);
+  const more = el('div', 'rc-more'); const bt = el('button', null, '검증 탭 전체 ▸'); bt.type = 'button';
+  bt.onclick = () => switchTab('verify', 'stick'); add(more, bt); add(wrap, more);
+  return wrap;
+}
+function rcRefresh() {   // verify.json 이 도착하면 이미 그려진 마감 탭의 이 구역만 바꿔 끼운다 (마감 탭 전체를 다시 그리지 않는다)
+  const old = document.querySelector('#close .rc-wrap'); if (old) old.replaceWith(rcBlock(old.dataset.ymd));
+}
 function renderVerify(vf) {
   const box = document.getElementById('verify'); box.innerHTML = '';
   const alFrom = String(vf.alFrom || '20260917');
+  VF_ROWS = arr(vf.rows); VF_ALFROM = alFrom; rcRefresh();   // 9/19 마감 탭 최근 거래일
   const byDate = (a, b) => String(b['일자']).localeCompare(String(a['일자']));
   const leads = arr(vf.rows).filter(r => r['역할'] === '대장').sort(byDate);
   const al = leads.filter(r => String(r['일자']) >= alFrom), krx = leads.filter(r => String(r['일자']) < alFrom);
@@ -1585,6 +1644,11 @@ const HELP_SEC = {
     ['(k)', '종목명 옆 (k) = KRX 전용(NXT 불가) — 다음날 매도 09:00 부터. 없으면 NXT 도 되는 종목이라 08:00 부터.']],
   'close.judge': [
     ['섹터명 % · 모멘텀 · 2따 · 판정', '모든 카드의 집중도 순 목록. 판정 = 후보 / 배경(모멘텀 음수) / 관문3제외(2따 부족) / 대장없음 / 개별이슈.']],
+  'close.recent': [
+    ['날짜 · 섹터 · 대장', '최근 10거래일을 후보 없는 날까지 한 줄씩. 검증 탭 표본 목록과 같은 자료 — 15:20 후보 섹터와 그 대장. 잠정 14:50 후보는 안 들어간다.'],
+    ['✓ ✕ ⏳ · 관망', '✓ ✕ = 검증 탭과 같은 10시 채점(D 종가 매수 → D+1 10:00 까지 고가 +4%). ⏳ = 아직 채점 전. 관망 = 관문1 불통과인데 후보. 지난 기록이지 오늘 판정의 조건이 아니다.'],
+    ['흐린 줄', '통합 자 시작(9/17) 전의 KRX 자 — 참고, 표본 아님.'],
+    ['누르면', '그 날짜의 마감 탭으로(빨간 날짜 = 지금 보는 날). "검증 탭 전체 ▸" 는 전체 목록 · 적중률.']],
   'close.gate6': [
     ['세 층 순서', '① 진입 전 배제(호가 한 칸 유동성 C10 — 미달이면 종목 배제) → ② 매수 자리(돼지 물량 E6 · 일봉 위치와 앞산 C2) → ③ 사람 판단(3레벨 뉴스 T2 · 재료 T6 · 악재 P4 · 내일 이벤트 · 괴리 캡처 · 재료 D-day E5).'],
     ['체크 상자', '저장되지 않는다. 그 자리에서 확인하는 순서표.'],
@@ -1665,7 +1729,7 @@ const HELP_COMMON = [
     ['09:10', '장중 탭. 맨 위 "지금 / 자료" 가 오늘 · 최근 회차인지(빨강 · 주황 없음) 확인. 모멘텀 · 조회순위는 보기만(M8).'],
     ['15:55', '마감 탭. 상태 줄 push OK → 관문1 → 후보 · 피뢰침 카드 → 후보가 있으면 관문6 세 층을 순서대로. 검증 기간에는 여기서 끝(기록만).'],
     ['10:10 · 20:00 뒤', '10:07 회차가 어제 후보 카드에 → 10시 고가 ✓ ✕ (D+1 10시까지 +4% 도달) 를, 20:05 채점이 D+1 종가를 채운다 — 날짜 줄 ◀ 로 어제 마감 탭. 실매매 뒤에는 복기 탭.'],
-    ['지난 날짜', '날짜 줄 ◀ ▶ 또는 목록으로. 복기 탭에는 날짜 줄이 없다(누적).']]],
+    ['지난 날짜', '날짜 줄 ◀ ▶ 또는 목록으로. 마감 탭 맨 아래 "최근 거래일" 줄을 눌러도 된다. 복기 탭에는 날짜 줄이 없다(누적).']]],
   ['탭 고정 · 좌우 밀기 · 색', [
     ['탭 막대 고정', '조금이라도 스크롤하면 탭 막대가 맨 위에 붙는다. 거기서 탭을 누르면 새 탭의 처음이 막대 바로 아래에 온다.'],
     ['좌우 밀기', '화면을 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭. 화면 가장자리는 폰의 뒤로 가기라 무시. 넓은 표(시계열 격자 · 종목 순위표) 위에서는 표가 옆으로 스크롤된다.'],
@@ -1824,7 +1888,7 @@ async function loadAll() {
   try { renderReview(await getJson('data/review.json')); }   // 9/15 : 실자료 (pages-export v1.8). 시안은 화면의 버튼으로
   catch (e) { const b = document.getElementById('review'); b.innerHTML = ''; add(b, el('div', 'empty', '복기 자료를 못 불러왔습니다 : ' + e.message)); }
   try { renderVerify(await getJson('data/verify.json')); }   // 9/16 밤 : 검증 탭 (pages-export v2.3, result_log 누적)
-  catch (e) { const b = document.getElementById('verify'); b.innerHTML = ''; add(b, el('div', 'empty', '검증 자료를 못 불러왔습니다 : ' + e.message)); }
+  catch (e) { VF_ROWS = false; rcRefresh(); const b = document.getElementById('verify'); b.innerHTML = ''; add(b, el('div', 'empty', '검증 자료를 못 불러왔습니다 : ' + e.message)); }
 }
 loadAll();
 // 9/13 : 홈 화면 앱(특히 아이폰)은 새로고침 버튼이 없어서, 5분 넘게 떠나 있다 돌아오면 자료를 다시 불러온다
