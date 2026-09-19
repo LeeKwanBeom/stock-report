@@ -138,7 +138,7 @@ label.chk.top{align-items:flex-start}label.chk.top input{margin-top:3px;flex:non
 .chk .hint{display:block;margin-top:2px}
 .gblk{padding:6px 0}.gblk+.gblk{border-top:1px solid var(--line2);margin-top:4px}
 .gblk h3{font-size:12.5px;font-weight:800;color:var(--wine);margin:2px 0 4px}.gblk h3 em{font-style:normal;font-weight:400;color:var(--muted)}
-.gblk .sub{font-size:11.5px;padding:2px 0 2px 25px}
+.gblk .sub{font-size:11.5px;padding:2px 0 2px 25px}.gblk .ix20 .up,.gblk .ix20 .down{font-weight:700}
 .idxline{font-size:12px;margin:2px 0 10px}.idxline .seg{white-space:nowrap}.idxline .up,.idxline .down{font-weight:700}
 /* 9/14 목업 B — 피뢰침 카드 (8-3 ②, 시안 pirochim_mockup.html). 카드·칩·색은 어종 카드 그대로, 아래는 피뢰침에만 있는 조각 */
 .meta{font-size:12px;color:var(--muted);font-weight:400}
@@ -513,11 +513,11 @@ function renderClose(d, dates) {
   add(c1, m4);
   // 8-3 ⑤ 지수 위치 (9/14 밤, `지수선` 세션) — gate_log v1.2 의 코스피 5·20일선(키움 ka20006 지수 일봉, 과거 소급).
   //   값·위/아래 는 CSV 그대로(이평위치·5일선대비%·20일선대비%), 통과 기준 없음 — 관문1 옆 참고 한 줄. 5·20일선이 없는 날은 줄 자체를 안 그린다
+  const fmtI = v => { const n = num(v); return n === null ? String(v) : n.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };   // 9/19 : 아래 관문6 20일선 줄도 같이 쓴다
+  const pctT = v => has(v) ? ` (${num(v) > 0 ? '+' : ''}${v}%)` : '';
   if (has(g['코스피5일선']) || has(g['코스피20일선'])) {
     const ix = el('div', 'sub idxline');
     const pos = String(g['이평위치'] || '').split('/');
-    const fmtI = v => { const n = num(v); return n === null ? String(v) : n.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
-    const pctT = v => has(v) ? ` (${num(v) > 0 ? '+' : ''}${v}%)` : '';
     add(ix, el('span', null, `코스피 ${has(g['코스피종가']) ? fmtI(g['코스피종가']) : '—'}`));
     [['5일선', g['코스피5일선'], g['5일선대비%'], pos[0]], ['20일선', g['코스피20일선'], g['20일선대비%'], pos[1]]].forEach(([k, ma, pct, p]) => {
       if (!has(ma)) return;
@@ -690,25 +690,37 @@ function renderClose(d, dates) {
   }
 
   // 8-3 ⑦ 관문6 3층 — 배제 조건 / 매수 자리 / 사람 판단을 섞지 않는다. 문구는 인계문서 8-3 ⑦, 모양은 close_mockup_red.html
+  //   9/19 사기전확인(사용자 결정) : 첫 블록 세 항목(지수 20일선 M6 · 일봉 위치(둘째 블록에서 옮김) · 호가 1억 C10), 둘째 블록은 돼지 물량만. 문구는 인계문서 8-3 ⑦ 9/19 갱신분
   add(c2, labelWith('사기 전 확인 — 관문6', 'close.gate6'));
   const chk = el('div', 'card');
   const candStocks = []; cands.forEach(r => (stockMap[r['섹터명']] || []).forEach(s => candStocks.push(s)));
   piroCands.forEach(p => candStocks.push({ '종목명': p['종목'], '종목코드': p['코드'], '현재가': p['현재가'] }));   // 피뢰침 후보도 1억 계산·뉴스 링크 (목업 B)
   function gblk(title, em, items) {
     const b = el('div', 'gblk'); const h = el('h3', null, title); if (em) add(h, el('em', null, ' ' + em)); add(b, h);
-    items.forEach(([t, hint]) => {
+    items.forEach(([t, hint, after]) => {
       const lb = el('label', 'chk' + (hint ? ' top' : '')); const cb = el('input'); cb.type = 'checkbox';
       const sp = el('span', null, t); if (hint) add(sp, el('span', 'hint', hint)); add(lb, cb, sp); b.appendChild(lb);
+      if (after) add(b, after);   // 9/19 : 항목 바로 밑에 붙는 줄 (20일선 항목의 코스피 줄)
     });
     return b;
   }
-  const b1 = gblk('진입 전 확인', '— 미달이면 배제', [['호가 한 칸당 1억 이상인가', '미달이면 종목 배제 (C10)']]);
+  // 20일선 항목 밑 코스피 줄 = 관문1 아래 지수 위치 줄과 같은 값(gate_log 코스피종가 · 코스피20일선 · 20일선대비% · 이평위치, 키움 ka20006 지수 일봉). 기준 없음, 표시만 — 판정·채점 무관.
+  //   코스닥 20일선은 어디에도 기록이 없어 코스닥 후보는 HTS 차트로(도움말). 장중 탭 지수 차트의 "20" 은 5분봉 20개 평균이라 20일선이 아니다.
+  let ix20;
+  if (has(g['코스피20일선'])) {
+    const p20 = String(g['이평위치'] || '').split('/')[1] || '';
+    const side = /아래/.test(p20) ? '아래' : (/위/.test(p20) ? '위' : '');
+    ix20 = el('div', 'sub ix20');
+    add(ix20, el('span', null, `코스피 ${has(g['코스피종가']) ? fmtI(g['코스피종가']) : '—'} · 20일선 ${fmtI(g['코스피20일선'])} `), el('span', side === '위' ? 'up' : (side === '아래' ? 'down' : 'muted'), side + pctT(g['20일선대비%'])));
+  } else ix20 = el('div', 'sub muted', '코스피 20일선 : 이 날짜 자료에 없음 — HTS 차트로');
+  const b1 = gblk('진입 전 확인', '— 미달이면 배제', [
+    ['당일 지수가 20일선 위에 있는가', '아래면 매매 안 함 (M6)', ix20],
+    ['일봉 위치를 차트로 확인했나', '신고가 Y/N 만 보지 말고 (7-9) · 신고가·앞산을 뚫는 날인가, 그날 거래대금이 평소보다 크게 실렸나'],
+    ['호가 한 칸당 1억 이상인가', '미달이면 종목 배제 (C10)']]);
   const eok = candStocks.filter(s => sharesPer1eok(s['현재가']) !== null);   // 8-3 ⑧ — 현재가가 JSON 에 들어온 뒤부터 (목업 B)
   if (eok.length) eok.forEach(s => { const ln = el('div', 'sub', `${s['종목명']} ${num(s['현재가']).toLocaleString()}원 → 1억 = 약 ${sharesPer1eok(s['현재가']).toLocaleString()}주`); add(ln, kMark(d, s['종목코드'])); add(b1, ln); });   // (k) 9/15 저녁
   else if (candStocks.length) add(b1, el('div', 'sub muted', '1억 = 몇 주 : 현재가가 자료에 들어오면 종목별로 표시'));
-  const b2 = gblk('매수 자리 정하기', null, [
-    ['돼지 물량 자리를 확인했나', '(E6)'],
-    ['일봉 위치를 차트로 확인했나', '신고가 Y/N 만 보지 말고 (7-9) · 신고가·앞산을 뚫는 날인가, 그날 거래대금이 평소보다 크게 실렸나']]);
+  const b2 = gblk('매수 자리 정하기', null, [['돼지 물량 자리를 확인했나', '(E6)']]);
   const b3 = gblk('관문6 사람 판단', null, [['3레벨 뉴스인가, 재료 살아있나'], ['악재 없나'], ['내일 이벤트 (홀짝 배제)'], ['괴리 캡처 확인'], ['재료 D-day 가 언제인가']]);
   if (candStocks.length) candStocks.forEach(s => add(b3, newsLinks(s['종목명'], ymd)));   // 8-3 ⑨
   else add(b3, el('div', 'sub muted', '뉴스·공시 링크는 후보가 있는 날 종목별로 붙습니다'));
@@ -1662,8 +1674,9 @@ const HELP_SEC = {
     ['흐린 줄', '통합 자 시작(9/17) 전의 KRX 자 — 참고, 표본 아님.'],
     ['누르면', '그 날짜의 마감 탭으로(빨간 날짜 = 지금 보는 날). "검증 탭 전체 ▸" 는 전체 목록 · 적중률.']],
   'close.gate6': [
-    ['세 층 순서', '① 진입 전 배제(호가 한 칸 유동성 C10 — 미달이면 종목 배제) → ② 매수 자리(돼지 물량 E6 · 일봉 위치와 앞산 C2) → ③ 사람 판단(3레벨 뉴스 T2 · 재료 T6 · 악재 P4 · 내일 이벤트 · 괴리 캡처 · 재료 D-day E5).'],
+    ['세 층 순서', '① 진입 전 확인(지수 20일선 M6 — 아래면 매매 안 함 · 일봉 위치와 앞산 C2 · 호가 한 칸 유동성 C10 — 미달이면 종목 배제) → ② 매수 자리(돼지 물량 E6) → ③ 사람 판단(3레벨 뉴스 T2 · 재료 T6 · 악재 P4 · 내일 이벤트 · 괴리 캡처 · 재료 D-day E5).'],
     ['체크 상자', '저장되지 않는다. 그 자리에서 확인하는 순서표.'],
+    ['코스피 · 20일선 (첫 항목 아래)', '관문1 아래 지수 위치 줄과 같은 값 — 코스피 종가 · 20일선(키움 지수 일봉) · 위/아래와 차이 %(M6). 통과 기준 없음. 코스닥 20일선은 기록하지 않아 코스닥 후보는 HTS 차트로 본다. 장중 탭 지수 차트의 20 은 5분봉 20개 평균이지 20일선이 아니다.'],
     ['1억 = 약 n주', '후보 종목마다 현재가로 1억 원이 몇 주인지 — 호가 한 칸 유동성(C10) 확인용. 이름 옆 (k) = KRX 전용(NXT 불가, 다음날 매도 09:00 부터).'],
     ['뉴스 링크', '최근 소식 = 판정일 앞 1주 · 제목만 = 제목에 종목명이 있는 뉴스 · 어제부터 = 직전 거래일 ~ 판정일(악재 구간) · 공시 = DART. 링크만, 본문은 수집하지 않는다.']],
   'series.overlap': [
