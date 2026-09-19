@@ -1355,13 +1355,18 @@ function renderSeries(d) {
       return best(a) - best(b);
     });
     const inqCell = (nm, t) => { const r = M.inq[t] && M.inq[t][nm]; if (!r) return null; const v = num(r['조회순위']); return { text: r['조회순위'], cls: v !== null && v <= 5 ? 'top' : null, title: `${r['조회순위']}위 · ${r['등락률']}%` }; };
-    const main = allI.filter(nm => best(nm) <= 10), rest = allI.filter(nm => best(nm) > 10);
-    add(inqCard, mkGrid(T.inq, main, inqCell, '종목'));
+    /* 9/19 `조회순위본표` : 본표 = 5위 안(굵은 칸)에 INQ_MIN 회 이상 든 종목만 (대조표 D7 "5위 이내 꾸준히" 를 회차로 센 것 — 화면 표시 값, 판정에 안 씀).
+       그 전(9/14 밤~)은 "10위 안 1회" 가 본표, "11~20위만" 접힘이었는데 한 번 튀어나온 종목이 다 올라와 표 목적(오래 걸려 있는 종목)과 안 맞았다 (사용자 지적, 추천 2회 결정). 접힘은 하나로 합침 */
+    const INQ_TOP = 5, INQ_MIN = 2;
+    const topN = nm => T.inq.filter(t => rk(nm, t) <= INQ_TOP).length;
+    const main = allI.filter(nm => topN(nm) >= INQ_MIN), rest = allI.filter(nm => topN(nm) < INQ_MIN);
+    if (main.length) add(inqCard, mkGrid(T.inq, main, inqCell, '종목'));
+    else add(inqCard, el('div', 'empty', `${INQ_TOP}위 안 ${INQ_MIN}회 이상 든 종목 아직 없음`));
     if (rest.length) {
-      const det = el('details'); add(det, el('summary', null, `11~20위에만 든 종목 ${rest.length}개 보기`));
+      const det = el('details'); add(det, el('summary', null, `나머지 ${rest.length}개 보기 (${INQ_TOP}위 안 ${INQ_MIN}회 미만 · 11~20위만)`));
       add(det, mkGrid(T.inq, rest, inqCell, '종목')); add(inqCard, det);
     }
-    add(inqCard, el('div', 'sg-leg', '숫자 = 그 회차 조회순위 (굵게 = 5위 안) · 빈칸 = 20위 밖 · 8시대 회차는 장 전'));
+    add(inqCard, el('div', 'sg-leg', `숫자 = 그 회차 조회순위 (굵게 = ${INQ_TOP}위 안) · 빈칸 = 20위 밖 · 8시대 회차는 장 전 · 본표 = ${INQ_TOP}위 안 ${INQ_MIN}회 이상 (D7 "5위 이내 꾸준히", 화면 기준일 뿐 판정에 안 씀)`));
   }
   add(c2, inqCard);
   add(box, el('div', 'foot', `관찰 전용 — 기준 넷 다 강의 원문(대조표) 그대로, 겹침 수는 판정 조건이 아님 · 생성 ${d.generated || '—'}`));
@@ -1720,7 +1725,8 @@ const HELP_SEC = {
     ['칸', '영웅문 조건검색 120일 신고가_강의(C3)에 그 회차 걸린 종목. 숫자 = 등락률 반올림, 빈칸 = 안 걸림.']],
   'series.inq': [
     ['숫자 · 굵게', '1시간마다 찍은 1분 스냅샷(D7). 숫자 = 그 회차 조회순위, 굵게 = 5위 안, 빈칸 = 20위 밖.'],
-    ['스냅샷의 한계', '회차 사이에 잠깐 오른 종목은 안 잡힌다 — 오래 걸려 있는 종목을 보는 표.']],
+    ['스냅샷의 한계', '회차 사이에 잠깐 오른 종목은 안 잡힌다 — 오래 걸려 있는 종목을 보는 표.'],
+    ['본표 · 접힘', '5위 안(굵은 칸)에 2회 이상 든 종목만 본표. 나머지(2회 미만 · 11~20위만)는 아래 접힘. D7 "5위 이내 꾸준히" 를 회차로 센 화면 기준이라 판정에 안 쓴다.']],
   'verify.table': [
     ['줄', '15:20 판정별 — 후보 · 관문2 제외 · 관문3 제외 · 관문4 제외 · 배경. 전부 그 섹터 대장 1종목을 같은 자(목표4%_10시)로 채점한 값. 표본 30 은 후보 줄만, 나머지 줄은 참고(표본 아님).'],
     ['표본', '후보 섹터 1개 = 표본 1. 관망(관문1 불통과) 후보도 넣되 목록에 관망 표시. (대기 n) = D+1 채점 전.'],
