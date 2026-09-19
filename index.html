@@ -693,8 +693,17 @@ function renderClose(d, dates) {
   //   9/19 사기전확인(사용자 결정) : 첫 블록 세 항목(지수 20일선 M6 · 일봉 위치(둘째 블록에서 옮김) · 호가 1억 C10), 둘째 블록은 돼지 물량만. 문구는 인계문서 8-3 ⑦ 9/19 갱신분
   add(c2, labelWith('사기 전 확인 — 관문6', 'close.gate6'));
   const chk = el('div', 'card');
-  const candStocks = []; cands.forEach(r => (stockMap[r['섹터명']] || []).forEach(s => candStocks.push(s)));
-  piroCands.forEach(p => candStocks.push({ '종목명': p['종목'], '종목코드': p['코드'], '현재가': p['현재가'] }));   // 피뢰침 후보도 1억 계산·뉴스 링크 (목업 B)
+  // 9/19 사기전확인 2 (사용자 결정) : 1억 줄·뉴스 링크는 후보 섹터의 대장·2등만 — 3·4등은 사지 않으므로(D1) 안 적는다(테마가 살아 있나는 후보 카드 4종목 줄이 등락률로 보여 준다).
+  //   대장 = 판정의 대장 칸(티마 목록에 없으면 첫 줄), 2등 = 티마 순서에서 대장 다음 종목. 강의가 2등을 이름 붙여 말하는 자리(D1 상승장 2등 허용 · 1등 상한가 잠기면 2등 · D3 1등·2등 체인지) 때문에 남긴다. 피뢰침 후보는 그대로.
+  const candStocks = [];
+  cands.forEach(r => {
+    const rows = stockMap[r['섹터명']] || []; if (!rows.length) return;
+    const lead = rows.find(s => s['종목명'] === r['대장']) || rows[0];
+    const second = rows.find(s => s !== lead);
+    candStocks.push(Object.assign({}, lead, { '역할': '대장' }));
+    if (second) candStocks.push(Object.assign({}, second, { '역할': '2등' }));
+  });
+  piroCands.forEach(p => candStocks.push({ '종목명': p['종목'], '종목코드': p['코드'], '현재가': p['현재가'], '역할': '피뢰침' }));   // 피뢰침 후보도 1억 계산·뉴스 링크 (목업 B)
   function gblk(title, em, items) {
     const b = el('div', 'gblk'); const h = el('h3', null, title); if (em) add(h, el('em', null, ' ' + em)); add(b, h);
     items.forEach(([t, hint, after]) => {
@@ -718,12 +727,12 @@ function renderClose(d, dates) {
     ['일봉 위치를 차트로 확인했나', '신고가 Y/N 만 보지 말고 (7-9) · 신고가·앞산을 뚫는 날인가, 그날 거래대금이 평소보다 크게 실렸나'],
     ['호가 한 칸당 1억 이상인가', '미달이면 종목 배제 (C10)']]);
   const eok = candStocks.filter(s => sharesPer1eok(s['현재가']) !== null);   // 8-3 ⑧ — 현재가가 JSON 에 들어온 뒤부터 (목업 B)
-  if (eok.length) eok.forEach(s => { const ln = el('div', 'sub', `${s['종목명']} ${num(s['현재가']).toLocaleString()}원 → 1억 = 약 ${sharesPer1eok(s['현재가']).toLocaleString()}주`); add(ln, kMark(d, s['종목코드'])); add(b1, ln); });   // (k) 9/15 저녁
+  if (eok.length) candStocks.forEach(s => { const sh = sharesPer1eok(s['현재가']); const ln = el('div', 'sub' + (sh === null ? ' muted' : '')); add(ln, el('span', 'muted', `${s['역할'] || ''} `), document.createTextNode(sh === null ? `${s['종목명']} — 현재가 자료 없음` : `${s['종목명']} ${num(s['현재가']).toLocaleString()}원 → 1억 = 약 ${sh.toLocaleString()}주`)); add(ln, kMark(d, s['종목코드'])); add(b1, ln); });   // (k) 9/15 저녁 · 역할 표기 9/19 · 현재가 없는 대장·2등도 회색 한 줄(2등 자리가 비어 보이지 않게)
   else if (candStocks.length) add(b1, el('div', 'sub muted', '1억 = 몇 주 : 현재가가 자료에 들어오면 종목별로 표시'));
   const b2 = gblk('매수 자리 정하기', null, [['돼지 물량 자리를 확인했나', '(E6)']]);
   const b3 = gblk('관문6 사람 판단', null, [['3레벨 뉴스인가, 재료 살아있나'], ['악재 없나'], ['내일 이벤트 (홀짝 배제)'], ['괴리 캡처 확인'], ['재료 D-day 가 언제인가']]);
   if (candStocks.length) candStocks.forEach(s => add(b3, newsLinks(s['종목명'], ymd)));   // 8-3 ⑨
-  else add(b3, el('div', 'sub muted', '뉴스·공시 링크는 후보가 있는 날 종목별로 붙습니다'));
+  else add(b3, el('div', 'sub muted', '뉴스·공시 링크는 후보가 있는 날 대장·2등에 붙습니다'));
   add(chk, b1, b2, b3); add(c2, chk);
 
   add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 관문1 표본 ${g['표본일수'] || '—'}일 · 생성 ${d.generated || '—'}`));
@@ -826,7 +835,7 @@ function newsLinks(name, ymd) {
   return box;
 }
 // ---- 8-3 ⑧ 1억 ÷ 현재가, 100주 단위 반올림 (6,610원 → 15,128 → 15,100주). 판정에는 안 들어간다 ----
-function sharesPer1eok(price) { const p = num(price); if (!p || p <= 0) return null; return Math.round(1e8 / p / 100) * 100; }
+function sharesPer1eok(price) { const p = num(price); if (!p || p <= 0) return null; const q = p > 200000 ? 10 : 100; return Math.round(1e8 / p / q) * q; }   // 9/19 : 20만 원 넘는 종목은 십 단위(SK하이닉스 1억 = 54주가 100주로 보이던 것), 그 아래는 백 단위 — 표시 반올림 단위일 뿐 기준 아님
 // 8-0★ E (9/14 밤) 거래대금배수 — JSON v7 volRatio[코드] = { 일봉거래대금억, 평균20억, 평균일수, 배수 } (pages-export v1.6, ka10081 KRX 일봉, 애프터마켓 포함).
 //   pages-export 가 계산한 '배수' 를 그대로 칩에 적을 뿐이다. "몇 배 이상" 이라는 기준은 강의에 숫자가 없으므로 여기서도 만들지 않는다 (색·경고·정렬 없음, 인계문서 8-4).
 function volRatioOf(d, code) { const m = d && d.volRatio; if (!m || !has(code)) return null; const v = m[String(code).trim()]; return (v && has(v['배수'])) ? v : null; }
@@ -1677,8 +1686,8 @@ const HELP_SEC = {
     ['세 층 순서', '① 진입 전 확인(지수 20일선 M6 — 아래면 매매 안 함 · 일봉 위치와 앞산 C2 · 호가 한 칸 유동성 C10 — 미달이면 종목 배제) → ② 매수 자리(돼지 물량 E6) → ③ 사람 판단(3레벨 뉴스 T2 · 재료 T6 · 악재 P4 · 내일 이벤트 · 괴리 캡처 · 재료 D-day E5).'],
     ['체크 상자', '저장되지 않는다. 그 자리에서 확인하는 순서표.'],
     ['코스피 · 20일선 (첫 항목 아래)', '관문1 아래 지수 위치 줄과 같은 값 — 코스피 종가 · 20일선(키움 지수 일봉) · 위/아래와 차이 %(M6). 통과 기준 없음. 코스닥 20일선은 기록하지 않아 코스닥 후보는 HTS 차트로 본다. 장중 탭 지수 차트의 20 은 5분봉 20개 평균이지 20일선이 아니다.'],
-    ['1억 = 약 n주', '후보 종목마다 현재가로 1억 원이 몇 주인지 — 호가 한 칸 유동성(C10) 확인용. 이름 옆 (k) = KRX 전용(NXT 불가, 다음날 매도 09:00 부터).'],
-    ['뉴스 링크', '최근 소식 = 판정일 앞 1주 · 제목만 = 제목에 종목명이 있는 뉴스 · 어제부터 = 직전 거래일 ~ 판정일(악재 구간) · 공시 = DART. 링크만, 본문은 수집하지 않는다.']],
+    ['1억 = 약 n주', '후보 섹터의 대장·2등(티마 순서에서 대장 다음)과 피뢰침 후보만 — 현재가로 1억 원이 몇 주인지, 호가 한 칸 유동성(C10) 확인용. 3·4등은 사지 않으므로(D1) 안 적는다. 20만 원 넘는 종목은 십 단위, 그 아래는 백 단위 반올림(표시 단위일 뿐 기준 아님). 이름 옆 (k) = KRX 전용(NXT 불가, 다음날 매도 09:00 부터).'],
+    ['뉴스 링크', '대장·2등·피뢰침 후보만. 최근 소식 = 판정일 앞 1주 · 제목만 = 제목에 종목명이 있는 뉴스 · 어제부터 = 직전 거래일 ~ 판정일(악재 구간) · 공시 = DART. 링크만, 본문은 수집하지 않는다.']],
   'series.overlap': [
     ['칸 숫자', '그 회차에 걸린 기준 수(진할수록 많음). 2개 이상 걸린 적 있는 종목만. 몇 개인가는 관찰이지 판정 조건이 아니다.'],
     ['n시에 2개 이상', '마지막 회차에 두 기준 넘게 걸린 종목과 언제부터인지.'],
