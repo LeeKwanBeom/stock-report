@@ -360,6 +360,7 @@ details.vf-more[open] summary::before{content:"▾ "}
 .rc-row .none,.rc-row .wait{color:var(--muted)}
 .rc-row.krx .nm{font-weight:400;color:var(--sub)}   /* 통합 자 전(KRX 자) — 참고, 표본 아님 */
 .rc-row .chip{margin-left:5px}
+.rc-row .pc{font-size:11.5px;margin-left:4px;font-variant-numeric:tabular-nums}   /* ✓ ✕ 옆 10시까지 고가 % (9/19 "붙여줘") */
 .rc-more{display:flex;justify-content:flex-end;margin:-4px 2px 0}
 .rc-more button{font-size:12px;color:var(--sub);background:none;border:0;padding:4px 2px;cursor:pointer;font-family:inherit}
 </style>
@@ -1409,7 +1410,9 @@ function rcBlock(ymd) {
     rows.forEach(r => {
       const it = el('span', 'it'); add(it, el('span', 'nm', `${r['섹터'] || ''} · ${r['종목'] || ''}`));
       if (r['관망'] === 'Y') add(it, el('span', 'chip warn', '관망'));
-      if (has(r['목표4%_10시'])) { const ok = r['목표4%_10시'] === 'Y'; add(it, el('span', 'tenmark' + (ok ? ' ok' : ' x'), ok ? ' ✓' : ' ✕')); }
+      if (has(r['목표4%_10시'])) {   // 9/19 사용자 요청 "붙여줘" : ✓ ✕ 옆에 10시까지 고가 %(D 종가 대비, 한 자리) — 얼마나 넘겼나 · 못 미쳤나
+        const ok = r['목표4%_10시'] === 'Y'; add(it, el('span', 'tenmark' + (ok ? ' ok' : ' x'), ok ? ' ✓' : ' ✕'), el('span', 'pc ' + rvSign(r['D1_10시고가%']), rvPct(r['D1_10시고가%'])));
+      }
       else add(it, el('span', 'wait', ' ⏳'));
       add(b, it);
     });
@@ -1646,7 +1649,7 @@ const HELP_SEC = {
     ['섹터명 % · 모멘텀 · 2따 · 판정', '모든 카드의 집중도 순 목록. 판정 = 후보 / 배경(모멘텀 음수) / 관문3제외(2따 부족) / 대장없음 / 개별이슈.']],
   'close.recent': [
     ['날짜 · 섹터 · 대장', '최근 10거래일을 후보 없는 날까지 한 줄씩. 검증 탭 표본 목록과 같은 자료 — 15:20 후보 섹터와 그 대장. 잠정 14:50 후보는 안 들어간다.'],
-    ['✓ ✕ ⏳ · 관망', '✓ ✕ = 검증 탭과 같은 10시 채점(D 종가 매수 → D+1 10:00 까지 고가 +4%). ⏳ = 아직 채점 전. 관망 = 관문1 불통과인데 후보. 지난 기록이지 오늘 판정의 조건이 아니다.'],
+    ['✓ ✕ +n% ⏳ · 관망', '✓ ✕ = 검증 탭과 같은 10시 채점(D 종가 매수 → D+1 10:00 까지 고가 +4%). 옆 % = D 종가 대비 10시까지의 고가 — 얼마나 넘겼나 · 못 미쳤나. ⏳ = 아직 채점 전. 관망 = 관문1 불통과인데 후보. 지난 기록이지 오늘 판정의 조건이 아니다.'],
     ['흐린 줄', '통합 자 시작(9/17) 전의 KRX 자 — 참고, 표본 아님.'],
     ['누르면', '그 날짜의 마감 탭으로(빨간 날짜 = 지금 보는 날). "검증 탭 전체 ▸" 는 전체 목록 · 적중률.']],
   'close.gate6': [
