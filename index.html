@@ -260,7 +260,9 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .sg-lead{font-size:12.5px;line-height:1.6;margin:0 0 6px}
 .sg-lead b{color:var(--wine)}
 .sg-leg{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
-@media (min-width:860px){.wrap{max-width:960px}.hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 18px}.stick .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 6px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}}
+@media (min-width:860px){.wrap{max-width:960px}.hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 18px}.stick .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 6px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.cols > *{min-width:0}   /* 9/19 시계열PC : 격자 열(1fr)의 min-width 기본값 auto 는 안쪽 표(첫 열 96 + 34px × 회차)의 폭이라 두 열이 wrap 밖으로 밀렸다(980px 에서 738+738). 0 이면 열이 반씩 나뉘고 넓은 표는 .sg 안에서 옆으로 스크롤 */
+#series .cols{display:block}   /* 9/19 시계열PC : 시계열 탭은 PC 에서도 한 열 — 표 다섯 장(최대 708px)이 936px 안에 통째로 보이게, 폰과 같은 순서 */}
 
 /* 복기 탭 (시안 3 모양) — 다른 탭 클래스와 겹치지 않게 rv- 로 시작 */
 .rv-note{border:1px solid var(--noteLine);border-radius:12px;background:var(--noteBg);padding:12px 13px;margin-bottom:22px;color:var(--sub);font-size:12px;line-height:1.72}
