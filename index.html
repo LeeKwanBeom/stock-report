@@ -112,6 +112,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .metric{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 4px;text-align:center}
 .metric .k{font-size:10.5px;color:var(--muted)}.metric .v{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.metric .g1th{font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
 .card.cand{border:1.5px solid var(--roseDash)}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line2)}
@@ -476,8 +477,13 @@ function renderClose(d, dates) {
   add(gl, helpBtn(gl, 'close.gate1'));
   add(c1, gl);
   const m4 = el('div', 'grid4');
-  [['상한가', g['상한가'], ''], ['상승비율', g['상승비율%'], '%'], ['B트랙', g['B트랙수'], '개'], ['B비중', g['B비중%'], '%']].forEach(([k, v, u]) => {
-    const m = el('div', 'metric'); add(m, el('div', 'k', k), el('div', 'v', has(v) ? v + u : '—')); m4.appendChild(m);
+  // 9/19 기준값 줄 (사용자 결정 A 안, 주 1회 화면·표시) : 그날 gate_log 의 임계값 칸("상한가3/상승45%/B수10/B비중2%")을 그대로 읽어 각 칸 아래 "기준 n↑".
+  //   같거나 크면 통과, 넷 다 넘어야 통과(gate1-log). 여기서 숫자를 정하지 않는다 — 칸이 없으면 줄을 안 그린다. 임계값이 바뀌어도 지난 날짜는 그날 기록된 기준이 보인다
+  const thr = {}; String(g['임계값'] || '').split('/').forEach(p => { const mm = p.match(/^(상한가|상승|B수|B비중)([\d.]+)%?$/); if (mm) thr[mm[1]] = num(mm[2]); });
+  [['상한가', g['상한가'], '', thr['상한가']], ['상승비율', g['상승비율%'], '%', thr['상승']], ['B트랙', g['B트랙수'], '개', thr['B수']], ['B비중', g['B비중%'], '%', thr['B비중']]].forEach(([k, v, u, t]) => {
+    const m = el('div', 'metric'); add(m, el('div', 'k', k), el('div', 'v', has(v) ? v + u : '—'));
+    if (t !== null && t !== undefined) add(m, el('div', 'g1th', '기준 ' + t + u + '↑'));
+    m4.appendChild(m);
   });
   add(c1, m4);
   // 8-3 ⑤ 지수 위치 (9/14 밤, `지수선` 세션) — gate_log v1.2 의 코스피 5·20일선(키움 ka20006 지수 일봉, 과거 소급).
@@ -1551,7 +1557,7 @@ const HELP_SEC = {
     ['상승비율', 'KRX 거래대금 100위 중 오른 종목의 비율.'],
     ['B트랙 · B비중', '100위 안 B트랙(시총 기준 소형, D9) 종목 수와 거래대금 비중 — 대장은 B트랙에서 찾는다. 9/17 부터 통합 100위 기준, 비중 분모는 통합 상위100 주식 합(9/16 까지는 KRX 시장 총거래대금).'],
     ['코스피 · 5일선 · 20일선', '지수가 이평선 위(빨강) / 아래(파랑) 인가와 차이 %(M6). 참고 한 줄, 통과 기준 없음.'],
-    ['기준값', '네 숫자의 기준값은 판정 CSV · 대조표에만 있다. 이 도움말에는 적지 않는다.']],
+    ['기준 n↑', '각 칸 아래 작은 줄 = 그날 판정 CSV(gate_log)에 기록된 기준값. 같거나 크면 통과, 넷 다 넘어야 통과. 강의가 준 숫자가 아닌 우리 임시값(M1 · M2)이라 월 1회 점검에서만 바뀌고, 지난 날짜는 그날 쓴 기준이 그대로 보인다.']],
   'close.cand': [
     ['후보 · 어종', '관문2(모멘텀 양수) → 관문3(2따) → 관문4(대장)를 지난 섹터. 어종 = 당일주도주 종베(C1).'],
     ['1순위 · 관망', '후보가 둘 이상이면 집중도 순 순위. 관망 = 관문1 불통과인데 후보.'],
