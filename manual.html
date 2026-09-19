@@ -160,7 +160,7 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 
 <div class="kpis">
   <div class="kpi now"><span class="l">300만원 실매매 조건</span><span class="v">표본 30 + 2주</span><span class="s">후보 표본 30개 · 무결성 오류 0 이 2주 연속. 지금 3/30 · 5/10 거래일</span></div>
-  <div class="kpi now"><span class="l">1주 연습</span><span class="v">9/21 부터 · 1주 고정</span><span class="s">후보 뜨는 날 어종 1종목 · 계좌 규칙 그대로 · 1회마다 복기. 실매매 기록과 종이 기록은 분리</span></div>
+  <div class="kpi now"><span class="l">1주 연습</span><span class="v">9/21 부터 · 1주 고정</span><span class="s">마지막 잠정(15:00 띠)에 후보 뜨는 날 어종 1종목 · 계좌 규칙 그대로 · 1회마다 복기. 실매매 기록과 종이 기록은 분리</span></div>
   <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">시스템은 조회 전용, 주문 TR 없음. 최선집행(SOR) 설정을 첫 1주 매매 전에 재확인</span></div>
   <div class="kpi"><span class="l">판정 기준</span><span class="v">동결 v2.1</span><span class="s">매매 결과로 임계값을 고치지 않는다. 바꾸고 싶으면 이유만 기록</span></div>
 </div>
@@ -193,9 +193,13 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       <div class="h"><span class="tag me">나</span>매매 금지 구간 — 보기만</div>
       <div class="d">"현금이 최고의 종목". 장중 탭에서 지수 5분봉 선(코스피·코스닥, 맨 위)·섹터 막대·대장 변천·[n위 n억] 만 본다. 미리 사지 않는다 — 3시 전에 사고 싶으면 기다린다.</div></div>
 
-    <div class="tr auto key"><div class="t">14:50<br>14:52</div>
-      <div class="h"><span class="tag auto">자동</span>마감 탭 "잠정 14:50" 띠 = 매수 신호</div>
-      <div class="d">14:50 회차로 판정을 한 번 돌려 후보를 띄운다(폰에는 14:53~54, 9/19 부터). <b>확정 판정은 15:50 이라 매수에 못 쓰므로 이 띠가 실매매의 신호</b>다. 표본은 아니다. 여기서 후보를 좁히기 시작한다. 후보 카드 아래 "섹터 판정 (잠정)" 목록에서 어느 섹터가 어디서 빠졌는지 본다 — 후보가 없는 날에도 나온다. 잠정 후보의 대장을 샀는데 15:50 확정이 달라져도 복기 탭은 <b>지킴</b>으로 보고 "잠정 후보 · 확정과 다름" 칩만 붙인다.</div></div>
+    <div class="tr auto"><div class="t">14:50<br>14:52</div>
+      <div class="h"><span class="tag auto">자동</span>마감 탭 "잠정 14:50" 띠 — 첫 잠정</div>
+      <div class="d">14:50 회차로 판정을 한 번 돌려 후보를 띄운다(폰에는 14:53~54). 표본은 아니다. 여기서 후보를 좁히기 시작한다. 후보 카드 아래 "섹터 판정 (잠정)" 목록에서 어느 섹터가 어디서 빠졌는지 본다 — 후보가 없는 날에도 나온다.</div></div>
+
+    <div class="tr auto key"><div class="t">15:00<br>15:02</div>
+      <div class="h"><span class="tag auto">자동</span>마감 탭 "잠정 15:00" 띠 = 매수 신호 (주문 직전 마지막 잠정)</div>
+      <div class="d">15:00 회차로 다시 돌린 잠정이 띠·후보 카드·목록을 바꾼다(폰에는 15:03~04, 9/19 부터). <b>확정 판정은 15:50 이라 매수에 못 쓰므로 주문 직전 마지막 잠정인 이 띠가 실매매의 신호</b>다. 상태 줄 아래 "잠정 흐름 : 14:50 … → 15:00 …" 한 줄로 14:50 과 같은지 본다 — 다르면 관문6 에서 내가 판단한다(숫자 규칙 없음). 잠정 후보의 대장을 샀는데 15:50 확정이 달라져도 복기 탭은 <b>지킴</b>으로 보고 "잠정 후보(14:50·15:00) · 확정과 다름" 칩만 붙인다.</div></div>
 
     <div class="tr me key"><div class="t">15:00<br>~15:20</div>
       <div class="h"><span class="tag me">나</span>관문6 — 사람 판단, 그리고 비중</div>
@@ -208,8 +212,8 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
       <div class="scr">주문은 HTS·MTS 에서. 시스템은 이 시각 화면까지만 책임진다.</div></div>
 
     <div class="tr auto"><div class="t">15:50<br>15:55</div>
-      <div class="h"><span class="tag auto">자동</span>확정 판정 → 마감 탭 "14:50 과 같음/다름"</div>
-      <div class="d">15:20 자료로 확정 판정과 피뢰침 대상(내일 아침에 뉴스 볼 종목)이 나온다. 잠정과 다르면 <b>일치 기록</b>만 남기고 판정은 고치지 않는다. 매일 오후확인 세션.</div></div>
+      <div class="h"><span class="tag auto">자동</span>확정 판정 → 마감 탭 "14:50 후보 → 15:00 후보 … 15:20 과 같음/다름"</div>
+      <div class="d">15:20 자료로 확정 판정과 피뢰침 대상(내일 아침에 뉴스 볼 종목)이 나온다. 잠정(14:50 · 15:00 각각)과 다르면 <b>일치 기록</b>만 남기고 판정은 고치지 않는다. 매일 오후확인 세션.</div></div>
 
     <div class="tr auto"><div class="t">16:00<br>~20:00</div>
       <div class="h"><span class="tag auto">자동</span>애프터마켓 회차 — 화면만</div>
@@ -228,7 +232,7 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 </section>
 
 <section>
-  <div class="sec-head"><h2>후보가 나오는 길 — 관문 6개</h2><span class="muted">1~5 자동 (14:50 잠정 · 15:50 확정) · 6 사람</span></div>
+  <div class="sec-head"><h2>후보가 나오는 길 — 관문 6개</h2><span class="muted">1~5 자동 (14:50 · 15:00 잠정 · 15:50 확정) · 6 사람</span></div>
   <div class="gates">
     <div class="gt"><div class="n">1</div><div class="tt">오늘 할 장인가</div><div class="dd">상한가 3 · 상승비율 45%. 불통과면 후보에 관망 표시</div></div>
     <div class="gt"><div class="n">2</div><div class="tt">주도 테마</div><div class="dd">섹터 모멘텀 &gt; 0</div></div>
@@ -269,12 +273,12 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
     <span class="p">아침 · 복기</span><span class="arr">→</span>
     <span class="p">검증</span><span class="arr">→</span>
     <span class="p">장중 (보기만)</span><span class="arr">→</span>
-    <span class="p first">14:52 마감 · 잠정 14:50</span><span class="arr">→</span>
+    <span class="p first">14:52 · 15:02 마감 · 잠정 14:50 → 15:00</span><span class="arr">→</span>
     <span class="p second">시계열 · 겹침 격자</span><span class="arr">→</span>
     <span class="p">15:55 마감 · 확정</span><span class="arr">→</span>
     <span class="p">D+1 복기 → 검증</span>
   </div>
-  <div class="muted">복기 탭이 종목보다 먼저다. 검증 탭의 적중률·최악은 비중을 정할 때, 장중 탭은 11~14:30 에 보기만, 마감 탭 잠정 띠가 매수 신호, 시계열 탭은 관문6 의 독립 증거, 확정 판정은 기록 대조용.</div>
+  <div class="muted">복기 탭이 종목보다 먼저다. 검증 탭의 적중률·최악은 비중을 정할 때, 장중 탭은 11~14:30 에 보기만, 마감 탭 마지막 잠정 띠(15:00)가 매수 신호, 시계열 탭은 관문6 의 독립 증거, 확정 판정은 기록 대조용.</div>
 </section>
 
 <section>
@@ -293,7 +297,7 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
     <div class="box">
       <h3>실매매 전에 채워야 할 빈 칸</h3>
       <div class="gap">
-        <div class="grow"><span class="id">1</span><span>14:50 잠정 ↔ 15:20 확정 후보 일치율 (judge_match.csv) — 3시 신호의 신뢰도 숫자</span><span class="cond">2일차 · 일치 0/2 (9/17 부터)</span></div>
+        <div class="grow"><span class="id">1</span><span>14:50 · 15:00 잠정 ↔ 15:20 확정 후보 일치율 (judge_match.csv) — 3시 신호의 신뢰도 숫자. 15:10 잠정을 넣을지도 이 기록으로</span><span class="cond">14:50 2일차 0/2 · 15:00 은 9/21 부터</span></div>
         <div class="grow"><span class="id">2</span><span>HTS 최선집행(SOR) 기준 재설정 확인 — 9/14 제도 변경으로 회사 기준으로 초기화됐다. 계좌 300만원 세팅도 같이</span><span class="cond">✅ 9/19 완료 (계좌 300만·SOR 확인)</span></div>
         <div class="grow"><span class="id">3</span><span>추정자산 자동 수집(kt00002) 첫 실전 — 20:05 로그 trade 줄에 kt00002 행수가 붙는지. U1 비중 계산의 분모</span><span class="cond">9/21 저녁</span></div>
         <div class="grow"><span class="id">4</span><span>매수 시각별 D+1 10시 비교 (15:20 · 15:40 · 19:50 가격)</span><span class="cond">표본 뒤</span></div>
@@ -302,7 +306,7 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
   </div>
 </section>
 
-<footer>출처 : 인계문서_v10.md 2-3(채점 원칙·계좌 규칙) · 11-3(관문) · 8-5 27번(14:50 잠정) · 강의기준_대조표.md 6절(진입) · 7절(매도·손절) · 8-0(U1~U3) · CLAUDE.md 5절(하루 파이프라인). 강의 기준과 사용자 결정을 시간순으로 옮긴 것이며 새 기준·새 숫자는 없다. 판정 v2.1 은 동결. 9/18 밤 사용자 결정 : 1주 연습을 전환 전으로(1주 고정 · 300만원 · 계좌 규칙 그대로), 추정자산 자동 수집, 잠정 후보의 대장은 복기에서 지킴.</footer>
+<footer>출처 : 인계문서_v10.md 2-3(채점 원칙·계좌 규칙) · 11-3(관문) · 8-5 27번(14:50 · 15:00 잠정) · 강의기준_대조표.md 6절(진입) · 7절(매도·손절) · 8-0(U1~U3) · CLAUDE.md 5절(하루 파이프라인). 강의 기준과 사용자 결정을 시간순으로 옮긴 것이며 새 기준·새 숫자는 없다. 판정 v2.1 은 동결. 9/18 밤 사용자 결정 : 1주 연습을 전환 전으로(1주 고정 · 300만원 · 계좌 규칙 그대로), 추정자산 자동 수집, 잠정 후보의 대장은 복기에서 지킴. 9/19 밤 : 15:00 잠정 추가 — 매수 신호는 주문 직전 마지막 잠정(보통 15:00), 잠정끼리 다르면 관문6.</footer>
 
 </div>
 </body>
