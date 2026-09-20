@@ -181,7 +181,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
     <p>하루를 시간순으로 따라가면 된다. 자동으로 도는 것과 내가 손으로 하는 것을 나눠 적었고, 매수는 15:00~15:20 어종 한 가지, 매도는 다음날 10:00 봉까지 +4% 한 가지다. 이 시스템은 조회만 하며 주문 기능이 없다. 주문은 HTS·MTS 에서 직접 낸다.</p>
   </div>
   <div class="stamp">
-    <div class="num">작성 2026-09-19 · 1주 연습 9/21 부터 · 300만원 실매매 전환 전</div>
+    <div class="num">작성 2026-09-20 · 1주 연습 9/21 부터 · 300만원 실매매 전환 전</div>
     <div class="big">D → D+1 10:00</div>
     <div class="muted">종가 매수 → 다음날 10시 봉까지 +4%</div>
   </div>
@@ -189,7 +189,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
 
 <div class="kpis">
   <div class="kpi now"><span class="l">300만원 실매매 조건</span><span class="v">표본 30 + 2주</span><span class="s">후보 표본 30개 · 무결성 오류 0 이 2주 연속. 지금 3/30 · 5/10 거래일</span></div>
-  <div class="kpi now"><span class="l">1주 연습</span><span class="v">9/21 부터 · 1주 고정</span><span class="s">마지막 잠정(15:00 띠)에 후보 뜨는 날 어종 1종목 · 계좌 규칙 그대로 · 1회마다 복기. 실매매 기록과 종이 기록은 분리</span></div>
+  <div class="kpi now"><span class="l">1주 연습</span><span class="v">9/21 부터 · 주문마다 1주</span><span class="s">마지막 잠정(15:00 띠)에 후보 뜨는 날 어종 1종목 · <b>주문 한 번에 1주</b>, 체결되면 직전 체결가 아래 돼지 물량에 다시 1주 · 계좌 규칙 그대로 · 1회마다 복기</span></div>
   <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">시스템은 조회 전용, 주문 TR 없음. 최선집행(SOR) 설정을 첫 1주 매매 전에 재확인</span></div>
   <div class="kpi"><span class="l">판정 기준</span><span class="v">동결 v2.1</span><span class="s">매매 결과로 임계값을 고치지 않는다. 바꾸고 싶으면 이유만 기록</span></div>
 </div>
@@ -215,7 +215,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
 
     <div class="tr me key"><div class="t">09:00<br>~10:00</div>
       <div class="h"><span class="tag me">나</span>어제 산 종목 매도 — D+1 오전</div>
-      <div class="d"><b>10:00 봉까지 +4%</b> 가 목표. 전고 부근 돌파·거래량 터질 때, 매도 쪽 돼지 물량 아래에 판다. 10시 넘어서도 못 가면 <b>시간 손절</b>. 추매는 <b>10:00 전 주문</b>만, 금액은 <b>어제 종가 매수 이하</b>. 피뢰침 종목은 추매 없음.</div>
+      <div class="d"><b>10:00 봉까지 +4%</b> 가 목표. 전고 부근 돌파·거래량 터질 때, 매도 쪽 돼지 물량 아래에 판다. 10시 넘어서도 못 가면 <b>시간 손절</b>. 여러 주가 잡힌 날은 <b>분할 매도</b> — 매도 쪽 돼지 물량 아래에 나눠 걸되 <b>10:00 봉 안에 전량</b>을 끝낸다 (남기면 시간 손절 어김). 추매는 <b>10:00 전 주문</b>만, 금액은 <b>어제 종가 매수 이하</b>. 피뢰침 종목은 추매 없음.</div>
       <div class="scr">10:07 자동 조기 채점 → 마감 탭 어제 종목 줄 아래에 "10시 고가 +x% ✓✕ · 저가 −x%". 횡보 하루 더 관망 · F존 추매 · NXT 불타기는 <span class="tag rec">기록</span>.</div></div>
 
     <div class="tr me"><div class="t">11:00<br>~14:30</div>
@@ -238,7 +238,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
     <div class="tr me key"><div class="t">15:00<br>~15:30</div>
       <div class="h"><span class="tag me">나</span>매수 — 어종 한 가지</div>
       <div class="d">3시부터 장 마감까지, 이평선 갈고리 + 4% 반등 자리에 분할, 갈고리가 없으면 종가 부근. 호가창의 <b>돼지 물량 자리에 매수 1호가</b>, 못 샀다고 위로 쫓아 사지 않는다. 15:20~15:30 은 종가 단일가. <b>채점 기준가는 오늘 종가</b>다.</div>
-      <div class="scr">주문은 HTS·MTS 에서. 시스템은 이 시각 화면까지만 책임진다.</div></div>
+      <div class="scr"><b>1주 연습(9/21~)</b> : 주문 한 번에 <b>1주</b> — ① 3시, 돼지 물량 한 자리에 1주 지정가 ② 체결되면 <b>직전 체결가보다 아래</b> 돼지 물량에 다시 1주 (위로는 가지 않는다) ③ 횟수·간격은 정하지 않는다 — 그날 체결이 정한다 ④ 15:20까지 <b>한 번도</b> 안 걸리면 동시호가에 <b>시장가 1주</b>. 걸어 둔 지정가가 주문창에 남아 있으면 <b>시장가로 정정하거나 취소하고</b> 넣는다 — 그냥 두면 종가가 그 값 아래로 찍힐 때 둘 다 체결돼 2주가 된다. 비중 50%(300만이면 150만)에 닿으면 거기서 멈춘다. 주문은 HTS·MTS 에서. 시스템은 이 시각 화면까지만 책임진다.</div></div>
 
     <div class="tr auto"><div class="t">15:50<br>15:55</div>
       <div class="h"><span class="tag auto">자동</span>확정 판정 → 마감 탭 "14:50 후보 → 15:00 후보 … 15:20 과 같음/다름"</div>
