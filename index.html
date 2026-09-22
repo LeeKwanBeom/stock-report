@@ -170,6 +170,10 @@ details.more summary::before{content:"▸ ";color:var(--muted)}
 details.more[open] summary::before{content:"▾ "}
 details.more .card{margin-top:6px}
 details.more .card strong{font-size:14.5px}
+/* 9/23 잠정 자세히 (A안, 사용자 결정) : 확정 뒤 "14:50 후보 : … → 15:00 후보 : …" 줄 아래 접힌 "▸ 자세히" — 그날 잠정 화면의 "섹터 판정 (잠정)" 목록 둘. pv- 접두사 (rules\screen.md) */
+.pv-det{margin:-6px 0 12px}
+.pv-det .pv-h{font-size:12px;font-weight:800;color:var(--muted);margin:8px 0 4px}
+.pv-det .list{margin-bottom:6px}
 .links{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 2px}
 .links .who{font-size:12px;color:var(--ink2);font-weight:700;margin-right:2px}
 .links a{font-size:11.5px;padding:3px 10px;border-radius:14px;border:1px solid var(--line);background:var(--card2);color:var(--wine);text-decoration:none;font-weight:700}
@@ -627,6 +631,16 @@ function renderClose(d, dates) {
     if (j1450.length) parts.push(`14:50 후보 : ${secText(provSecs(j1450))}`);
     if (j1500.length) parts.push(`15:00 후보 : ${secText(provSecs(j1500))}`);
     add(c1, el('div', 'status', `${parts.join(' → ')} ${sameSecs(provSecs(jProv), cands.map(r => r['섹터명'])) ? '(15:20 과 같음)' : '(15:20 과 다름)'}`));
+    // 9/23 A안 (사용자 결정 "14:50·15:00 후보를 시간이 지나고 다시 보고 싶다") : 그 줄 아래 접힌 "▸ 자세히" — 그날 잠정 화면에 있던 "섹터 판정 (잠정)" 목록을 14:50 → 15:00 차례로 그대로,
+    //   대장 이름 한 칸만 더 (judgeList 의 lead). 기본 접힘 — 잠정은 표본이 아니라 확정 후보 카드와 같은 무게로 읽히지 않게, 후보 없는 날 탭이 길어지지 않게.
+    //   종목 줄(대장·2등·3등·4등)은 안 그린다 — 마감 JSON 의 종목표(d.stocks)는 15:20 것이라 잠정 시각과 맞지 않는다. 자료는 JSON 에 이미 있던 judge1450·judge1500 그대로, 새 수집·새 칸 없음
+    const det = el('details', 'more pv-det'); add(det, el('summary', null, '자세히 (잠정 14:50 · 15:00 섹터 판정)'));
+    [['14:50', j1450], ['15:00', j1500]].forEach(([t, rows]) => {
+      if (!rows.length) return;
+      add(det, el('div', 'pv-h', `잠정 ${t}`));
+      judgeList(det, rows, true);
+    });
+    add(c1, det);
   }
 
   // 8-3 ② 피뢰침 (9/14 목업 B) — 종베 후보 카드 바로 아래, 같은 카드·칩·색 규칙 (시안 pirochim_mockup.html). 15:20 판정만.
@@ -701,11 +715,13 @@ function renderClose(d, dates) {
   add(c2, labelWith('섹터 판정', 'close.judge'));
   judgeList(c2, judge);
   // 섹터 판정 목록 본체 — 9/17 함수로 묶음 : 15:20 확정과 14:50 잠정(위 live 분기)이 같은 목록을 그린다. 내용은 그대로
-  function judgeList(parent, rows) {
+  //   9/23 lead=true (잠정 자세히 전용) : 집중도 뒤에 " · 대장이름" 한 칸. 확정·잠정 띠 목록은 인자 없이 종전 그대로
+  function judgeList(parent, rows, lead) {
     const list = el('div', 'list');
     rows.slice().sort((a, b) => (num(b['집중도%']) ?? 0) - (num(a['집중도%']) ?? 0)).forEach(r => {
       const row = el('div', 'row');
       const nm = el('span'); add(nm, el('span', null, r['섹터명'] + ' '), el('span', 'muted', has(r['집중도%']) ? r['집중도%'] + '%' : ''));
+      if (lead && has(r['대장'])) add(nm, el('span', 'muted', ' · ' + r['대장']));
       const rt = el('span', 'sub', `모멘텀 ${r['모멘텀'] ?? '—'} · 2따 ${r['2따스코어'] ?? '—'} · `);
       add(rt, el('span', r['판정'] === '후보' ? 'acc' : null, r['판정'] || '—'));
       add(list, add(row, nm, rt));
@@ -1790,7 +1806,7 @@ const HELP = {
       ['m/d (요일) 15:20 판정', '판정 시각. 오른쪽 배지는 비고(만기일 등).'],
       ['수집 · OCR 경고 · push', '수집 = 마지막 수집 시각, OCR 경고 = 티마 읽기 경고 수, push = 이 화면이 올라간 시각. OK 가 아니면 빨강 — 화면이 최신이 아닐 수 있다. 이 화면 파일을 마지막으로 만든 시점의 값이라 최신 날짜에서만 보인다 (지난 날짜는 숨김).'],
       ['판정 전', '장중 자료만 있는 날은 후보 · 관문1 을 그리지 않는다. "후보 없음" 으로 읽지 말 것.'],
-      ['잠정 14:50 · 15:00 (노란 띠)', '14:52 에 14:50 자료로, 15:02 에 15:00 자료로 미리 돌린 판정 (폰에는 14:53~54 · 15:03~04). 띠·후보 카드·"섹터 판정 (잠정)" 목록은 마지막 잠정 하나(15:00 이 오면 15:00 으로 바뀜), 둘 다 있으면 "잠정 흐름 : 14:50 … → 15:00 …" 한 줄에 같음/다름. 15:50 확정과 다를 수 있고 표본이 아니다. 후보가 없는 날은 목록에서 어느 섹터가 어디서 빠졌는지 본다. 확정 뒤에는 "14:50 후보 : … → 15:00 후보 : … (15:20 과 같음/다름)" 한 줄로 남고, 일치 여부는 매일 기록된다(judge_match). 1주 연습은 주문 직전 마지막 잠정(보통 15:00) 후보의 대장 1주 — 잠정끼리 다르면 관문6(사람 판단).']]],
+      ['잠정 14:50 · 15:00 (노란 띠)', '14:52 에 14:50 자료로, 15:02 에 15:00 자료로 미리 돌린 판정 (폰에는 14:53~54 · 15:03~04). 띠·후보 카드·"섹터 판정 (잠정)" 목록은 마지막 잠정 하나(15:00 이 오면 15:00 으로 바뀜), 둘 다 있으면 "잠정 흐름 : 14:50 … → 15:00 …" 한 줄에 같음/다름. 15:50 확정과 다를 수 있고 표본이 아니다. 후보가 없는 날은 목록에서 어느 섹터가 어디서 빠졌는지 본다. 확정 뒤에는 "14:50 후보 : … → 15:00 후보 : … (15:20 과 같음/다름)" 한 줄로 남고, 그 아래 "▸ 자세히" 를 누르면 그날 잠정 14:50 · 15:00 의 섹터 판정 목록이 대장 이름과 함께 펼쳐진다(종목 줄은 없음, 표본 아님). 일치 여부는 매일 기록된다(judge_match). 1주 연습은 주문 직전 마지막 잠정(보통 15:00) 후보의 대장 1주 — 잠정끼리 다르면 관문6(사람 판단).']]],
     ['보고 나서', [
       ['검증 기간', '후보가 있어도 매매하지 않는다. 관문6 을 사람이 하고, 다음날 20:05 뒤 → D+1 칸을 본다.'],
       ['표본', '15:20 후보 섹터 1개 = 표본 1(관문6 에서 사람이 제외한 것은 표본 아님). 표본 30개 + 무결성 2주 뒤 실매매 전환.']]]] },
