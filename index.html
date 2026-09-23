@@ -199,6 +199,8 @@ details.more .card strong{font-size:14.5px}
 .kmk{font-size:10.5px;color:var(--muted);margin-left:3px;font-weight:400}
 .iq-out{text-decoration:line-through;color:var(--muted)}   /* 9/17 사용자 결정 ① : 대금 35위 밖(강의 당일주도주 검색식 숫자, 대조표 C4)은 종목명만 취소선 + 회색. 오른쪽 숫자·선행은 그대로. 판정에 안 씀 */
 .iq-rk{font-size:10.5px;padding:1px 7px;border-radius:10px;background:var(--chip);color:var(--chipInk);margin:0 5px 0 7px;white-space:nowrap}   /* 9/17 조회순위 해답지 : 거래대금 순위 칩 (사용자 결정 ②) — 전역 .chip 과 이름 안 겹치게 iq- 접두사 */
+.iq-sec{font-size:12px;color:var(--sub)}   /* 9/23 조회순위섹터 : 종목명 앞 같은 회차 티마 카드의 섹터명 (사용자 제안 → 추천안 셋, 화면 표시일 뿐 판정에 안 씀). 전역 .sub·.chip 과 이름 안 겹치게 iq- 접두사 */
+.iq-nm .iq-name{display:inline-block}.iq-nm .flag{white-space:nowrap}.iq-rt{white-space:nowrap}   /* 9/23 조회순위섹터 캡처 정정 : 섹터명이 붙어 한 줄에 안 들어가는 긴 이름은 글자 중간("와이즈플래닛컴퍼/니")이 아니라 이름째로 다음 줄, '선행' 칩과 오른쪽 등락률·순위·금액("11,089/억")은 안 끊긴다. 배치는 그대로 */
 .gapline{font-size:11px;color:var(--muted);margin-top:4px}
 .hint{font-size:11px;color:var(--wine);margin-top:6px}
 .secblk.tap{cursor:pointer}
@@ -1210,18 +1212,29 @@ function renderLive(d) {
   else {
     const outs = inq.filter(r => !has(r['거래대금순위']));
     add(c2, el('div', 'status', `20위 중 거래대금 100위 밖 ${outs.length}개` + (outs.length ? ' : ' + outs.map(r => r['종목명']).join(' · ') : '')));
+    /* 9/23 `조회순위섹터` (사용자 제안 → 추천안 셋 채택) : 종목명 앞에 같은 회차 티마 카드의 섹터명. stockFlow 에서 inqTime 회차 행을 종목코드로 맞춘다 — JSON·pages-export 변경 0.
+       ① 같은 회차 카드만 (빈칸 = 그 회차 캡처된 카드(카드당 4종목)에 없는 종목, 뜻이 하나) ② 두 카드에 들면 '·' 로 둘 다 (9/17 한화시스템 조선/기자재·방산 — 5일 1건, 고르는 규칙 없음) ③ 없으면 아무것도 안 붙임.
+       화면 표시일 뿐 판정에 안 쓴다. 15:20 회차 실측 9/17~23 대응 10~14/20 */
+    const iqSec = {};   // 종목코드 → 섹터명 목록
+    arr(d.stockFlow).forEach(s => {
+      if (String(s['시각']) !== String(d.inqTime) || !has(s['섹터명'])) return;
+      const c = String(s['종목코드'] || '').trim(); if (!c) return;
+      if (!iqSec[c]) iqSec[c] = [];
+      if (!iqSec[c].includes(s['섹터명'])) iqSec[c].push(s['섹터명']);
+    });
     const mkRow = r => {
       const row = el('div', 'row');
       const rk = num(r['거래대금순위']);
       const IQ_OUT = 35;   /* 9/17 사용자 결정 ① : 대금 35위 밖은 종목명만 취소선. 35 = 강의 당일주도주 검색식 "거래대금 순위 상위 35"(대조표 C4). 화면 표시일 뿐 판정에 안 쓴다 */
       const out35 = rk === null || rk > IQ_OUT;
-      const nm = el('span'); add(nm, el('span', 'sub', r['조회순위'] + '. '), el('span', out35 ? 'iq-out' : null, r['종목명']));
+      const secs = iqSec[String(r['코드'])];   /* 9/23 조회순위섹터 : 이름 앞 섹터명, 없으면 아무것도 안 붙임 (③) */
+      const nm = el('span', 'iq-nm'); add(nm, el('span', 'sub', r['조회순위'] + '. '), secs ? el('span', 'iq-sec', secs.join('·') + ' ') : null, el('span', 'iq-name' + (out35 ? ' iq-out' : ''), r['종목명']));
       if (r['구분'] === 'ETF') add(nm, el('span', 'muted', ' ETF'));
       add(nm, kMark(d, r['코드']));   // (k) 9/15 저녁
       if ((num(r['조회순위']) ?? 99) <= 5 && (rk === null || rk > 20)) add(nm, el('span', 'flag', '선행'));
       const eok = num(r['거래대금억']);   /* 9/17 사용자 결정 ② : '대금' 글자 빼고 순위 + 금액(억). 뜻은 도움말 ? 에 */
       /* 9/17 사용자 결정 ② (2차) : 순위는 칩, 금액은 본문 글자 — 'n위 n억' 숫자 두 개가 붙어 한 덩어리로 읽히던 것을 가름 */
-      const rt = el('span'); add(rt, pctEl(r['등락률']), el('span', 'iq-rk', rk === null ? '100위 밖' : `${rk}위`));
+      const rt = el('span', 'iq-rt'); add(rt, pctEl(r['등락률']), el('span', 'iq-rk', rk === null ? '100위 밖' : `${rk}위`));
       if (rk !== null && eok !== null) add(rt, el('span', 'sub', `${eok.toLocaleString()}억`));
       return add(row, nm, rt);
     };
@@ -1700,6 +1713,7 @@ const HELP_SEC = {
     ['점선 (16:00 앞) · 머리글 15²⁰', '점선 오른쪽 = KRX 애프터마켓(16:00~20:00, 9/14 개설) 회차. 열 머리글은 시 + 작은 위첨자 분 — 정각은 시만(10 · 18), 나머지는 15²⁰ · 15⁴⁰ · 19⁵⁰ · 20⁰²(= 15:20 …). 15:20 을 그대로 쓰면 옆 칸과 겹쳐서(9/16 밤, 사용자 결정). 15:40 은 장후 시간외 종가라 점선 왼쪽. 같은 계산(통합 스냅 금액 · 통합 상위100 분모 — 9/17 부터)이지만 판정은 15:20 한 구간뿐 — 저녁 흐름은 관찰만(사용자 결정 9/15).']],
   'live.inq': [
     ['n. 종목명 · [n위] n억', '키움 실시간 종목조회 순위 20위(D7 — 1~3위로 튀어나온 종목, 5위 안 꾸준히). 오른쪽 칩 [n위] 와 n억 = 같은 회차 KRX+NXT 통합 거래대금 100위 안 순위와 누적 거래대금(9/17 부터. 9/16 까지는 KRX). "상위" 의 숫자 기준은 없다 — 금액을 보고 사람이 가린다(C 기준 없음). 100위 밖은 금액 없음.'],
+    ['섹터명 (이름 앞)', '같은 회차 티마 카드의 섹터명(9/23). 빈칸 = 그 회차 캡처된 티마 카드(카드당 4종목)에 없는 종목. 두 카드에 든 종목은 · 로 둘 다. 관찰 표시일 뿐 판정에 안 쓴다.'],
     ['~~종목명~~ 취소선', '거래대금 35위 밖(100위 밖 포함). 35 = 강의 당일주도주 검색식의 "거래대금 순위 상위 35"(대조표 C4). 훑을 때 건너뛰라는 표시일 뿐 판정에 안 쓴다 — 오른쪽 숫자·선행은 그대로 둔다.'],
     ['선행', '조회 5위 안인데 거래대금 20위 밖 — 관심이 돈보다 앞선 종목. 관찰 표시일 뿐 판정에 안 쓴다.'],
     ['100위 밖 n개', '조회 20위 중 거래대금 100위 밖인 종목 수.'],
