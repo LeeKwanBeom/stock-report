@@ -372,6 +372,8 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .vf-row .nm{font-weight:700}
 .vf-row .l2{grid-column:2;margin-top:3px;font-size:11.5px;color:var(--sub)}
 .vf-row .l2 .mk{display:inline-block;width:16px}
+.vf-row .l2 .chip{margin-left:5px}   /* 9/24 실전 토막 칩 (15:40 봉만 · 한 시장만) */
+.vf-row .l2 .vf-rt{display:inline-block;white-space:nowrap;margin-left:.3em}   /* 9/24 실전 토막은 통째로 다음 줄로 (앞 글자는 제자리) */
 .vf-row .wait{color:var(--muted)}
 .vf-band{display:flex;align-items:center;gap:8px;margin:22px 2px 10px;font-size:11.5px;font-weight:800;color:var(--sub);letter-spacing:.4px}
 .vf-band::before,.vf-band::after{content:"";flex:1;height:1px;background:var(--rule)}
@@ -1449,9 +1451,50 @@ function renderSeries(d) {
       같은 날 : 표와 목록 합침(사용자 결정 추천안) — 줄을 누르면 표 아래 그 줄 대장 목록(vfBlock), 처음엔 후보. 옛 '표본 목록' 구역 · 접힌 목록 · verify.list 도움말 없앰.
       같은 날 : 목록 한 줄을 늘 두 줄로(사용자 결정 B안) — 1줄 날짜 · 섹터 · 대장(k) · 관망, 2줄 ✓✕⏳ 맨 앞(세로 한 줄) + 10시 고가 · 저가.
    ⓓ 적중률 옆에 D1_10시고가% 평균 · 중앙값 · 최악(D1_10시저가% 최저, 날짜·종목). 채점 5개 미만이면 '목록만'.
-   일자 >= alFrom(20260917) 만 표본(거래대금 KRX+NXT 통합 자). 그 전 9/10~9/16 은 "KRX 자 · 참고 (표본 아님)" 띠 아래 같은 표·목록 (9/16 밤 사용자 결정). 판정·채점 코드·임계값 무관. */
+   일자 >= alFrom(20260917) 만 표본(거래대금 KRX+NXT 통합 자). 그 전 9/10~9/16 은 "KRX 자 · 참고 (표본 아님)" 띠 아래 같은 표·목록 (9/16 밤 사용자 결정). 판정·채점 코드·임계값 무관.
+   9/24 `실전채점` (사용자 결정 B안 — 추천대로) : 표본 · 적중률 표 아래 '실전 (기록)' 작은 표 + 목록 한 줄 끝 토막 '· 실전 ✓ 저녁 16:00 KRX'.
+      자료 = verify.json 'real'(pages-export v2.9 — data\result_real.csv, real-score.ps1 v1.0). 실전 = D 저녁(NXT 15:40~ · KRX 16:00~, 어느 시장이든) ·
+      D+1 NXT 프리 08:00~08:49 · D+1 KRX 09:00~10:00 중 먼저 +4%(next-day 와 같은 식). 채점 원본 아님 — 표본 수 · 적중률 · 전환 조건은 위 표 그대로.
+      지금 · 실전은 두 채점이 다 끝난 같은 행만 센다. 칩 '15:40 봉만'(NXT 단일가가 섞인 15:40 봉 한 분에서만 닿음) · '한 시장만'(NXT 되는 종목이 16:00 뒤 한 시장에서만 닿음 —
+      자동매도 16:00 주문은 SOR 이 한 시장에만 건다). real 이 없으면(옛 verify.json) 구역·토막을 안 그린다. */
 const VF_LINES = [['후보', '후보'], ['관문3제외', '관문3 제외'], ['배경', '배경']];
 let VERIFY_SUB = '';
+let VF_REAL = {};   // 9/24 : 일자|섹터|종목코드 → 실전 기록 행 (renderVerify 가 채운다)
+function vfRealKey(r) { return `${r['일자']}|${r['섹터']}|${r['종목코드']}`; }
+function vfRealDone(r) { return (r['목표4%_10시'] === 'Y' || r['목표4%_10시'] === 'N') && (r['목표4%_실전'] === 'Y' || r['목표4%_실전'] === 'N'); }
+function vfRealTable(rrows) {
+  const wrap = el('div', 'vf-tbl'); wrap.setAttribute('data-noswipe', '');
+  const t = el('table'); const th = el('tr');
+  ['줄', '둘 다 끝난 수', '지금', '실전', '먼저 닿은 창'].forEach(h => add(th, el('th', null, h)));
+  add(t, th);
+  VF_LINES.forEach(([key, label], i) => {
+    const rows = rrows.filter(r => r['판정'] === key); const done = rows.filter(vfRealDone); const wait = rows.length - done.length;
+    const tr = el('tr', i === 0 ? 'main' : null);
+    const c0 = el('td', null, label); if (i > 0) add(c0, el('span', 'ref', '참고'));
+    add(tr, c0, el('td', null, String(done.length) + (wait ? ` (대기 ${wait})` : '')));
+    if (!done.length) add(tr, el('td', null, '—'), el('td', null, '—'), el('td', null, '—'));
+    else {
+      const now = done.filter(r => r['목표4%_10시'] === 'Y').length; const real = done.filter(r => r['목표4%_실전'] === 'Y');
+      const cnt = w => real.filter(r => r['첫도달창'] === w).length;
+      add(tr, el('td', null, `${now}/${done.length}`), el('td', null, `${real.length}/${done.length}`),
+        el('td', 'w', real.length ? `저녁 ${cnt('저녁')} · 프리 ${cnt('프리')} · 10시 ${cnt('10시')}` : '—'));
+    }
+    add(t, tr);
+  });
+  add(wrap, t); return wrap;
+}
+function vfRealTok(r) {   /* 목록 한 줄 끝 토막. 실전 기록이 없는 행(9/17 전 · 옛 verify.json)은 토막 없음 */
+  const x = VF_REAL[vfRealKey(r)]; if (!x) return [];
+  const v = x['목표4%_실전'];
+  if (v === 'N') return [el('span', 'sub', '· 실전 '), el('span', 'tenmark x', '✕')];
+  if (v !== 'Y') return [el('span', 'sub', '· 실전 '), el('span', 'wait', '⏳')];
+  const tm = String(x['첫도달시각'] || ''); const hm = tm.length === 4 ? `${tm.slice(0, 2)}:${tm.slice(2)}` : tm;
+  const ev = x['첫도달창'] === '저녁';
+  const out = [el('span', 'sub', '· 실전 '), el('span', 'tenmark ok', '✓'), el('span', 'sub', ` ${x['첫도달창'] || ''} ${hm}${ev && x['저녁도달시장'] ? ' ' + x['저녁도달시장'] : ''}`)];
+  if (ev && tm === '1540' && String(x['저녁도달봉수']) === '1') out.push(el('span', 'chip', '15:40 봉만'));
+  if (ev && x['저녁NXT'] === 'Y' && tm >= '1600' && (x['저녁도달시장'] === 'KRX' || x['저녁도달시장'] === 'NXT')) out.push(el('span', 'chip', '한 시장만'));
+  return out;
+}
 function vfMd(ymd) { const s = String(ymd || ''); return s.length === 8 ? `${+s.slice(4, 6)}/${+s.slice(6, 8)}` : s; }
 function vfStats(rows) {
   const scored = rows.filter(r => has(r['목표4%_10시']));
@@ -1508,6 +1551,7 @@ function vfRow(r) {
     const ok = r['목표4%_10시'] === 'Y';
     add(l2, el('span', 'mk tenmark' + (ok ? ' ok' : ' x'), ok ? '✓' : '✕'), el('span', 'sub', '10시 고가 '), pctEl(r['D1_10시고가%']), el('span', 'sub', ' · 저가 '), pctEl(r['D1_10시저가%']));
   } else add(l2, el('span', 'mk wait', '⏳'), el('span', 'wait', has(r['비고']) ? `채점 대기 (${r['비고']})` : '채점 대기'));
+  const rt = vfRealTok(r); if (rt.length) add(l2, add(el('span', 'vf-rt'), ...rt));   /* 9/24 실전 (기록) 토막 — 한 덩어리로 줄바꿈 */
   add(row, el('span', 'd', vfMd(r['일자'])), l1, l2);
   return row;
 }
@@ -1583,6 +1627,7 @@ function renderVerify(vf) {
   const box = document.getElementById('verify'); box.innerHTML = '';
   const alFrom = String(vf.alFrom || '20260917');
   VF_ROWS = arr(vf.rows); VF_ALFROM = alFrom; VF_K = vf; rcRefresh();   // 9/19 마감 탭 최근 거래일 · 9/24 VF_K (k)
+  const real = arr(vf.real && vf.real.rows); VF_REAL = {}; real.forEach(r => { VF_REAL[vfRealKey(r)] = r; });   // 9/24 실전 (기록) — 목록 토막보다 먼저 채운다
   const byDate = (a, b) => String(b['일자']).localeCompare(String(a['일자']));
   const leads = arr(vf.rows).filter(r => r['역할'] === '대장').sort(byDate);
   const al = leads.filter(r => String(r['일자']) >= alFrom), krx = leads.filter(r => String(r['일자']) < alFrom);
@@ -1593,6 +1638,10 @@ function renderVerify(vf) {
   const gh = el('div', 'rv-sec'); add(gh, el('h2', null, '관문 순서'), el('span', 'ln')); add(box, gh, vfGateTable());
   add(box, sec('표본 · 적중률', `통합 자 ${vfMd(alFrom)} 부터 · 후보 줄만 표본`, null, 'verify.table'));
   add(box, vfBlock(al, false));   /* 9/24 : 표 + 누른 줄의 대장 목록 (옛 '표본 목록' 구역 합침) */
+  if (real.length) {   /* 9/24 실전채점 : 실전 (기록) 작은 표 — 채점 원본 아님 */
+    add(box, sec('실전 (기록)', '채점 원본 아님', null, 'verify.real'));
+    add(box, vfRealTable(real.filter(r => r['역할'] === '대장' && String(r['일자']) >= alFrom)));
+  }
   if (krx.length) {
     const kd = krx.map(r => String(r['일자'])).sort();
     const band = el('div', 'vf-band'); add(band, el('span', null, `KRX 자 · 참고 (표본 아님) · ${vfMd(kd[0])}~${vfMd(kd[kd.length - 1])}`)); add(box, band);
@@ -1836,7 +1885,15 @@ const HELP_SEC = {
     ['목록 한 줄', '두 줄 — 위 : 날짜 · 섹터 · 대장 (관망). 아래 : ✓ 적중 · ✕ 미달 · ⏳ 채점 전 + 10시까지 고가% · 저가%. ✓✕ 가 왼쪽에 세로로 서서 훑으면 적중 개수가 보인다. 최근 순. 2등 · 3등은 참고 기록이라 여기 없다.'],
     ['(k)', 'KRX 전용 종목(NXT 거래 불가) — 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목이라 08:00 프리마켓부터(사용자 결정 9/15, 장중 탭과 같은 표시). 아래 KRX 자 띠(9/16 까지 날짜 구간)와는 다른 뜻. 종목마스터에 없는 종목은 표시 없음. 판정 · 채점 무관.'],
     ['피뢰침', '별도 계열 — 표본 30 에 안 센다. 채점 칸이 아직 없어 첫 피뢰침 대상일 뒤에 연결.'],
-    ['KRX 자 띠', '9/16 까지는 거래대금이 KRX 단독이라 표본이 아니다. 9/17 부터 KRX+NXT 통합 자로 표본 0 부터 다시 센다.']],
+    ['KRX 자 띠', '9/16 까지는 거래대금이 KRX 단독이라 표본이 아니다. 9/17 부터 KRX+NXT 통합 자로 표본 0 부터 다시 센다.'],
+    ['· 실전 토막', '목록 한 줄 끝 — ✓ 저녁 16:00 KRX = 실전 규칙으로 그 창 · 시각 · 시장에서 먼저 +4%. ✕ = 세 창 모두 못 닿음. ⏳ = 창이 덜 끝남. 뜻은 아래 "실전 (기록)" 구역 ?.']],
+  'verify.real': [
+    ['뜻', '실매매 규칙대로 본 기록 — D 저녁(NXT 되는 종목 15:40~ · KRX 16:00~, 어느 시장이든) · 다음날 NXT 프리 08:00~08:49 · 다음날 KRX 09:00~10:00 봉 중 시간 순으로 먼저 +4%(지금 채점과 같은 식)에 닿으면 ✓. 채점 원본이 아니다 — 표본 수 · 적중률 · 실매매 전환 조건은 위 표(10시) 그대로이고, 어느 쪽으로 볼지는 월 1회 결정(9/24 사용자 결정).'],
+    ['둘 다 끝난 수', '10시 채점과 실전 기록이 둘 다 끝난 대장만 센다 — 지금 · 실전을 같은 행으로 비교한다. (대기 n) = 창이 덜 끝남.'],
+    ['지금 · 실전', '같은 행에서 10시 +4% 도달 수와 실전 규칙 도달 수. 실전은 10시 창 앞에 저녁 · 프리를 붙인 것이라 지금보다 작을 수 없다.'],
+    ['먼저 닿은 창', '실전 ✓ 가 어느 창에서 먼저 닿았나. 저녁 · 프리 수가 지금과 실전의 차이다.'],
+    ['가정', '1분봉 고가가 +4% 에 닿으면 팔렸다고 본다 — 저녁 · 프리는 거래가 얇아 실제 체결과 다를 수 있다(1주 연습 체결로 확인). 기준가는 D 종가(계좌 매입가 아님). (k) 종목은 프리 창이 없다.'],
+    ['칩', '15:40 봉만 = NXT 15:40 봉 한 분에서만 닿음(그 봉에는 15:30~15:40 단일가 체결이 섞여 자동매도 주문이 못 낀다). 한 시장만 = NXT 되는 종목이 16:00 뒤 KRX · NXT 중 한 시장에서만 닿음(자동매도 16:00 주문은 한 시장에만 걸린다).']],
   'review.sum': [
     ['기준 준수율', '규칙을 다 지킨 매매 ÷ 전체.'],
     ['연속 손실', '손실 매매가 이어진 건수. 쉬는 날 판단은 계좌 규칙(대조표 8절).'],
