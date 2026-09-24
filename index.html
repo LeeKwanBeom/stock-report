@@ -345,7 +345,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .rv-say{margin-top:11px;font-size:12.5px;line-height:1.6;color:var(--ink2);background:var(--rose);border-radius:10px;padding:9px 11px}
 .rv-foot{margin:24px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.9;border-top:1px solid var(--rule);padding-top:14px}
 .rv-foot b{color:var(--sub);font-weight:700}
-/* 검증 탭 (9/16 밤 검증탭, 인계문서 8-6 ⓐ~ⓓ) — 다섯 줄 표 + 통계, 표본 목록, KRX 자 참고 띠 */
+/* 검증 탭 (9/16 밤 검증탭, 인계문서 8-6 ⓐ~ⓓ · 9/24 세 줄) — 줄별 표 + 통계, 표본 목록, KRX 자 참고 띠 */
 .vf-tbl{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 10px 4px;margin-bottom:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .vf-tbl table{border-collapse:collapse;width:100%;font-size:11.5px}
 .vf-tbl th{font-size:10px;font-weight:400;color:var(--muted);padding:4px 3px;text-align:right;white-space:nowrap}
@@ -1427,10 +1427,12 @@ function renderSeries(d) {
    data/verify.json (pages-export.ps1 v2.3 — result_log 전 행·전 칸 그대로) 을 그린다. 표본 수·적중률·평균·중앙값·최악은 전부 여기서 센다.
    ⓐ 표본 1 = 후보 섹터 1개, 채점은 그 섹터 대장(역할 '대장') 1종목. 관망 후보도 표본에 넣되 [관망] 표시. 2등·3등은 JSON 에만(참고 기록).
    ⓑ 적중률 = 대장 '목표4%_10시' Y ÷ 채점된 대장 수(D+1 미도래는 '채점 대기' 로 따로 셈). 피뢰침은 별도 계열 — result_log 에 채점 칸이 없어 자리만.
-   ⓒ 후보 · 관문2 제외 · 관문3 제외 · 관문4 제외 · 배경 다섯 줄 한 표. 표본 30 은 후보 줄만, 나머지 줄은 '참고'.
+   ⓒ 후보 · 관문3 제외 · 배경 세 줄 한 표. 표본 30 은 후보 줄만, 나머지 줄은 '참고'.
+      9/24 사용자 결정 (`검증탭공부`) : 관문2 제외 · 관문4 제외 줄 삭제 — close-judge 는 그 이름을 안 내서 늘 0 이었다.
+      관문2(모멘텀 0 이하) 탈락은 판정 이름이 '배경', 관문4 탈락 '대장없음' 은 카드 4종목 금액이 다 빈 자료 빈칸이라 채점할 대장이 없다.
    ⓓ 적중률 옆에 D1_10시고가% 평균 · 중앙값 · 최악(D1_10시저가% 최저, 날짜·종목). 채점 5개 미만이면 '목록만'.
    일자 >= alFrom(20260917) 만 표본(거래대금 KRX+NXT 통합 자). 그 전 9/10~9/16 은 "KRX 자 · 참고 (표본 아님)" 띠 아래 같은 표·목록 (9/16 밤 사용자 결정). 판정·채점 코드·임계값 무관. */
-const VF_LINES = [['후보', '후보'], ['관문2제외', '관문2 제외'], ['관문3제외', '관문3 제외'], ['관문4제외', '관문4 제외'], ['배경', '배경']];
+const VF_LINES = [['후보', '후보'], ['관문3제외', '관문3 제외'], ['배경', '배경']];
 let VERIFY_SUB = '';
 function vfMd(ymd) { const s = String(ymd || ''); return s.length === 8 ? `${+s.slice(4, 6)}/${+s.slice(6, 8)}` : s; }
 function vfStats(rows) {
@@ -1782,7 +1784,7 @@ const HELP_SEC = {
     ['스냅샷의 한계', '회차 사이에 잠깐 오른 종목은 안 잡힌다 — 오래 걸려 있는 종목을 보는 표.'],
     ['본표 · 접힘', '5위 안(굵은 칸)에 2회 이상 든 종목만 본표. 나머지(2회 미만 · 11~20위만)는 아래 접힘. D7 "5위 이내 꾸준히" 를 회차로 센 화면 기준이라 판정에 안 쓴다.']],
   'verify.table': [
-    ['줄', '15:20 판정별 — 후보 · 관문2 제외 · 관문3 제외 · 관문4 제외 · 배경. 전부 그 섹터 대장 1종목을 같은 자(목표4%_10시)로 채점한 값. 표본 30 은 후보 줄만, 나머지 줄은 참고(표본 아님).'],
+    ['줄', '15:20 판정별 — 후보 · 관문3 제외(카드 4종목 중 +5% 이상이 2개 미만) · 배경(관문3 은 통과, 모멘텀 0 이하 = 관문2 탈락). 관문4(대장 없음)는 카드 금액을 못 읽은 자료 빈칸이라 채점할 대장이 없어 줄이 없다. 전부 그 섹터 대장 1종목을 같은 자(목표4%_10시)로 채점한 값. 표본 30 은 후보 줄만, 나머지 줄은 참고(표본 아님).'],
     ['표본', '후보 섹터 1개 = 표본 1. 관망(관문1 불통과) 후보도 넣되 목록에 관망 표시. (대기 n) = D+1 채점 전.'],
     ['적중률', '10시까지 고가 +4% 도달(Y) ÷ 채점된 수. 채점 5개 미만이면 통계 대신 목록만.'],
     ['평균 · 중앙값 · 최악', 'D+1 10시까지 고가% 의 평균과 중앙값. 최악 = 10시까지 저가% 가 가장 낮았던 표본(날짜 · 종목).'],
