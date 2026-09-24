@@ -345,7 +345,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .rv-say{margin-top:11px;font-size:12.5px;line-height:1.6;color:var(--ink2);background:var(--rose);border-radius:10px;padding:9px 11px}
 .rv-foot{margin:24px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.9;border-top:1px solid var(--rule);padding-top:14px}
 .rv-foot b{color:var(--sub);font-weight:700}
-/* 검증 탭 (9/16 밤 검증탭, 인계문서 8-6 ⓐ~ⓓ · 9/24 세 줄 · 관문 순서 표 · 표와 목록 합침) — 관문 순서, 줄별 표 + 통계(줄을 누르면 표 아래 대장 목록), KRX 자 참고 띠 */
+/* 검증 탭 (9/16 밤 검증탭, 인계문서 8-6 ⓐ~ⓓ · 9/24 세 줄 · 관문 순서 표 · 표와 목록 합침 · 목록 두 줄) — 관문 순서, 줄별 표 + 통계(줄을 누르면 표 아래 대장 목록), KRX 자 참고 띠 */
 .vf-tbl{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 10px 4px;margin-bottom:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .vf-tbl table{border-collapse:collapse;width:100%;font-size:11.5px}
 .vf-tbl th{font-size:10px;font-weight:400;color:var(--muted);padding:4px 3px;text-align:right;white-space:nowrap}
@@ -364,12 +364,15 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .vf-gate th:first-child,.vf-gate td:first-child{padding-left:0;width:1%;color:var(--muted);font-variant-numeric:tabular-nums}
 .vf-gate td:nth-child(2){white-space:nowrap}
 .vf-list{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 12px;margin-bottom:10px}
-.vf-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;padding:7px 0;border-top:1px solid var(--line2);font-size:12.5px}
+/* 9/24 B안 : 늘 두 줄 — 날짜 칸(34px) | 1줄 섹터 · 대장 · 관망 / 2줄(들여 씀) ✓✕⏳ 고정 칸 + 결과. 옛 한 줄 flex(길면 저절로 줄바꿈) 대신 */
+.vf-row{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:6px;padding:7px 0;border-top:1px solid var(--line2);font-size:12.5px}
 .vf-row:first-child{border-top:0}
-.vf-row .d{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.vf-row .d{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;padding-top:1px}
+.vf-row .l1{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;min-width:0}
 .vf-row .nm{font-weight:700}
-.vf-row .r{font-size:11.5px;color:var(--sub);white-space:nowrap}
-.vf-row .wait{font-size:11.5px;color:var(--muted)}
+.vf-row .l2{grid-column:2;margin-top:3px;font-size:11.5px;color:var(--sub)}
+.vf-row .l2 .mk{display:inline-block;width:16px}
+.vf-row .wait{color:var(--muted)}
 .vf-band{display:flex;align-items:center;gap:8px;margin:22px 2px 10px;font-size:11.5px;font-weight:800;color:var(--sub);letter-spacing:.4px}
 .vf-band::before,.vf-band::after{content:"";flex:1;height:1px;background:var(--rule)}
 .vf-band span{white-space:nowrap}
@@ -1444,6 +1447,7 @@ function renderSeries(d) {
       같은 날 사용자 결정으로 대장(관문4) 줄을 뺐다 — 대장없음은 채점 종목이 없어 검증 탭 밖(무결성 쪽 일). 대장 = 채점 종목이라는 설명은 ? 도움말 '줄'·표본 목록에 있다.
       같은 날 : 목록 종목명 옆 (k) = KRX 전용(NXT 불가) — verify.json krxOnly(pages-export v2.8), 장중 탭과 같은 표시.
       같은 날 : 표와 목록 합침(사용자 결정 추천안) — 줄을 누르면 표 아래 그 줄 대장 목록(vfBlock), 처음엔 후보. 옛 '표본 목록' 구역 · 접힌 목록 · verify.list 도움말 없앰.
+      같은 날 : 목록 한 줄을 늘 두 줄로(사용자 결정 B안) — 1줄 날짜 · 섹터 · 대장(k) · 관망, 2줄 ✓✕⏳ 맨 앞(세로 한 줄) + 10시 고가 · 저가.
    ⓓ 적중률 옆에 D1_10시고가% 평균 · 중앙값 · 최악(D1_10시저가% 최저, 날짜·종목). 채점 5개 미만이면 '목록만'.
    일자 >= alFrom(20260917) 만 표본(거래대금 KRX+NXT 통합 자). 그 전 9/10~9/16 은 "KRX 자 · 참고 (표본 아님)" 띠 아래 같은 표·목록 (9/16 밤 사용자 결정). 판정·채점 코드·임계값 무관. */
 const VF_LINES = [['후보', '후보'], ['관문3제외', '관문3 제외'], ['배경', '배경']];
@@ -1496,15 +1500,15 @@ function vfTable(leads, ref) {
   add(wrap, t); return wrap;
 }
 function vfRow(r) {
-  const row = el('div', 'vf-row');
+  const row = el('div', 'vf-row'); const l1 = el('div', 'l1'); const l2 = el('div', 'l2');   /* 9/24 B안 : 늘 두 줄 */
   const nm = el('span', 'nm', `${r['섹터'] || ''} · ${r['종목'] || ''}`); add(nm, kMark(VF_K, r['종목코드']));   /* (k) KRX 전용 9/24 */
-  add(row, el('span', 'd', vfMd(r['일자'])), nm);
-  if (r['관망'] === 'Y') add(row, el('span', 'chip warn', '관망'));
+  add(l1, nm);
+  if (r['관망'] === 'Y') add(l1, el('span', 'chip warn', '관망'));
   if (has(r['목표4%_10시'])) {
     const ok = r['목표4%_10시'] === 'Y';
-    const s = el('span', 'r'); add(s, el('span', 'sub', '10시 고가 '), pctEl(r['D1_10시고가%']), el('span', 'tenmark' + (ok ? ' ok' : ' x'), ok ? ' ✓' : ' ✕'), el('span', 'sub', ' · 저가 '), pctEl(r['D1_10시저가%']));
-    add(row, s);
-  } else add(row, el('span', 'wait', has(r['비고']) ? `채점 대기 (${r['비고']})` : '채점 대기'));
+    add(l2, el('span', 'mk tenmark' + (ok ? ' ok' : ' x'), ok ? '✓' : '✕'), el('span', 'sub', '10시 고가 '), pctEl(r['D1_10시고가%']), el('span', 'sub', ' · 저가 '), pctEl(r['D1_10시저가%']));
+  } else add(l2, el('span', 'mk wait', '⏳'), el('span', 'wait', has(r['비고']) ? `채점 대기 (${r['비고']})` : '채점 대기'));
+  add(row, el('span', 'd', vfMd(r['일자'])), l1, l2);
   return row;
 }
 /* 9/24 `검증탭공부` 사용자 결정(추천안) : 표본 · 적중률 표와 표본 목록을 하나로 — 줄 이름(후보 · 관문3 제외 · 배경)을 누르면 그 줄 대장 목록이 표 바로 아래에.
@@ -1829,7 +1833,7 @@ const HELP_SEC = {
     ['표본', '후보 섹터 1개 = 표본 1. 관망(관문1 불통과) 후보도 넣되 목록에 관망 표시. (대기 n) = D+1 채점 전.'],
     ['적중률', '10시까지 고가 +4% 도달(Y) ÷ 채점된 수. 채점 5개 미만이면 통계 대신 목록만.'],
     ['평균 · 중앙값 · 최악', 'D+1 10시까지 고가% 의 평균과 중앙값. 최악 = 10시까지 저가% 가 가장 낮았던 표본(날짜 · 종목).'],
-    ['목록 한 줄', '날짜 · 섹터 · 대장 · 10시 고가% ✓✕ · 10시 저가%. 최근 순. 2등 · 3등은 참고 기록이라 여기 없다.'],
+    ['목록 한 줄', '두 줄 — 위 : 날짜 · 섹터 · 대장 (관망). 아래 : ✓ 적중 · ✕ 미달 · ⏳ 채점 전 + 10시까지 고가% · 저가%. ✓✕ 가 왼쪽에 세로로 서서 훑으면 적중 개수가 보인다. 최근 순. 2등 · 3등은 참고 기록이라 여기 없다.'],
     ['(k)', 'KRX 전용 종목(NXT 거래 불가) — 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목이라 08:00 프리마켓부터(사용자 결정 9/15, 장중 탭과 같은 표시). 아래 KRX 자 띠(9/16 까지 날짜 구간)와는 다른 뜻. 종목마스터에 없는 종목은 표시 없음. 판정 · 채점 무관.'],
     ['피뢰침', '별도 계열 — 표본 30 에 안 센다. 채점 칸이 아직 없어 첫 피뢰침 대상일 뒤에 연결.'],
     ['KRX 자 띠', '9/16 까지는 거래대금이 KRX 단독이라 표본이 아니다. 9/17 부터 KRX+NXT 통합 자로 표본 0 부터 다시 센다.']],
