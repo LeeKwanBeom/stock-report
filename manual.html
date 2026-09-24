@@ -178,7 +178,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
   <div>
     <div class="eyebrow">종가베팅 검증 시스템 · 실매매 설명서</div>
     <h1>시스템은 후보를 고르고, 주문은 내가 낸다</h1>
-    <p>하루를 시간순으로 따라가면 된다. 자동으로 도는 것과 내가 손으로 하는 것을 나눠 적었고, 매수는 15:00~15:20 어종 한 가지, 매도는 다음날 10:00 봉까지 +4% 한 가지다. 이 시스템은 조회만 하며 주문 기능이 없다. 주문은 HTS·MTS 에서 직접 낸다.</p>
+    <p>하루를 시간순으로 따라가면 된다. 자동으로 도는 것과 내가 손으로 하는 것을 나눠 적었고, 매수는 15:00~15:20 어종 한 가지, 매도는 +4% 한 가지 — 당일 저녁과 다음날 아침에 자동으로 걸고 10:00 에 시간 손절한다. 채점은 그대로 다음날 10:00 봉까지. 매수 주문은 HTS·MTS 에서 직접 낸다.</p>
   </div>
   <div class="stamp">
     <div class="num">작성 2026-09-24 · 1주 연습 9/21 부터 · 300만원 실매매 전환 전</div>
@@ -190,7 +190,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
 <div class="kpis">
   <div class="kpi now"><span class="l">300만원 실매매 조건</span><span class="v">표본 30 + 2주</span><span class="s">후보 표본 30개 · 무결성 오류 0 이 2주 연속. 지금 3/30 · 5/10 거래일</span></div>
   <div class="kpi now"><span class="l">1주 연습</span><span class="v">9/21 부터 · 주문마다 1주</span><span class="s">마지막 잠정(15:00 띠)에 후보 뜨는 날 어종 1종목 · <b>주문 한 번에 1주</b>, 체결되면 직전 체결가 아래 돼지 물량에 다시 1주 · 계좌 규칙 그대로 · 1회마다 복기</span></div>
-  <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">시스템은 조회 전용, 주문 TR 없음. 최선집행(SOR) 설정을 첫 1주 매매 전에 재확인</span></div>
+  <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">매수는 HTS·MTS 에서. 매도·취소만 자동. 최선집행(SOR) 설정을 첫 1주 매매 전에 재확인</span></div>
   <div class="kpi"><span class="l">판정 기준</span><span class="v">동결 v2.1</span><span class="s">매매 결과로 임계값을 고치지 않는다. 바꾸고 싶으면 이유만 기록</span></div>
 </div>
 
@@ -202,7 +202,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
 
     <div class="tr auto"><div class="t">07:00</div>
       <div class="h"><span class="tag auto">자동</span>휴장일 스위치</div>
-      <div class="d">휴장일 목록(holidays.txt)에 오늘이 있으면 예약 10개를 끄고, 다음 거래일 아침에 다시 켠다. 휴장 전날 저녁엔 -Off 를 한 번 손으로. 알림 감시(Healthchecks 체크 9개)도 그때 같이 멈췄다가 거래일 아침에 다시 산다(9/24). 수능일(11/19)도 끄는 날이라 전날 11/18 은 사지 않는다.</div></div>
+      <div class="d">휴장일 목록(holidays.txt)에 오늘이 있으면 예약 11개를 끄고, 다음 거래일 아침에 다시 켠다. 휴장 전날 저녁엔 -Off 를 한 번 손으로. 알림 감시(Healthchecks 체크 9개)도 그때 같이 멈췄다가 거래일 아침에 다시 산다(9/24). 수능일(11/19)도 끄는 날이라 전날 11/18 은 사지 않는다.</div></div>
 
     <div class="tr auto"><div class="t">07:30</div>
       <div class="h"><span class="tag auto">자동</span>종목마스터 갱신</div>
@@ -220,7 +220,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
     <div class="tr me key"><div class="t">09:00<br>~10:00</div>
       <div class="h"><span class="tag me">나</span>어제 산 종목 매도 — D+1 오전</div>
       <div class="d"><b>10:00 봉까지 +4%</b> 가 목표. 전고 부근 돌파·거래량 터질 때, 매도 쪽 돼지 물량 아래에 판다. 10시 넘어서도 못 가면 <b>시간 손절</b>. 여러 주가 잡힌 날은 <b>분할 매도</b> — 매도 쪽 돼지 물량 아래에 나눠 걸되 <b>10:00 봉 안에 전량</b>을 끝낸다 (남기면 시간 손절 어김). 추매는 <b>10:00 전 주문</b>만, 금액은 <b>어제 종가 매수 이하</b>. 피뢰침 종목은 추매 없음.</div>
-      <div class="scr"><span class="tag auto">자동</span> 매도 주문은 <b>D+1 08:00 부터 자동</b>으로 건다(9/23) — 08:00·08:55 에 매도 미체결을 취소하고 <b>매입가 +4%</b> 지정가(SOR) 전량, 10:00 에 취소 뒤 <b>시장가 전량</b>(시간 손절). 매도·취소만 자동, 매수는 내가 한다. 안 돌았으면 <span class="num">data\trade\auto-sell.log</span>.</div>
+      <div class="scr"><span class="tag auto">자동</span> 매도 주문은 <b>당일 저녁 15:40 부터 자동</b>(9/24) — D+1 08:00·08:55 에 매도 미체결을 취소하고 <b>매입가 +4%</b> 지정가(SOR) 전량, 10:00 에 취소 뒤 <b>시장가 전량</b>(시간 손절). <b>저녁에 이미 팔렸으면 아침엔 할 일이 없다.</b> 매도·취소만 자동, 매수는 내가 한다. 안 돌았으면 <span class="num">data\trade\auto-sell.log</span>.</div>
       <div class="scr">10:07 자동 조기 채점 → 마감 탭 어제 종목 줄 아래에 "10시 고가 +x% ✓✕ · 저가 −x%". 횡보 하루 더 관망 · F존 추매 · NXT 불타기는 <span class="tag rec">기록</span>.</div></div>
 
     <div class="tr me"><div class="t">11:00<br>~14:30</div>
@@ -245,13 +245,18 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
       <div class="d">3시부터 장 마감까지, 이평선 갈고리 + 4% 반등 자리에 분할, 갈고리가 없으면 종가 부근. 호가창의 <b>돼지 물량 자리에 매수 1호가</b>, 못 샀다고 위로 쫓아 사지 않는다. 15:20~15:30 은 종가 단일가. <b>채점 기준가는 오늘 종가</b>다.</div>
       <div class="scr"><b>1주 연습(9/21~)</b> : 주문 한 번에 <b>1주</b> — ① 3시, 돼지 물량 한 자리에 1주 지정가 ② 체결되면 <b>직전 체결가보다 아래</b> 돼지 물량에 다시 1주 (위로는 가지 않는다) ③ 횟수·간격은 정하지 않는다 — 그날 체결이 정한다 ④ 15:20까지 <b>한 번도</b> 안 걸리면 동시호가에 <b>시장가 1주</b>. 걸어 둔 지정가가 주문창에 남아 있으면 <b>시장가로 정정하거나 취소하고</b> 넣는다 — 그냥 두면 종가가 그 값 아래로 찍힐 때 둘 다 체결돼 2주가 된다. 비중 50%(300만이면 150만)에 닿으면 거기서 멈춘다. 주문은 HTS·MTS 에서. 시스템은 이 시각 화면까지만 책임진다.</div></div>
 
+    <div class="tr auto"><div class="t">15:40<br>16:00</div>
+      <div class="h"><span class="tag auto">자동</span>당일 저녁 자동 매도 +4%</div>
+      <div class="d">오늘 산 종목에 <b>매입가 +4%</b> 지정가(SOR) 매도를 자동으로 건다(9/24). 15:40 은 NXT 되는 종목만(NXT 애프터마켓). 16:00 에 취소하고 전 종목을 다시 건다(KRX 애프터마켓이 열려 SOR 이 두 시장 중 한 곳을 고른다). 20:00 까지 안 팔리면 주문은 사라지고 다음날 08:00 에 다시 건다. <b>손으로 매도 주문을 따로 걸지 않는다</b> — 회차마다 매도 미체결을 전부 취소하고 다시 건다.</div>
+      <div class="scr">전일 대비 약 +25% 이상에서 산 날(+4% 가 저녁 상한가 위)·투자경고 등은 저녁 주문이 거부될 수 있다 — 다음날 아침 회차가 그대로 돈다. 안 돌았으면 <span class="num">data\trade\auto-sell.log</span>.</div></div>
+
     <div class="tr auto"><div class="t">15:50<br>15:55</div>
       <div class="h"><span class="tag auto">자동</span>확정 판정 → 마감 탭 "14:50 후보 → 15:00 후보 … 15:20 과 같음/다름"</div>
       <div class="d">15:20 자료로 확정 판정과 피뢰침 대상(내일 아침에 뉴스 볼 종목)이 나온다. 잠정(14:50 · 15:00 각각)과 다르면 <b>일치 기록</b>만 남기고 판정은 고치지 않는다. 확정 뒤에도 마감 탭 "14:50 후보 → 15:00 후보" 줄 아래 "▸ 자세히" 를 누르면 두 잠정의 섹터 판정 목록(대장 포함)을 다시 볼 수 있다(9/23). 15:20 확정도 폰 알림으로 온다(15:50~51, 9/23). 매일 오후확인 세션.</div></div>
 
     <div class="tr auto"><div class="t">16:00<br>~20:00</div>
       <div class="h"><span class="tag auto">자동</span>애프터마켓 회차 — 화면만</div>
-      <div class="d">저녁 다섯 회차가 장중 탭 같은 표에 이어 붙는다(16:00 앞 점선). 여기서 하는 매매는 전부 <span class="tag rec">기록</span> — 검증이 쌓이기 전에는 하지 않는다.</div></div>
+      <div class="d">저녁 다섯 회차가 장중 탭 같은 표에 이어 붙는다(16:00 앞 점선). <b>자동 +4% 매도(15:40·16:00 에 건 주문)만</b> 이 시간에 체결될 수 있고, 손으로 하는 매매(추매·불타기 등)는 전부 <span class="tag rec">기록</span> — 검증이 쌓이기 전에는 하지 않는다.</div></div>
 
     <div class="tr auto"><div class="t">20:05</div>
       <div class="h"><span class="tag auto">자동</span>D+1 채점 · 체결 수집 · 복기 갱신</div>
