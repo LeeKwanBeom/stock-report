@@ -802,8 +802,10 @@ function isPref(code) { const s = String(code || '').trim(); return /^\d{6}$/.te
 //   JSON v8 의 krxOnly(종목마스터 nxtEnable = N 인 코드 목록)에 있으면 종목명 옆 (k). NXT 거래 불가 → 다음날 매도는 09:00 부터.
 //   표시가 없으면 NXT 도 되는 종목이라 08:00 프리마켓부터 봐야 한다. 마스터에 없는 종목(신규상장 · 갱신 전)은 목록에 없어 표시 없음 — 모르는 종목을 (k) 로 찍지 않는다.
 //   표시만 — 판정 · 채점 무관. 옛 JSON(v7 이전)은 krxOnly 가 없어 아무 데도 안 붙는다.
+//   9/24 `검증탭공부` : 코드 형식 6자리 숫자 → 6자리 숫자·영문 대문자(0161M0 같은 신규 상장, pages-export v2.8 · next-day 와 같은 형식).
+//   검증 탭 목록 · 마감 탭 최근 거래일은 verify.json 의 krxOnly(VF_K)로 붙인다. 'NM:' 이름 코드는 여전히 표시 없음.
 function kMark(d, code) {
-  const s = String(code || '').trim(); if (!/^\d{6}$/.test(s)) return null;
+  const s = String(code || '').trim(); if (!/^[0-9A-Z]{6}$/.test(s)) return null;
   if (!d.__krxOnly) d.__krxOnly = new Set(arr(d.krxOnly).map(String));
   return d.__krxOnly.has(s) ? el('span', 'kmk', '(k)') : null;
 }
@@ -1439,6 +1441,7 @@ function renderSeries(d) {
       관문2(모멘텀 0 이하) 탈락은 판정 이름이 '배경', 관문4 탈락 '대장없음' 은 카드 4종목 금액이 다 빈 자료 빈칸이라 채점할 대장이 없다.
       9/24 같은 세션 : 검증 탭 맨 위에 '관문 순서' 표 — 설계할 때 번호(관문1 시장 · 2 돈 · 3 이따) ↔ 15:20 판정이 실제로 묻는 순서(시장 표시만 → 이따 → 돈). 사용자가 채팅에서 고른 표 글자 그대로, 늘 펼침(익숙해지면 빼거나 접는다). 설명만, 판정·채점 무관.
       같은 날 사용자 결정으로 대장(관문4) 줄을 뺐다 — 대장없음은 채점 종목이 없어 검증 탭 밖(무결성 쪽 일). 대장 = 채점 종목이라는 설명은 ? 도움말 '줄'·표본 목록에 있다.
+      같은 날 : 목록 종목명 옆 (k) = KRX 전용(NXT 불가) — verify.json krxOnly(pages-export v2.8), 장중 탭과 같은 표시.
    ⓓ 적중률 옆에 D1_10시고가% 평균 · 중앙값 · 최악(D1_10시저가% 최저, 날짜·종목). 채점 5개 미만이면 '목록만'.
    일자 >= alFrom(20260917) 만 표본(거래대금 KRX+NXT 통합 자). 그 전 9/10~9/16 은 "KRX 자 · 참고 (표본 아님)" 띠 아래 같은 표·목록 (9/16 밤 사용자 결정). 판정·채점 코드·임계값 무관. */
 const VF_LINES = [['후보', '후보'], ['관문3제외', '관문3 제외'], ['배경', '배경']];
@@ -1492,7 +1495,8 @@ function vfTable(leads, ref) {
 }
 function vfRow(r) {
   const row = el('div', 'vf-row');
-  add(row, el('span', 'd', vfMd(r['일자'])), el('span', 'nm', `${r['섹터'] || ''} · ${r['종목'] || ''}`));
+  const nm = el('span', 'nm', `${r['섹터'] || ''} · ${r['종목'] || ''}`); add(nm, kMark(VF_K, r['종목코드']));   /* (k) KRX 전용 9/24 */
+  add(row, el('span', 'd', vfMd(r['일자'])), nm);
   if (r['관망'] === 'Y') add(row, el('span', 'chip warn', '관망'));
   if (has(r['목표4%_10시'])) {
     const ok = r['목표4%_10시'] === 'Y';
@@ -1516,9 +1520,10 @@ function vfLists(box, leads, ref) {
 /* ── 마감 탭 "최근 거래일" (9/19 `최근거래일` 세션, 사용자 결정 A안 + ✓✕ 보임 → 같은 날 오후 B안 : 위쪽 5줄) ─────────────────────
    마감 탭 위쪽(날짜 제목·상태 줄 아래, 관문1·후보 카드 앞)에 최근 RC_DAYS 거래일을 후보 없는 날까지 한 줄씩 — "추세 먼저, 당일 상세는 그 다음". 자료는 검증 탭과 같은 verify.json(result_log 후보·대장 행) + dates.json(날짜 목록) — 새 수집·새 칸 없음.
    ✓ ✕ = 검증 탭과 같은 10시 채점(목표4%_10시), 채점 전 ⏳, 관망 칩. 줄을 누르면 그 날짜 마감 탭(날짜 줄 ◀▶ 와 같은 loadDate). alFrom 전(KRX 자)은 흐리게 — 표본 아님.
-   잠정(14:50·15:00) 후보는 안 들어간다(15:20 표본만). 판정·채점 무관, 화면만. 인계문서 8-6 "월 달력·날짜별 상태 점" 의 첫 판 — 한 달치 쌓이면 이 목록 위에 달력 칸을 얹는다. */
+   잠정(14:50·15:00) 후보는 안 들어간다(15:20 표본만). 판정·채점 무관, 화면만. 인계문서 8-6 "월 달력·날짜별 상태 점" 의 첫 판 — 한 달치 쌓이면 이 목록 위에 달력 칸을 얹는다.
+   9/24 : 종목명 옆 (k) = KRX 전용(NXT 불가) — verify.json krxOnly(pages-export v2.8), 장중 탭과 같은 표시. */
 const RC_DAYS = 5;   // 9/19 B안(사용자 결정) : 위쪽으로 올리며 10 → 5 — 후보 카드가 첫 화면에 걸리게. 10거래일 전체는 검증 탭
-let VF_ROWS = null, VF_ALFROM = '20260917';   // renderVerify 가 채운다(null = 아직, false = 못 불러옴). verify.json 이 마감 탭보다 늦게 오면 rcRefresh 가 구역만 다시 그린다
+let VF_ROWS = null, VF_ALFROM = '20260917', VF_K = {};   // renderVerify 가 채운다(null = 아직, false = 못 불러옴). verify.json 이 마감 탭보다 늦게 오면 rcRefresh 가 구역만 다시 그린다. VF_K = verify.json 통째 — krxOnly 로 (k) (9/24)
 function rcBlock(ymd) {
   const wrap = el('div', 'rc-wrap'); wrap.dataset.ymd = ymd;
   add(wrap, labelWith('최근 거래일', 'close.recent'));
@@ -1536,7 +1541,7 @@ function rcBlock(ymd) {
     const b = el('div', 'b');
     if (!rows.length) add(b, el('span', 'none', '없음'));
     rows.forEach(r => {
-      const it = el('span', 'it'); add(it, el('span', 'nm', `${r['섹터'] || ''} · ${r['종목'] || ''}`));
+      const it = el('span', 'it'); const nm = el('span', 'nm', `${r['섹터'] || ''} · ${r['종목'] || ''}`); add(nm, kMark(VF_K, r['종목코드'])); add(it, nm);   /* (k) KRX 전용 9/24 */
       if (r['관망'] === 'Y') add(it, el('span', 'chip warn', '관망'));
       if (has(r['목표4%_10시'])) {   // 9/19 사용자 요청 "붙여줘" : ✓ ✕ 옆에 10시까지 고가 %(D 종가 대비, 한 자리) — 얼마나 넘겼나 · 못 미쳤나
         const ok = r['목표4%_10시'] === 'Y'; add(it, el('span', 'tenmark' + (ok ? ' ok' : ' x'), ok ? ' ✓' : ' ✕'), el('span', 'pc ' + rvSign(r['D1_10시고가%']), rvPct(r['D1_10시고가%'])));
@@ -1560,7 +1565,7 @@ function rcRefresh() {   // verify.json 이 도착하면 이미 그려진 마감
 function renderVerify(vf) {
   const box = document.getElementById('verify'); box.innerHTML = '';
   const alFrom = String(vf.alFrom || '20260917');
-  VF_ROWS = arr(vf.rows); VF_ALFROM = alFrom; rcRefresh();   // 9/19 마감 탭 최근 거래일
+  VF_ROWS = arr(vf.rows); VF_ALFROM = alFrom; VF_K = vf; rcRefresh();   // 9/19 마감 탭 최근 거래일 · 9/24 VF_K (k)
   const byDate = (a, b) => String(b['일자']).localeCompare(String(a['일자']));
   const leads = arr(vf.rows).filter(r => r['역할'] === '대장').sort(byDate);
   const al = leads.filter(r => String(r['일자']) >= alFrom), krx = leads.filter(r => String(r['일자']) < alFrom);
@@ -1780,6 +1785,7 @@ const HELP_SEC = {
     ['섹터명 % · 모멘텀 · 2따 · 판정', '모든 카드의 집중도 순 목록. 판정 = 후보 / 배경(모멘텀 음수) / 관문3제외(2따 부족) / 대장없음 / 개별이슈.']],
   'close.recent': [
     ['날짜 · 섹터 · 대장', '최근 5거래일을 후보 없는 날까지 한 줄씩(10거래일은 검증 탭). 검증 탭 표본 목록과 같은 자료 — 15:20 후보 섹터와 그 대장. 잠정(14:50·15:00) 후보는 안 들어간다.'],
+    ['(k)', 'KRX 전용 종목(NXT 거래 불가) — 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목이라 08:00 프리마켓부터(사용자 결정 9/15, 장중 탭과 같은 표시). 종목마스터에 없는 종목은 표시 없음. 판정 · 채점 무관.'],
     ['✓ ✕ +n% ⏳ · 관망', '✓ ✕ = 검증 탭과 같은 10시 채점(D 종가 매수 → D+1 10:00 까지 고가 +4%). 옆 % = D 종가 대비 10시까지의 고가 — 얼마나 넘겼나 · 못 미쳤나. ⏳ = 아직 채점 전. 관망 = 관문1 불통과인데 후보. 지난 기록이지 오늘 판정의 조건이 아니다.'],
     ['흐린 줄', '통합 자 시작(9/17) 전의 KRX 자 — 참고, 표본 아님.'],
     ['누르면', '그 날짜의 마감 탭으로(빨간 날짜 = 지금 보는 날). "검증 탭 전체 ▸" 는 전체 목록 · 적중률.']],
@@ -1815,6 +1821,7 @@ const HELP_SEC = {
     ['피뢰침', '별도 계열 — 표본 30 에 안 센다. 채점 칸이 아직 없어 첫 피뢰침 대상일 뒤에 연결.']],
   'verify.list': [
     ['한 줄', '날짜 · 섹터 · 대장 · 10시 고가% ✓✕ · 10시 저가%. 2등 · 3등은 참고 기록이라 여기 없다.'],
+    ['(k)', 'KRX 전용 종목(NXT 거래 불가) — 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목이라 08:00 프리마켓부터(사용자 결정 9/15, 장중 탭과 같은 표시). 아래 KRX 자 띠(9/16 까지 날짜 구간)와는 다른 뜻. 종목마스터에 없는 종목은 표시 없음. 판정 · 채점 무관.'],
     ['펼치기', '관문 제외 · 배경 줄의 대장 목록. 참고용.'],
     ['KRX 자 띠', '9/16 까지는 거래대금이 KRX 단독이라 표본이 아니다. 9/17 부터 KRX+NXT 통합 자로 표본 0 부터 다시 센다.']],
   'review.sum': [
