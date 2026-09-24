@@ -345,7 +345,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .rv-say{margin-top:11px;font-size:12.5px;line-height:1.6;color:var(--ink2);background:var(--rose);border-radius:10px;padding:9px 11px}
 .rv-foot{margin:24px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.9;border-top:1px solid var(--rule);padding-top:14px}
 .rv-foot b{color:var(--sub);font-weight:700}
-/* 검증 탭 (9/16 밤 검증탭, 인계문서 8-6 ⓐ~ⓓ · 9/24 세 줄) — 줄별 표 + 통계, 표본 목록, KRX 자 참고 띠 */
+/* 검증 탭 (9/16 밤 검증탭, 인계문서 8-6 ⓐ~ⓓ · 9/24 세 줄 · 관문 순서 표) — 관문 순서, 줄별 표 + 통계, 표본 목록, KRX 자 참고 띠 */
 .vf-tbl{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 10px 4px;margin-bottom:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .vf-tbl table{border-collapse:collapse;width:100%;font-size:11.5px}
 .vf-tbl th{font-size:10px;font-weight:400;color:var(--muted);padding:4px 3px;text-align:right;white-space:nowrap}
@@ -356,6 +356,13 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .vf-tbl tr.main td:first-child{color:var(--brand)}
 .vf-tbl .ref{font-size:9.5px;font-weight:400;color:var(--muted);margin-left:3px}
 .vf-tbl td.nt{white-space:normal;text-align:left;color:var(--muted);font-size:11px;font-weight:400}
+/* 관문 순서 표 (9/24 `검증탭공부` 사용자 요청) — 설계 번호 ↔ 15:20 판정이 실제로 묻는 순서. 글이 칸 안에서 줄바꿈 */
+.vf-gate{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 10px 4px;margin-bottom:10px}
+.vf-gate table{border-collapse:collapse;width:100%;font-size:11.5px}
+.vf-gate th{font-size:10px;font-weight:400;color:var(--muted);padding:4px 3px;text-align:left;white-space:nowrap}
+.vf-gate td{padding:6px 3px;border-top:1px solid var(--line2);text-align:left;vertical-align:top;line-height:1.4}
+.vf-gate th:first-child,.vf-gate td:first-child{padding-left:0;width:1%;color:var(--muted);font-variant-numeric:tabular-nums}
+.vf-gate td:nth-child(2){white-space:nowrap}
 .vf-list{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 12px;margin-bottom:10px}
 .vf-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;padding:7px 0;border-top:1px solid var(--line2);font-size:12.5px}
 .vf-row:first-child{border-top:0}
@@ -1430,6 +1437,7 @@ function renderSeries(d) {
    ⓒ 후보 · 관문3 제외 · 배경 세 줄 한 표. 표본 30 은 후보 줄만, 나머지 줄은 '참고'.
       9/24 사용자 결정 (`검증탭공부`) : 관문2 제외 · 관문4 제외 줄 삭제 — close-judge 는 그 이름을 안 내서 늘 0 이었다.
       관문2(모멘텀 0 이하) 탈락은 판정 이름이 '배경', 관문4 탈락 '대장없음' 은 카드 4종목 금액이 다 빈 자료 빈칸이라 채점할 대장이 없다.
+      9/24 같은 세션 : 검증 탭 맨 위에 '관문 순서' 표 — 설계할 때 번호(관문1 시장 · 2 돈 · 3 이따 · 4 대장) ↔ 15:20 판정이 실제로 묻는 순서(시장 표시만 → 이따 → 대장 → 돈). 사용자가 채팅에서 고른 표 글자 그대로, 늘 펼침(익숙해지면 빼거나 접는다). 설명만, 판정·채점 무관.
    ⓓ 적중률 옆에 D1_10시고가% 평균 · 중앙값 · 최악(D1_10시저가% 최저, 날짜·종목). 채점 5개 미만이면 '목록만'.
    일자 >= alFrom(20260917) 만 표본(거래대금 KRX+NXT 통합 자). 그 전 9/10~9/16 은 "KRX 자 · 참고 (표본 아님)" 띠 아래 같은 표·목록 (9/16 밤 사용자 결정). 판정·채점 코드·임계값 무관. */
 const VF_LINES = [['후보', '후보'], ['관문3제외', '관문3 제외'], ['배경', '배경']];
@@ -1444,6 +1452,20 @@ function vfStats(rows) {
   let worst = null;
   scored.forEach(r => { const v = num(r['D1_10시저가%']); if (v !== null && (worst === null || v < worst.v)) worst = { v, r }; });
   return { n: rows.length, scored: scored.length, wait: rows.length - scored.length, hit, mean, median, worst };
+}
+const VF_GATES = [['1', '관문1 시장', '', "시장: 거르지 않고 후보에 '관망' 표시만"],
+  ['2', '관문2 돈', '이따', "(관문3): 떨어지면 '관문3 제외'"],
+  ['3', '관문3 이따', '대장', "(관문4): 떨어지면 '대장없음'(자료 빈칸)"],
+  ['4', '관문4 대장', '돈', "(관문2): 통과하면 '후보', 떨어지면 '배경'"]];
+function vfGateTable() {
+  const wrap = el('div', 'vf-gate'); const t = el('table'); const th = el('tr');
+  ['', '설계할 때 번호', '15:20 판정이 실제로 묻는 순서'].forEach(h => add(th, el('th', null, h)));
+  add(t, th);
+  VF_GATES.forEach(([n, design, bold, rest]) => {
+    const c3 = el('td'); if (bold) add(c3, el('b', null, bold)); c3.appendChild(document.createTextNode(rest));
+    add(t, add(el('tr'), el('td', null, n), el('td', null, design), c3));
+  });
+  add(wrap, t); return wrap;
 }
 function vfTable(leads, ref) {
   const wrap = el('div', 'vf-tbl'); wrap.setAttribute('data-noswipe', '');
@@ -1545,6 +1567,8 @@ function renderVerify(vf) {
   const n = al.filter(r => r['판정'] === '후보').length;
   VERIFY_SUB = `표본 ${n} / 30 · 통합 자 ${vfMd(alFrom)} 부터`;
   const sec = (title, cnt, extra, key) => { const h = el('div', 'rv-sec' + (extra ? ' ' + extra : '')); add(h, el('h2', null, title), el('span', 'c', cnt), el('span', 'ln'), helpBtn(h, key)); return h; };
+  /* 9/24 사용자 요청 : 맨 위 관문 순서 표 (제목 줄만, ? 없음) */
+  const gh = el('div', 'rv-sec'); add(gh, el('h2', null, '관문 순서'), el('span', 'ln')); add(box, gh, vfGateTable());
   add(box, sec('표본 · 적중률', `통합 자 ${vfMd(alFrom)} 부터 · 후보 줄만 표본`, null, 'verify.table'));
   add(box, vfTable(al, false));
   add(box, sec('표본 목록', '후보 대장 · 최근 순', null, 'verify.list'));
