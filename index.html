@@ -357,6 +357,9 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .vf-tbl tr.main td:first-child{color:var(--brand)}
 .vf-tbl .ref{font-size:9.5px;font-weight:400;color:var(--muted);margin-left:3px}
 .vf-tbl td.nt{white-space:normal;text-align:left;color:var(--muted);font-size:11px;font-weight:400}
+.vf-tbl tr.main td.vf-rc{font-weight:400}   /* 9/25 실전합침 : 실전(기록) 칸은 기록 — 후보 줄에서도 굵게 안 함(굵은 % 는 적중률만) */
+.rv-sec.vf-sech h2{flex-shrink:0;white-space:nowrap}   /* 9/25 실전합침 : 부제가 길어져 폰에서 제목이 '표본 · 적 / 중률' 로 꺾이던 것 — 제목은 한 줄, 부제만 띄어쓰기에서 접힘 */
+.rv-sec.vf-sech .c{word-break:keep-all}
 /* 관문 순서 표 (9/24 `검증탭공부` 사용자 요청) — 설계 번호 ↔ 15:20 판정이 실제로 묻는 순서. 글이 칸 안에서 줄바꿈 */
 .vf-gate{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:6px 10px 4px;margin-bottom:10px}
 .vf-gate table{border-collapse:collapse;width:100%;font-size:11.5px}
@@ -381,7 +384,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .vf-tbl tr[data-key] td:first-child::before{content:"▸ ";color:var(--muted);font-weight:400}
 .vf-tbl tr[data-key].on td:first-child::before{content:"▾ ";color:var(--wine)}
 .vf-tbl tr[data-key].on td:first-child{font-weight:800}
-.vf-selh{font-size:11.5px;font-weight:700;color:var(--sub);margin:0 2px 6px}
+.vf-selh{font-size:11.5px;font-weight:700;color:var(--sub);margin:0 2px 6px;word-break:keep-all}   /* 9/25 실전합침 : 먼저 닿은 창 꼬리로 길어져 두 줄 — 낱말 가운데서 안 꺾이게 */
 /* ── 마감 탭 "최근 거래일" (9/19 사용자 결정 A안 + ✓✕ 보임) — 검증 탭과 같은 verify.json 자료, 후보 없는 날까지 한 줄씩. 줄을 누르면 그 날짜 마감 탭 ── */
 .rc-list{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 12px;margin-bottom:10px}
 .rc-row{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-top:1px solid var(--line2);font-size:12.5px;cursor:pointer}
@@ -1458,32 +1461,27 @@ function renderSeries(d) {
    9/25 사용자 결정 A안 (`실전표본칸`) : 둘째 칸 '둘 다 끝난 수' → '표본' — 위 표와 같은 셈(그 줄 대장 전부 + (대기 n)). 옛 칸은 끝난 것만 세어
       위 표 6 (대기 1) 이 여기선 5 (대기 1) 로 보였다. 지금 · 실전의 분모는 그대로 둘 다 끝난 대장 수. 같은 날 도움말 '먼저 닿은 창' 정정 —
       프리에서 먼저 닿고 10시에도 닿은 종목(9/17 SK하이닉스)이 있어 저녁 · 프리 수 ≠ 지금과의 차이.
-   같은 날 `실전10시` (stock-live v1.6) : 실전 기록도 다음날 10:07 회차에 채워져 두 표가 같이 찬다 — 도움말 '표본' 의 '10:07 뒤 20:05 까지 대기가 많을 수 있다' 괄호 뺌. */
+   같은 날 `실전10시` (stock-live v1.6) : 실전 기록도 다음날 10:07 회차에 채워져 두 표가 같이 찬다 — 도움말 '표본' 의 '10:07 뒤 20:05 까지 대기가 많을 수 있다' 괄호 뺌.
+   같은 날 `실전합침` (사용자 결정 A안 — "표본이 같으니 하나로") : '실전 (기록)' 구역을 없애고 표본 · 적중률 표의 적중률 바로 옆 '실전(기록)' 칸으로.
+      옛 표의 표본 · 지금 칸은 위 표와 겹쳐 뺌. 칸 = 분수만(% 없음, 후보 줄도 굵게 안 함 — 굵은 % 는 적중률만), 분모 = 10시 채점과 실전 기록이 둘 다 끝난 대장
+      (옛 '지금 · 실전' 과 같은 셈 — 비교 기준 10시 칸은 verify.json rows 의 것). 10시는 끝났는데 실전이 덜 끝난 대장은 칸에 (대기 n).
+      먼저 닿은 창 나눔은 칸에 넣으면 폰(375px)에서 평균 · 최악이 둘 다 밀려서 줄을 눌러 연 목록 제목 끝으로. 부제에 '실전 칸은 기록 · 채점 원본 아님'.
+      도움말 verify.real 은 verify.table 로 합침. real 이 없으면(옛 verify.json) 칸 · 부제 꼬리 · 목록 제목 꼬리 · 토막을 안 그린다. */
 const VF_LINES = [['후보', '후보'], ['관문3제외', '관문3 제외'], ['배경', '배경']];
 let VERIFY_SUB = '';
 let VF_REAL = {};   // 9/24 : 일자|섹터|종목코드 → 실전 기록 행 (renderVerify 가 채운다)
 function vfRealKey(r) { return `${r['일자']}|${r['섹터']}|${r['종목코드']}`; }
-function vfRealDone(r) { return (r['목표4%_10시'] === 'Y' || r['목표4%_10시'] === 'N') && (r['목표4%_실전'] === 'Y' || r['목표4%_실전'] === 'N'); }
-function vfRealTable(rrows) {
-  const wrap = el('div', 'vf-tbl'); wrap.setAttribute('data-noswipe', '');
-  const t = el('table'); const th = el('tr');
-  ['줄', '표본', '지금', '실전', '먼저 닿은 창'].forEach(h => add(th, el('th', null, h)));
-  add(t, th);
-  VF_LINES.forEach(([key, label], i) => {
-    const rows = rrows.filter(r => r['판정'] === key); const done = rows.filter(vfRealDone); const wait = rows.length - done.length;
-    const tr = el('tr', i === 0 ? 'main' : null);
-    const c0 = el('td', null, label); if (i > 0) add(c0, el('span', 'ref', '참고'));
-    add(tr, c0, el('td', null, String(rows.length) + (wait ? ` (대기 ${wait})` : '')));   /* 9/25 A안 : 위 표 표본과 같은 셈 */
-    if (!done.length) add(tr, el('td', null, '—'), el('td', null, '—'), el('td', null, '—'));
-    else {
-      const now = done.filter(r => r['목표4%_10시'] === 'Y').length; const real = done.filter(r => r['목표4%_실전'] === 'Y');
-      const cnt = w => real.filter(r => r['첫도달창'] === w).length;
-      add(tr, el('td', null, `${now}/${done.length}`), el('td', null, `${real.length}/${done.length}`),
-        el('td', 'w', real.length ? `저녁 ${cnt('저녁')} · 프리 ${cnt('프리')} · 10시 ${cnt('10시')}` : '—'));
-    }
-    add(t, tr);
-  });
-  add(wrap, t); return wrap;
+function vfRealStat(rows) {   /* 9/25 `실전합침` : 한 줄 대장들의 실전 셈. done = 10시 채점과 실전 기록이 둘 다 끝난 대장, wait = 10시는 끝났는데 실전이 덜 끝난 대장 */
+  const yn = v => v === 'Y' || v === 'N';
+  const scored = rows.filter(r => yn(r['목표4%_10시']));
+  const recs = scored.map(r => VF_REAL[vfRealKey(r)]).filter(x => x && yn(x['목표4%_실전']));
+  const hits = recs.filter(x => x['목표4%_실전'] === 'Y');
+  const cnt = w => hits.filter(x => x['첫도달창'] === w).length;
+  return { done: recs.length, wait: scored.length - recs.length, hit: hits.length, win: `저녁 ${cnt('저녁')} · 프리 ${cnt('프리')} · 10시 ${cnt('10시')}` };
+}
+function vfRealCell(rows) {   /* 9/25 `실전합침` : 적중률 옆 실전(기록) 칸 — 분수만 */
+  const rs = vfRealStat(rows);
+  return el('td', 'vf-rc', (rs.done ? `${rs.hit}/${rs.done}` : '—') + (rs.wait ? ` (대기 ${rs.wait})` : ''));
 }
 function vfRealTok(r) {   /* 목록 한 줄 끝 토막. 실전 기록이 없는 행(9/17 전 · 옛 verify.json)은 토막 없음 */
   const x = VF_REAL[vfRealKey(r)]; if (!x) return [];
@@ -1521,27 +1519,30 @@ function vfGateTable() {
   });
   add(wrap, t); return wrap;
 }
-function vfTable(leads) {   // 9/25 : 옛 ref(KRX 자 참고 표) 인자 뺌 — 띠를 없애 늘 표본 표
+function vfTable(leads, real) {   // 9/25 : 옛 ref(KRX 자 참고 표) 인자 뺌 — 띠를 없애 늘 표본 표. real = 실전(기록) 칸 그림(옛 verify.json 이면 false)
   const wrap = el('div', 'vf-tbl'); wrap.setAttribute('data-noswipe', '');
   const t = el('table'); const th = el('tr');
-  ['줄', '표본', '적중률', '10시 고가% 평균 · 중앙값', '최악'].forEach(h => add(th, el('th', null, h)));
+  /* 9/25 `실전합침` : 실전(기록) 칸은 적중률 바로 옆. 칸이 있으면 머리글 둘을 두 줄로(사용자 결정) — 한 줄이면 폰(375px)에서 평균 칸 끝이 잘린다 */
+  ['줄', '표본', '적중률', ...(real ? ['실전|(기록)', '10시 고가%|평균 · 중앙값'] : ['10시 고가% 평균 · 중앙값']), '최악'].forEach(h => {
+    const c = el('th'); h.split('|').forEach((p, j) => { if (j) c.appendChild(el('br')); c.appendChild(document.createTextNode(p)); }); add(th, c);
+  });
   add(t, th);
   VF_LINES.forEach(([key, label], i) => {
-    const s = vfStats(leads.filter(r => r['판정'] === key));
+    const rows = leads.filter(r => r['판정'] === key); const s = vfStats(rows); const rc = real ? vfRealCell(rows) : null;
     const tr = el('tr', i === 0 ? 'main' : null); tr.dataset.key = key; tr.tabIndex = 0; tr.setAttribute('role', 'button');   /* 9/24 : 누르면 표 아래 목록 (vfBlock) */
     const c0 = el('td', null, label); if (i > 0) add(c0, el('span', 'ref', '참고'));
     add(tr, c0, el('td', null, String(s.n) + (s.wait ? ` (대기 ${s.wait})` : '')));
-    if (!s.scored) { add(tr, el('td', null, '—'), el('td', null, '—'), el('td', null, '—')); }
-    else if (s.scored < 5) { add(tr, el('td', null, `${s.hit} / ${s.scored}`), el('td', 'nt', '목록만 (5개 미만)'), el('td', null, '—')); }
+    if (!s.scored) { add(tr, el('td', null, '—'), rc, el('td', null, '—'), el('td', null, '—')); }
+    else if (s.scored < 5) { add(tr, el('td', null, `${s.hit} / ${s.scored}`), rc, el('td', 'nt', '목록만 (5개 미만)'), el('td', null, '—')); }
     else {
-      add(tr, el('td', null, `${Math.round(s.hit / s.scored * 100)}% (${s.hit}/${s.scored})`), el('td', null, `${rvPct(s.mean)} · ${rvPct(s.median)}`));
+      add(tr, el('td', null, `${Math.round(s.hit / s.scored * 100)}% (${s.hit}/${s.scored})`), rc, el('td', null, `${rvPct(s.mean)} · ${rvPct(s.median)}`));
       const w = el('td', 'w'); if (s.worst) add(w, el('b', 'down', rvPct(s.worst.v)), el('span', 'sub', ` (${vfMd(s.worst.r['일자'])} ${s.worst.r['종목'] || ''})`)); else w.textContent = '—';
       add(tr, w);
     }
     add(t, tr);
   });
   const pr = el('tr'); const p0 = el('td', null, '피뢰침'); add(p0, el('span', 'ref', '별도 계열'));
-  add(pr, p0, el('td', null, '0')); const pn = el('td', 'nt', '채점 칸 없음 → 첫 대상일 뒤 연결'); pn.colSpan = 3; add(pr, pn); add(t, pr);
+  add(pr, p0, el('td', null, '0')); const pn = el('td', 'nt', '채점 칸 없음 → 첫 대상일 뒤 연결'); pn.colSpan = real ? 4 : 3; add(pr, pn); add(t, pr);
   add(wrap, t); return wrap;
 }
 function vfRow(r) {
@@ -1560,15 +1561,16 @@ function vfRow(r) {
 /* 9/24 `검증탭공부` 사용자 결정(추천안) : 표본 · 적중률 표와 표본 목록을 하나로 — 줄 이름(후보 · 관문3 제외 · 배경)을 누르면 그 줄 대장 목록이 표 바로 아래에.
    처음엔 후보가 열린 상태. 다른 줄을 누르면 목록이 바뀌고 같은 줄을 다시 누르면 닫힌다(한 번에 한 목록).
    목록을 표 줄 사이에 넣지 않는 이유 : 표가 폰에서 옆으로 밀리고(375px 측정 442 / 349px) 표본 30 이면 후보 목록이 길어 세 줄 비교가 끊긴다 */
-function vfBlock(leads) {
-  const blk = el('div', 'vf-blk'); const tw = vfTable(leads); const lw = el('div', 'vf-sel');
+function vfBlock(leads, real) {
+  const blk = el('div', 'vf-blk'); const tw = vfTable(leads, real); const lw = el('div', 'vf-sel');
   let cur = '후보';
   const paint = () => {
     lw.innerHTML = '';
     tw.querySelectorAll('tr[data-key]').forEach(tr => { const on = tr.dataset.key === cur; tr.classList.toggle('on', on); tr.setAttribute('aria-expanded', on ? 'true' : 'false'); });
     const line = VF_LINES.find(x => x[0] === cur); if (!line) return;
     const rows = leads.filter(r => r['판정'] === line[0]); const main = line[0] === '후보';
-    add(lw, el('div', 'vf-selh', `${line[1]} 대장 ${rows.length}건${main ? '' : ' (참고)'} · 최근 순`));
+    const rs = real ? vfRealStat(rows) : null;   /* 9/25 `실전합침` : 먼저 닿은 창 나눔은 표 칸 대신 여기 */
+    add(lw, el('div', 'vf-selh', `${line[1]} 대장 ${rows.length}건${main ? '' : ' (참고)'} · 최근 순${rs && rs.done ? ` · 실전 먼저 닿은 창 : ${rs.win}` : ''}`));
     const lst = el('div', 'vf-list');
     if (rows.length) rows.forEach(r => add(lst, vfRow(r)));
     else add(lst, el('div', 'empty', main ? '아직 표본이 없습니다 — 통합 자 첫 판정일부터 쌓입니다' : '해당 없음'));
@@ -1638,12 +1640,8 @@ function renderVerify(vf) {
   const sec = (title, cnt, extra, key) => { const h = el('div', 'rv-sec' + (extra ? ' ' + extra : '')); add(h, el('h2', null, title), el('span', 'c', cnt), el('span', 'ln'), helpBtn(h, key)); return h; };
   /* 9/24 사용자 요청 : 맨 위 관문 순서 표 (제목 줄만, ? 없음) */
   const gh = el('div', 'rv-sec'); add(gh, el('h2', null, '관문 순서'), el('span', 'ln')); add(box, gh, vfGateTable());
-  add(box, sec('표본 · 적중률', `통합 자 ${vfMd(alFrom)} 부터 · 후보 줄만 표본`, null, 'verify.table'));
-  add(box, vfBlock(al));   /* 9/24 : 표 + 누른 줄의 대장 목록 (옛 '표본 목록' 구역 합침) */
-  if (real.length) {   /* 9/24 실전채점 : 실전 (기록) 작은 표 — 채점 원본 아님 */
-    add(box, sec('실전 (기록)', '채점 원본 아님', null, 'verify.real'));
-    add(box, vfRealTable(real.filter(r => r['역할'] === '대장' && String(r['일자']) >= alFrom)));
-  }
+  add(box, sec('표본 · 적중률', `통합 자 ${vfMd(alFrom)} 부터 · 후보 줄만 표본${real.length ? ' · 실전 칸은 기록 · 채점 원본 아님' : ''}`, 'vf-sech', 'verify.table'));
+  add(box, vfBlock(al, real.length > 0));   /* 9/24 : 표 + 누른 줄의 대장 목록 (옛 '표본 목록' 구역 합침) · 9/25 `실전합침` : 옛 '실전 (기록)' 구역은 이 표의 칸으로 */
   add(box, el('div', 'foot', `채점 한 가지 — D 종가 매수 → D+1 10:00 봉까지 고가 +4% (next-day, 칸 불변) · 계산은 화면에서 · 생성 ${vf.generated || '—'}`));
   if (CUR === 'verify') setHero('verify');
 }
@@ -1877,16 +1875,13 @@ const HELP_SEC = {
     ['누르기', '줄 이름(후보 · 관문3 제외 · 배경)을 누르면 그 줄 대장 목록이 표 바로 아래에 뜬다. 처음엔 후보가 열린 상태(▾). 다른 줄을 누르면 목록이 바뀌고, 같은 줄을 다시 누르면 닫힌다.'],
     ['표본', '후보 섹터 1개 = 표본 1. 관망(관문1 불통과) 후보도 넣되 목록에 관망 표시. (대기 n) = D+1 채점 전.'],
     ['적중률', '10시까지 고가 +4% 도달(Y) ÷ 채점된 수. 채점 5개 미만이면 통계 대신 목록만.'],
+    ['실전(기록)', '실매매 규칙대로 본 기록 — D 저녁(NXT 되는 종목 15:40~ · KRX 16:00~, 어느 시장이든) · 다음날 NXT 프리 08:00~08:49 · 다음날 KRX 09:00~10:00 봉 중 시간 순으로 먼저 +4%(10시 채점과 같은 식)에 닿은 대장 수 ÷ 10시 채점과 실전 기록이 둘 다 끝난 대장 수. 채점 원본이 아니다 — 표본 수 · 적중률 · 실매매 전환 조건은 적중률(10시) 그대로이고, 어느 쪽으로 볼지는 월 1회 결정(9/24 사용자 결정). 그래서 % 없이 분수만 둔다. 분모가 적중률과 같으면 그대로 견주면 된다 — 실전은 10시 창 앞에 저녁 · 프리를 붙인 것이라 같은 대장끼리는 적중 수보다 작을 수 없다. (대기 n) = 10시 채점은 끝났는데 실전 기록이 아직 없거나 창이 덜 끝난 대장(둘 다 다음날 10:07 에 차서 보통 없다).'],
+    ['먼저 닿은 창', "줄을 눌러 연 목록 제목 끝 — 실전 ✓ 가 시간 순으로 처음 닿은 창별 수(저녁 · 프리 · 10시). 프리에서 먼저 닿고 10시에도 닿은 종목도 '프리' 로 센다. 실전(기록) 칸과 같이 10시 채점이 끝난 대장만 센다 — 오늘 저녁에 닿은 대장은 목록 줄에 ✓ 저녁이 떠도 다음날 10:07 뒤에 센다. 10시 채점과의 차이는 '실전 − 적중 수' 로 본다((대기 n) 이 있으면 어림)."],
     ['평균 · 중앙값 · 최악', 'D+1 10시까지 고가% 의 평균과 중앙값. 최악 = 10시까지 저가% 가 가장 낮았던 표본(날짜 · 종목).'],
     ['목록 한 줄', '두 줄 — 위 : 날짜 · 섹터 · 대장 (관망). 아래 : ✓ 적중 · ✕ 미달 · ⏳ 채점 전 + 10시까지 고가% · 저가%. ✓✕ 가 왼쪽에 세로로 서서 훑으면 적중 개수가 보인다. 최근 순. 2등 · 3등은 참고 기록이라 여기 없다.'],
     ['(k)', 'KRX 전용 종목(NXT 거래 불가) — 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목이라 08:00 프리마켓부터(사용자 결정 9/15, 장중 탭과 같은 표시). 종목마스터에 없는 종목은 표시 없음. 판정 · 채점 무관.'],
     ['피뢰침', '별도 계열 — 표본 30 에 안 센다. 채점 칸이 아직 없어 첫 피뢰침 대상일 뒤에 연결.'],
-    ['· 실전 토막', '목록 한 줄 끝 — ✓ 저녁 16:00 KRX = 실전 규칙으로 그 창 · 시각 · 시장에서 먼저 +4%. ✕ = 세 창 모두 못 닿음. ⏳ = 창이 덜 끝남. 뜻은 아래 "실전 (기록)" 구역 ?.']],
-  'verify.real': [
-    ['뜻', '실매매 규칙대로 본 기록 — D 저녁(NXT 되는 종목 15:40~ · KRX 16:00~, 어느 시장이든) · 다음날 NXT 프리 08:00~08:49 · 다음날 KRX 09:00~10:00 봉 중 시간 순으로 먼저 +4%(지금 채점과 같은 식)에 닿으면 ✓. 채점 원본이 아니다 — 표본 수 · 적중률 · 실매매 전환 조건은 위 표(10시) 그대로이고, 어느 쪽으로 볼지는 월 1회 결정(9/24 사용자 결정).'],
-    ['표본', '위 표 표본과 같은 셈 — 그 줄 대장 전부. (대기 n) = 10시 채점이나 실전 기록 중 하나라도 창이 덜 끝난 대장.'],
-    ['지금 · 실전', '10시 채점과 실전 기록이 둘 다 끝난 대장만 같은 행으로 비교한다(분모 = 표본 − 대기). 10시 +4% 도달 수와 실전 규칙 도달 수. 실전은 10시 창 앞에 저녁 · 프리를 붙인 것이라 지금보다 작을 수 없다.'],
-    ['먼저 닿은 창', "실전 ✓ 가 시간 순으로 처음 닿은 창. 프리에서 먼저 닿고 10시에도 닿은 종목도 '프리' 로 센다 — 지금과의 차이는 '실전 − 지금' 으로 본다."],
+    ['· 실전 토막', '목록 한 줄 끝 — ✓ 저녁 16:00 KRX = 실전 규칙으로 그 창 · 시각 · 시장에서 먼저 +4%. ✕ = 세 창 모두 못 닿음. ⏳ = 창이 덜 끝남. 뜻은 이 도움말의 실전(기록).'],
     ['가정', '1분봉 고가가 +4% 에 닿으면 팔렸다고 본다 — 저녁 · 프리는 거래가 얇아 실제 체결과 다를 수 있다(1주 연습 체결로 확인). 기준가는 D 종가(계좌 매입가 아님). (k) 종목은 프리 창이 없다.'],
     ['칩', '15:40 봉만 = NXT 15:40 봉 한 분에서만 닿음(그 봉에는 15:30~15:40 단일가 체결이 섞여 자동매도 주문이 못 낀다). 한 시장만 = NXT 되는 종목이 16:00 뒤 KRX · NXT 중 한 시장에서만 닿음(자동매도 16:00 주문은 한 시장에만 걸린다).']],
   'review.sum': [
