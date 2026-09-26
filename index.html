@@ -150,6 +150,8 @@ label.chk.top{align-items:flex-start}label.chk.top input{margin-top:3px;flex:non
 .g6v-row .g6v-v.up{color:var(--up)}.g6v-row .g6v-v.down{color:var(--down)}
 .g6v-row.muted .g6v-v{font-weight:400;color:var(--muted)}
 .idxline{font-size:12px;margin:2px 0 10px}.idxline .seg{white-space:nowrap}.idxline .up,.idxline .down{font-weight:700}
+/* 9/26 `시장한줄` — 잠정 화면 시장 한 줄 (.status 와 같은 크기·간격, 위/아래 색은 전역 .up/.down — 확정 화면 지수 줄처럼 굵게) */
+.mkt-line{font-size:12px;margin:4px 0 12px}.mkt-line .mkt-seg{white-space:nowrap}.mkt-line .up,.mkt-line .down{font-weight:700}
 /* 9/14 목업 B — 피뢰침 카드 (8-3 ②, 시안 pirochim_mockup.html). 카드·칩·색은 어종 카드 그대로, 아래는 피뢰침에만 있는 조각 */
 .meta{font-size:12px;color:var(--muted);font-weight:400}
 .facts{font-size:12px;color:var(--muted);margin:-4px 0 4px;font-variant-numeric:tabular-nums}
@@ -512,6 +514,10 @@ function renderClose(d, dates) {
     add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) ${provAt} 잠정`));
     box.lastChild.style.fontSize = '18px'; box.lastChild.style.margin = '0';
     add(box, el('div', 'status', `관문1 — (15:50 기록) · ${provAt} 자료로 미리 돌린 판정이라 15:50 확정과 다를 수 있다 · 피뢰침은 15:20 판정만`));
+    // 9/26 `시장한줄` (사용자 결정 "추천대로") : 그 잠정 시각의 시장 한 줄 — market-line 이 만든 조각(parts)을 그대로 이어 붙이고 색만 (다시 계산·반올림 안 함).
+    //   알림 둘째 줄과 같은 글자. 그 시각 키가 없으면(도구 실패 · 9/25 이전 JSON) 아무것도 안 그린다. 기준 아님 — 관문1 · 판정 · 비중과 무관
+    const mk = d['market' + provAt.replace(':', '')];
+    if (mk && arr(mk.parts).length) add(box, mktLine(mk));
     if (j1450.length && j1500.length) {
       const a = provSecs(j1450), b = provSecs(j1500);
       add(box, el('div', 'status', `잠정 흐름 : 14:50 ${secText(a)} → 15:00 ${secText(b)} ${sameSecs(a, b) ? '(같음)' : '(다름)'}`));
@@ -566,11 +572,14 @@ function renderClose(d, dates) {
   //   값·위/아래 는 CSV 그대로(이평위치·5일선대비%·20일선대비%), 통과 기준 없음 — 관문1 옆 참고 한 줄. 5·20일선이 없는 날은 줄 자체를 안 그린다
   const fmtI = v => { const n = num(v); return n === null ? String(v) : n.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };   // 9/19 : 아래 관문6 20일선 줄도 같이 쓴다
   const pctT = v => has(v) ? ` (${num(v) > 0 ? '+' : ''}${v}%)` : '';
-  if (has(g['코스피5일선']) || has(g['코스피20일선'])) {
+  // 9/26 `시장한줄` (사용자 결정 ⑤ "추천대로") : 코스닥 줄도 같은 모양으로 코스피 줄 아래 — gate_log v1.4 코스닥 7칸(9/28 부터). 칸이 없는 날은 코스닥 줄을 안 그린다
+  [['코스피', '코스피종가', '코스피5일선', '코스피20일선', '5일선대비%', '20일선대비%', '이평위치'],
+   ['코스닥', '코스닥종가', '코스닥5일선', '코스닥20일선', '코스닥5일선대비%', '코스닥20일선대비%', '코스닥이평위치']].forEach(([nm, kPx, k5, k20, kP5, kP20, kPos]) => {
+    if (!(has(g[k5]) || has(g[k20]))) return;
     const ix = el('div', 'sub idxline');
-    const pos = String(g['이평위치'] || '').split('/');
-    add(ix, el('span', null, `코스피 ${has(g['코스피종가']) ? fmtI(g['코스피종가']) : '—'}`));
-    [['5일선', g['코스피5일선'], g['5일선대비%'], pos[0]], ['20일선', g['코스피20일선'], g['20일선대비%'], pos[1]]].forEach(([k, ma, pct, p]) => {
+    const pos = String(g[kPos] || '').split('/');
+    add(ix, el('span', null, `${nm} ${has(g[kPx]) ? fmtI(g[kPx]) : '—'}`));
+    [['5일선', g[k5], g[kP5], pos[0]], ['20일선', g[k20], g[kP20], pos[1]]].forEach(([k, ma, pct, p]) => {
       if (!has(ma)) return;
       const side = /아래/.test(p || '') ? '아래' : (/위/.test(p || '') ? '위' : '');
       const seg = el('span', 'seg');   // 이평 하나는 한 덩어리(nowrap). 덩어리 사이 공백은 밖에 두어 거기서만 줄이 바뀌게 (375px 실측)
@@ -578,7 +587,7 @@ function renderClose(d, dates) {
       add(ix, document.createTextNode(' '), seg);
     });
     add(c1, ix);
-  }
+  });
 
   const judge = arr(d.judge1520);
   const cands = judge.filter(r => r['판정'] === '후보');
@@ -779,21 +788,26 @@ function renderClose(d, dates) {
     return b;
   }
   // 20일선 항목 밑 코스피 줄 = 관문1 아래 지수 위치 줄과 같은 값(gate_log 코스피종가 · 코스피20일선 · 20일선대비% · 이평위치, 키움 ka20006 지수 일봉). 기준 없음, 표시만 — 판정·채점 무관.
-  //   코스닥 20일선은 어디에도 기록이 없어 코스닥 후보는 HTS 차트로(도움말). 장중 탭 지수 차트의 "20" 은 5분봉 20개 평균이라 20일선이 아니다.
+  //   9/26 `시장한줄` : 코스닥도 같은 상자에 한 줄(gate_log v1.4 코스닥 칸, 9/28 부터 — 그 전 날짜는 코스피 줄만, 코스닥 후보는 HTS 차트로(도움말)). 장중 탭 지수 차트의 "20" 은 5분봉 20개 평균이라 20일선이 아니다.
   // 9/19 값상자 (사용자 결정 A) : 값 줄은 .g6v 상자 안 한 줄씩 — 왼쪽 설명(g6v-l) · 오른쪽 끝 핵심 숫자(g6v-v). 값·계산은 그대로, 배치만
   function g6row(box, left, right, cls) {
     const r = el('div', 'g6v-row' + (cls ? ' ' + cls : '')); const l = el('span', 'g6v-l'); const v = el('span', 'g6v-v');
     [[l, left], [v, right]].forEach(([sp, ks]) => (Array.isArray(ks) ? ks : [ks]).forEach(k => add(sp, typeof k === 'string' ? document.createTextNode(k) : k)));
     add(r, l, v); add(box, r); return v;
   }
-  let ix20;
-  if (has(g['코스피20일선'])) {
-    const p20 = String(g['이평위치'] || '').split('/')[1] || '';
+  let ix20 = null;
+  [['코스피', '코스피종가', '코스피20일선', '20일선대비%', '이평위치'], ['코스닥', '코스닥종가', '코스닥20일선', '코스닥20일선대비%', '코스닥이평위치']].forEach(([nm, kPx, k20, kP20, kPos]) => {
+    if (!has(g[k20])) return;
+    const p20 = String(g[kPos] || '').split('/')[1] || '';
     const side = /아래/.test(p20) ? '아래' : (/위/.test(p20) ? '위' : '');
-    ix20 = el('div', 'g6v ix20');
-    g6row(ix20, `코스피 ${has(g['코스피종가']) ? fmtI(g['코스피종가']) : '—'} · 20일선 ${fmtI(g['코스피20일선'])}`, side + pctT(g['20일선대비%']).replace(/[()]/g, ''))   // 값 칸이라 괄호 없이 "위 +1.37%"
+    if (!ix20) ix20 = el('div', 'g6v ix20');
+    g6row(ix20, `${nm} ${has(g[kPx]) ? fmtI(g[kPx]) : '—'} · 20일선 ${fmtI(g[k20])}`, side + pctT(g[kP20]).replace(/[()]/g, ''))   // 값 칸이라 괄호 없이 "위 +1.37%"
       .classList.add(side === '위' ? 'up' : (side === '아래' ? 'down' : 'muted'));
-  } else ix20 = el('div', 'sub muted', '코스피 20일선 : 이 날짜 자료에 없음 — HTS 차트로');
+  });
+  if (!has(g['코스피20일선'])) {   // 코스피가 빈 날은 옛 안내 그대로 — 코스닥 줄만 있으면 그 아래에 안내를 붙인다
+    const miss = el('div', 'sub muted', '코스피 20일선 : 이 날짜 자료에 없음 — HTS 차트로');
+    if (ix20) { const wrap = el('div'); add(wrap, ix20, miss); ix20 = wrap; } else ix20 = miss;
+  }
   const b1 = gblk('진입 전 확인', '— 미달이면 배제', [
     ['당일 지수가 20일선 위에 있는가', '아래면 매매 안 함 (M6)', ix20],
     ['일봉 위치를 차트로 확인했나', '신고가 Y/N 만 보지 말고 (7-9) · 신고가·앞산을 뚫는 날인가, 그날 거래대금이 평소보다 크게 실렸나'],
@@ -1870,10 +1884,12 @@ const HELP_SEC = {
   'close.gate1': [
     ['통과 / 불통과 · 걸린조건', '시장 판단(M1 · M2). 네 숫자 중 어느 것이 걸렸는지. 불통과여도 후보는 나오고 "관망" 이 붙는다(M3).'],
     ['상한가', '오늘 상한가 종목 수 — 상따장 구별(M2).'],
-    ['상승비율', 'KRX 거래대금 100위 중 오른 종목의 비율.'],
+    ['상승비율', '코스피 · 코스닥 전 종목 중 오른 종목 수 ÷ (오른 + 내린), 보합은 뺀다 — 15:20 기준.'],
     ['B트랙 · B비중', '100위 안 B트랙(시총 기준 소형, D9) 종목 수와 거래대금 비중 — 대장은 B트랙에서 찾는다. 9/17 부터 통합 100위 기준, 비중 분모는 통합 상위100 주식 합(9/16 까지는 KRX 시장 총거래대금).'],
-    ['코스피 · 5일선 · 20일선', '지수가 이평선 위(빨강) / 아래(파랑) 인가와 차이 %(M6). 참고 한 줄, 통과 기준 없음.'],
+    ['코스피 · 코스닥 · 5일선 · 20일선', '지수가 이평선 위(빨강) / 아래(파랑) 인가와 차이 %(M6). 참고 한 줄, 통과 기준 없음.'],
     ['기준 n↑', '각 칸 아래 작은 줄 = 그날 판정 CSV(gate_log)에 기록된 기준값. 같거나 크면 통과, 넷 다 넘어야 통과. 강의가 준 숫자가 아닌 우리 임시값(M1 · M2)이라 월 1회 점검에서만 바뀌고, 지난 날짜는 그날 쓴 기준이 그대로 보인다.']],
+  'close.market': [
+    ['시장 14:50 · 15:00', '그 잠정 시각(14:50 · 15:00)의 시장. 코스피 · 코스닥 등락, 5일선 · 20일선 위(빨강) / 아래(파랑)와 차이 %(M6 — 5일선 = 앞 4거래일 종가와 이 시각 지수의 평균, 20일선은 앞 19거래일). 오른 / 내린 = 코스피 · 코스닥 전 종목 수(보합 뺌), 상한가 수(M2), 신고가식 = 강의 \'120일 신고가\' 조건검색에 이 시각 잡힌 종목 수(KRX). 보기만 하는 값 — 관문1 · 판정 · 비중 기준이 아니다. 관문1 은 15:50 기록.']],
   'close.cand': [
     ['후보 · 어종', '관문2(모멘텀 양수) → 관문3(2따) → 관문4(대장)를 지난 섹터. 어종 = 당일주도주 종베(C1).'],
     ['1순위 · 관망', '후보가 둘 이상이면 집중도 순 순위. 관망 = 관문1 불통과인데 후보.'],
@@ -1909,7 +1925,7 @@ const HELP_SEC = {
   'close.gate6': [
     ['세 층 순서', '① 진입 전 확인(지수 20일선 M6 — 아래면 매매 안 함 · 일봉 위치와 앞산 C2 · 호가 한 칸 유동성 C10 — 미달이면 종목 배제) → ② 매수 자리(돼지 물량 E6) → ③ 사람 판단(3레벨 뉴스 T2 · 재료 T6 · 악재 P4 · 내일 이벤트 · 괴리 캡처 · 재료 D-day E5).'],
     ['체크 상자', '저장되지 않는다. 그 자리에서 확인하는 순서표.'],
-    ['코스피 · 20일선 (첫 항목 아래)', '관문1 아래 지수 위치 줄과 같은 값 — 코스피 종가 · 20일선(키움 지수 일봉) · 위/아래와 차이 %(M6). 통과 기준 없음. 코스닥 20일선은 기록하지 않아 코스닥 후보는 HTS 차트로 본다. 장중 탭 지수 차트의 20 은 5분봉 20개 평균이지 20일선이 아니다.'],
+    ['코스피 · 코스닥 · 20일선 (첫 항목 아래)', '관문1 아래 지수 위치 줄과 같은 값 — 코스피 종가 · 20일선(키움 지수 일봉) · 위/아래와 차이 %(M6). 통과 기준 없음. 코스닥도 같은 모양(9/28 부터 — 그 전 날짜는 HTS 차트로). 장중 탭 지수 차트의 20 은 5분봉 20개 평균이지 20일선이 아니다.'],
     ['1억 = 약 n주 (셋째 항목 아래 상자)', '후보 섹터의 대장·2등(티마 순서에서 대장 다음)과 피뢰침 후보만 — 왼쪽은 역할·종목·현재가, 오른쪽 굵은 숫자가 현재가로 1억 원이 몇 주인지, 호가 한 칸 유동성(C10) 확인용. 3·4등은 사지 않으므로(D1) 안 적는다. 20만 원 넘는 종목은 십 단위, 그 아래는 백 단위 반올림(표시 단위일 뿐 기준 아님). 이름 옆 (k) = KRX 전용(NXT 불가, 다음날 매도 09:00 부터).'],
     ['뉴스 링크', '대장·2등·피뢰침 후보만. 최근 소식 = 판정일 앞 1주 · 제목만 = 제목에 종목명이 있는 뉴스 · 어제부터 = 직전 거래일 ~ 판정일(악재 구간) · 공시 = DART. 링크만, 본문은 수집하지 않는다.']],
   'series.overlap': [
@@ -2020,6 +2036,22 @@ function helpBtn(head, key) {
   return b;
 }
 function labelWith(text, key) { const l = el('div', 'label', text); add(l, helpBtn(l, key)); return l; }
+// 9/26 `시장한줄` : 잠정 화면 시장 한 줄. 조각 하나 = 한 덩어리(nowrap) — 덩어리 사이에서만 줄이 바뀐다('코스피 +0.45%' · '5일선 위 +1.6%' …).
+//   조각 { t: 글자, h: 색칠할 글자('위 +1.6%'), c: 'up' | 'down', j: 앞 조각과의 이음(없으면 ' · ') } 를 그대로 — 숫자·반올림은 market-line 한 곳에서
+//   만든 글자라 여기서 바꾸지 않는다. 이음의 앞 빈칸은 덩어리 밖(거기서 줄이 바뀜), '· ' 는 뒤 덩어리 안 — 글자는 알림 text 와 같다
+function mktLine(mk) {
+  const ln = el('div', 'sub mkt-line');
+  arr(mk.parts).forEach((p, i) => {
+    const jn = i ? (p.j == null ? ' · ' : String(p.j)) : '';
+    const lead = jn.match(/^\s*/)[0];
+    const seg = el('span', 'mkt-seg', jn.slice(lead.length) + String(p.t == null ? '' : p.t));
+    if (has(p.h)) add(seg, el('span', p.c === 'up' ? 'up' : (p.c === 'down' ? 'down' : 'muted'), String(p.h)));
+    if (lead) add(ln, document.createTextNode(lead));
+    add(ln, seg);
+  });
+  add(ln, helpBtn(ln, 'close.market'));
+  return ln;
+}
 let HELP_OPEN = false;
 function renderHelp(tab) {
   const box = document.getElementById('help'); box.innerHTML = '';
