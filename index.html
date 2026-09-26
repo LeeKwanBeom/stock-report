@@ -252,6 +252,17 @@ details.more .card strong{font-size:14.5px}
 .ix-tag{margin-left:3px;padding:1px 3px;border-radius:4px;background:var(--cocoa);color:var(--onFill);font-weight:700}
 .ix-x{display:grid;margin:4px 56px 0 0;font-size:10px;color:var(--muted);text-align:center}
 .ix-x b{color:var(--text);font-weight:700}
+/* 9/27 `일봉전환` (사용자 결정 9/26 ①~⑩) : [5분봉 | 일봉] 전환 단추(구역 제목 줄 ? 뒤) · 일봉 범례 셋 · 5분봉 날짜 칸 '갭 · 종가' 줄 · 마지막 칸 전일 종가 점선 · 일봉 가로축(달 · 기간) */
+.ix-mode{order:3;flex:none;display:inline-flex;align-self:center;margin-left:6px;border:1px solid var(--roseDash);border-radius:9px;overflow:hidden;letter-spacing:0}
+.ix-mode button{font:inherit;font-size:11px;font-weight:700;line-height:1;margin:0;padding:3px 8px;border:0;background:var(--card);color:var(--wine);cursor:pointer}
+.ix-mode button[aria-pressed="true"]{background:var(--wineFill);color:var(--onFill)}   /* --wine 은 다크에서 연분홍이라 흰 글자가 안 보인다 — 채운 바탕 짝은 --wineFill (밝은 모드는 같은 #6e0b14) */
+.ix-leg.ix-leg3{grid-template-columns:auto repeat(3,minmax(0,1fr))}
+.ix-pc{stroke:var(--roseDash);stroke-width:1.4;stroke-dasharray:1 3;stroke-linecap:round}
+.ix-gl{display:block;font-weight:400;color:var(--muted)}
+.ix-xm{position:relative;height:13px;margin-top:4px;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ix-xmi{position:absolute;left:0;right:56px;top:0;bottom:0}
+.ix-xmi span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.ix-xr{position:absolute;right:0;top:0;white-space:nowrap}
 details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 /* 시계열 탭 (9/14 밤, 8-3 ④) — 시각 × 종목 격자. 옆으로 스크롤(data-noswipe), 첫 열 고정 */
 .sg{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:4px}
@@ -788,7 +799,7 @@ function renderClose(d, dates) {
     return b;
   }
   // 20일선 항목 밑 코스피 줄 = 관문1 아래 지수 위치 줄과 같은 값(gate_log 코스피종가 · 코스피20일선 · 20일선대비% · 이평위치, 키움 ka20006 지수 일봉). 기준 없음, 표시만 — 판정·채점 무관.
-  //   9/26 `시장한줄` : 코스닥도 같은 상자에 한 줄(gate_log v1.4 코스닥 칸, 9/28 부터 — 그 전 날짜는 코스피 줄만, 코스닥 후보는 HTS 차트로(도움말)). 장중 탭 지수 차트의 "20" 은 5분봉 20개 평균이라 20일선이 아니다.
+  //   9/26 `시장한줄` : 코스닥도 같은 상자에 한 줄(gate_log v1.4 코스닥 칸, 9/28 부터 — 그 전 날짜는 코스피 줄만, 코스닥 후보는 HTS 차트로(도움말)). 장중 탭 지수 차트는 일봉(5 · 20일선) · 5분봉(20 · 60 · 120 = 5분봉 개수) 전환 — 5분봉의 "20" 은 20일선이 아니다(9/27 `일봉전환`).
   // 9/19 값상자 (사용자 결정 A) : 값 줄은 .g6v 상자 안 한 줄씩 — 왼쪽 설명(g6v-l) · 오른쪽 끝 핵심 숫자(g6v-v). 값·계산은 그대로, 배치만
   function g6row(box, left, right, cls) {
     const r = el('div', 'g6v-row' + (cls ? ' ' + cls : '')); const l = el('span', 'g6v-l'); const v = el('span', 'g6v-v');
@@ -951,6 +962,12 @@ function tStack(node, t, prev) { t = String(t); const sameH = prev !== undefined
    세로 = 그 기간 지수·이평의 최소~최대. 지수선은 날짜 경계에서 끊고(밤사이 갭), 이평선은 잇는다(날짜를 넘어 계산한 값이라). */
 const IX_MA = [['ma20', '20', 1], ['ma60', '60', 2], ['ma120', '120', 3]];
 const IX_W = 1000, IX_H = 100, IX_PAD = 0.02;
+/* 9/27 `일봉전환` (사용자 결정 9/26 지수차트토론 + ①~⑩) : 두 카드를 같이 [5분봉 | 일봉] 으로 바꾼다. 처음 열 때 일봉 — 고른 쪽은 이 변수 하나에만
+   (1분 폴링 replaceWith · 5분 뒤 renderLive 가 구역을 새로 그려도 유지, 페이지를 새로 열면 다시 일봉. localStorage 안 씀).
+   일봉 자료 = index-chart v1.1 의 series dlyD · dlyC · dlyMa5 · dlyMa20 (두 지수 다 있을 때만 단추). 없는 파일(9/23 까지)은 옛 5분봉 그대로.
+   일봉 = 키움 지수 일봉 종가 3개월 + 오늘 점(5분봉 끝값) · 5일 · 20일선. 보기만 하는 그림 — 위/아래 색 · '조심' 글 없음(강의 M6 선을 그리기만) */
+const IX_DAY_MA = [['dlyMa5', '5일', 2], ['dlyMa20', '20일', 1]];   /* 이름 · 색 번호 : 5일 = 청록(ixM2) · 20일 = 주황(ixM1, 5분봉 '20' 과 같은 색) */
+let IX_MODE = 'day';
 function ixNums(s) { return String(s === undefined || s === null ? '' : s).split(',').map(v => (v === '' ? null : +v / 100)); }
 function ixMin(t) { return +t.slice(0, 2) * 60 + +t.slice(2); }
 function ixFmt(v, dec) { return v === null || v === undefined || isNaN(v) ? '—' : v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
@@ -972,9 +989,47 @@ function indexChartBlock(d) {
   if (!list.length) return null;
   const wrap = el('div', 'ix-wrap');
   const lastT = list.map(s => String(s.lastT || '')).sort().pop();
-  add(wrap, labelWith(`지수 5분봉${has(lastT) ? ' · ' + tLabel(lastT) + ' 봉까지' : ''}`, 'live.index'));
-  list.forEach(s => add(wrap, ixCard(s)));
+  const dayOk = list.every(s => has(s.dlyD) && has(s.dlyC));   /* 일봉 칸은 두 지수 다 있을 때만 (한 카드만 일봉인 화면을 만들지 않음) */
+  const day = dayOk && IX_MODE === 'day';
+  const lab = labelWith(day ? `지수 일봉 · ${num(ic.dmonths) || 3}개월${has(lastT) ? ' · ' + tLabel(lastT) + ' 봉까지' : ''}`
+    : `지수 5분봉${has(lastT) ? ' · ' + tLabel(lastT) + ' 봉까지' : ''}`, 'live.index');
+  if (dayOk) add(lab, ixModeSw(d, wrap));
+  add(wrap, lab);
+  list.forEach(s => add(wrap, day ? ixCardDay(s) : ixCard(s)));
   return wrap;
+}
+/* [5분봉 | 일봉] 단추 — 누르면 이 구역만 새로 그려 바꿔 끼운다(폴링과 같은 방식, ? 를 펴 둔 채였으면 다시 편다) */
+function ixModeSw(d, wrap) {
+  const g = el('span', 'ix-mode'); g.setAttribute('role', 'group'); g.setAttribute('aria-label', '지수 차트 봉 고르기');
+  [['min', '5분봉'], ['day', '일봉']].forEach(([m, name]) => {
+    const b = el('button', null, name); b.type = 'button'; b.setAttribute('aria-pressed', IX_MODE === m ? 'true' : 'false');
+    b.onclick = e => {
+      e.stopPropagation();
+      if (IX_MODE === m) return;
+      IX_MODE = m;
+      const blk = indexChartBlock(d); if (!blk || !wrap.isConnected) return;
+      const open = !!wrap.querySelector('.help-inline');
+      wrap.replaceWith(blk);
+      if (open) { const q = blk.querySelector('.hq2'); if (q) q.click(); }
+      const nb = blk.querySelector('.ix-mode button[aria-pressed="true"]'); if (nb && nb.focus) nb.focus({ preventScroll: true });
+    };
+    add(g, b);
+  });
+  return g;
+}
+/* 제목 줄 : 이름 · 마지막 값 · 전일 대비 (5분봉 · 일봉 같은 줄) */
+function ixHead(s) {
+  const diff = num(s.diff) ?? 0; const pct = num(s.pct) ?? 0;
+  const head = el('div', 'ix-head');
+  add(head, el('b', 'ix-name', s.name), el('span', 'ix-last', ixFmt(num(s.last), 2)),
+    el('span', 'ix-diff' + (diff > 0 ? ' ix-up' : diff < 0 ? ' ix-dn' : ''), `${diff > 0 ? '▲' : diff < 0 ? '▼' : ''}${ixFmt(Math.abs(diff), 2)} (${pct > 0 ? '+' : ''}${pct.toFixed(2)}%)`));
+  return head;
+}
+/* 등락 % 글 : 반올림 둘째 자리, 부호 + / - (0.00 은 부호 · 색 없음) → [글, 'up' | 'down' | ''] */
+function ixPctTxt(a, b) {
+  if (!(a > 0) || !(b > 0)) return null;
+  const r = Math.round((a / b - 1) * 10000) / 100;
+  return [(r > 0 ? '+' : '') + (r === 0 ? '0.00' : r.toFixed(2)) + '%', r > 0 ? 'up' : r < 0 ? 'down' : ''];
 }
 function ixCard(s) {
   const card = el('div', 'card ix-card');
@@ -987,7 +1042,10 @@ function ixCard(s) {
   const m0 = Math.min(540, ...mins), m1 = Math.max(930, ...mins);   /* 09:00~15:30 고정 칸. 수능일처럼 시간이 밀린 날은 자료에 맞춰 넓힌다 */
   const nDay = Math.max(1, days.length);
   const xOf = i => ((dayOf[i] + IX_PAD + (1 - 2 * IX_PAD) * ((mins[i] - m0) / (m1 - m0))) / nDay) * IX_W;
-  const vals = c.concat(...mas).filter(v => v !== null && !isNaN(v));
+  /* 9/27 일봉전환 : 날짜별 첫 봉 시가 · 전일 종가(index-chart v1.1 dayOpen · dayPrev). 없는 파일(9/23 까지)은 null — 옛 그림 그대로 */
+  const dOpen = has(s.dayOpen) ? ixNums(s.dayOpen) : null; const dPrev = has(s.dayPrev) ? ixNums(s.dayPrev) : null;
+  const pcLast = dPrev && dPrev.length === days.length ? dPrev[days.length - 1] : null;   /* 마지막 날짜 칸의 전일 종가 (점선) */
+  const vals = c.concat(...mas, pcLast === null ? [] : [pcLast]).filter(v => v !== null && !isNaN(v));   /* 전일 종가가 범위 밖이면 넓혀 늘 보이게 */
   let lo = Math.min(...vals), hi = Math.max(...vals);
   const padV = (hi - lo || 1) * 0.07; lo -= padV; hi += padV;
   const yOf = v => (1 - (v - lo) / (hi - lo)) * IX_H;
@@ -1002,11 +1060,7 @@ function ixCard(s) {
   };
 
   /* 제목 줄 : 이름 · 마지막 값 · 전일 대비 */
-  const diff = num(s.diff) ?? 0; const pct = num(s.pct) ?? 0;
-  const head = el('div', 'ix-head');
-  add(head, el('b', 'ix-name', s.name), el('span', 'ix-last', ixFmt(num(s.last), 2)),
-    el('span', 'ix-diff' + (diff > 0 ? ' ix-up' : diff < 0 ? ' ix-dn' : ''), `${diff > 0 ? '▲' : diff < 0 ? '▼' : ''}${ixFmt(Math.abs(diff), 2)} (${pct > 0 ? '+' : ''}${pct.toFixed(2)}%)`));
-  add(card, head);
+  add(card, ixHead(s));
 
   /* 범례(윗줄) + 값(아랫줄) : 평소에는 마지막 봉의 값, 손가락을 대면 그 봉의 값. 두 줄을 늘 차지해서 짚을 때 그림이 밀리지 않는다 */
   const leg = el('div', 'ix-leg'); const when = el('span', 'ix-when'); add(leg, el('span'));
@@ -1019,13 +1073,14 @@ function ixCard(s) {
   add(card, leg);
 
   /* 그림 */
-  const plot = el('div', 'ix-plot');
+  const plot = el('div', 'ix-plot'); plot.setAttribute('data-noswipe', '');   /* 9/27 일봉전환 ⑦ : 그림을 짚고 옆으로 끌 때 탭이 안 넘어가게 */
   const svg = ixSvg('svg', null, { viewBox: `0 0 ${IX_W} ${IX_H}`, preserveAspectRatio: 'none', role: 'img',
     'aria-label': `${s.name} 5분봉 선 차트 ${days.map(dayLabelIx).join(' · ')} · 마지막 ${ixFmt(num(s.last), 2)}` });
   const tk = ixTicks(lo, hi); const lastV = c.length ? c[c.length - 1] : null; const lastY = lastV === null ? null : yOf(lastV);
   tk.list.forEach(v => svg.appendChild(ixSvg('line', 'ix-grid', { x1: 0, x2: IX_W, y1: yOf(v).toFixed(2), y2: yOf(v).toFixed(2) })));
   for (let di = 1; di < nDay; di++) svg.appendChild(ixSvg('line', 'ix-day', { x1: (di / nDay) * IX_W, x2: (di / nDay) * IX_W, y1: 0, y2: IX_H }));
   if (lastY !== null) svg.appendChild(ixSvg('line', 'ix-lastl', { x1: 0, x2: IX_W, y1: lastY.toFixed(2), y2: lastY.toFixed(2) }));
+  if (pcLast !== null) svg.appendChild(ixSvg('line', 'ix-pc', { x1: ((nDay - 1) / nDay) * IX_W, x2: IX_W, y1: yOf(pcLast).toFixed(2), y2: yOf(pcLast).toFixed(2) }));   /* 마지막 날짜 칸 안 전일 종가 (글자 없음 — 도움말) */
   IX_MA.slice().reverse().forEach(([, , n]) => svg.appendChild(ixSvg('path', 'ix-l' + n, { d: pathOf(mas[n - 1], false) })));
   svg.appendChild(ixSvg('path', 'ix-l0', { d: pathOf(c, true) }));
   const cross = ixSvg('line', 'ix-cross', { x1: 0, x2: 0, y1: 0, y2: IX_H }); svg.appendChild(cross);
@@ -1040,7 +1095,20 @@ function ixCard(s) {
 
   /* 가로축 : 날짜 (하루 = 같은 폭) */
   const xs = el('div', 'ix-x'); xs.style.gridTemplateColumns = `repeat(${nDay}, minmax(0,1fr))`;
-  days.forEach((ymd, di) => add(xs, el(di === nDay - 1 ? 'b' : 'span', null, dayLabelIx(ymd))));
+  /* 9/27 일봉전환 ③ : 날짜 아래 두 줄 '갭 +0.64%' (첫 봉 시가 ÷ 전일 종가 − 1) · '종가 +1.65%' (그날 마지막 봉 ÷ 전일 종가 − 1). 숫자만 빨강 · 파랑.
+     마지막 날짜 칸이 15:30 봉 전이면 '종가' 대신 '지금'. 전일 종가가 없는 칸(받은 봉의 첫날)은 날짜만 */
+  let dEnd = -1;
+  days.forEach((ymd, di) => {
+    const cell = el(di === nDay - 1 ? 'b' : 'span', null, dayLabelIx(ymd));
+    dEnd += per[di] || 0;
+    const pv = dPrev ? dPrev[di] : null; const op = dOpen ? dOpen[di] : null; const cl = dEnd >= 0 && dEnd < c.length ? c[dEnd] : null;
+    const gp = ixPctTxt(op, pv); const cg = ixPctTxt(cl, pv);
+    if (gp && cg) {
+      const cLab = di === nDay - 1 && String(s.lastT || '') < '1530' ? '지금 ' : '종가 ';
+      [['갭 ', gp], [cLab, cg]].forEach(([lb, [tx, cls]]) => { const ln = el('span', 'ix-gl', lb); add(ln, el('span', cls || null, tx)); add(cell, ln); });
+    }
+    add(xs, cell);
+  });
   add(card, xs);
 
   /* 손가락·마우스 : 가장 가까운 봉의 값을 범례 자리에 */
@@ -1058,6 +1126,98 @@ function ixCard(s) {
     const x = Math.min(IX_W, Math.max(0, ((e.clientX - r.left) / r.width) * IX_W));
     let best = 0, bd = Infinity;
     for (let i = 0; i < nBar; i++) { const dx = Math.abs(xOf(i) - x); if (dx < bd) { bd = dx; best = i; } }
+    show(best, true);
+  };
+  clear();
+  plot.addEventListener('pointerdown', onMove); plot.addEventListener('pointermove', onMove);
+  plot.addEventListener('pointerleave', clear); plot.addEventListener('pointercancel', clear);
+  return card;
+}
+/* 9/27 일봉전환 ② : 일봉 카드 — 거래일마다 같은 간격(주말 · 휴장 빈칸 없음), 달력 3개월. 검은 선 = 종가, 청록 = 5일선, 주황 = 20일선.
+   마지막 점 = 오늘(5분봉 끝값). 달이 바뀌는 첫 거래일에 옅은 세로선 + 아래 'n월', 가로축 오른쪽 끝(세로 눈금 숫자 아래)에 기간 '6/23 ~ 9/23'.
+   값 줄은 평소 마지막 점 — 날짜 '9/23 (수)', 장중(15:30 봉 전) 오늘 점은 '9/28 15:00' (5분봉 마지막 봉 시각) */
+function ixCardDay(s) {
+  const card = el('div', 'card ix-card');
+  const dd = String(s.dlyD || '').split(','); const c = ixNums(s.dlyC);
+  const mas = IX_DAY_MA.map(([key]) => ixNums(s[key]));
+  const n = Math.min(dd.length, c.length);
+  const xOf = i => (IX_PAD + (1 - 2 * IX_PAD) * (n > 1 ? i / (n - 1) : 0.5)) * IX_W;
+  const vals = c.slice(0, n).concat(...mas.map(m => m.slice(0, n))).filter(v => v !== null && !isNaN(v));
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const padV = (hi - lo || 1) * 0.07; lo -= padV; hi += padV;
+  const yOf = v => (1 - (v - lo) / (hi - lo)) * IX_H;
+  const pathOf = arrV => {
+    let p = ''; let open = false;
+    arrV.forEach((v, i) => {
+      if (v === null || isNaN(v) || i >= n) { open = false; return; }
+      p += (open ? 'L' : 'M') + xOf(i).toFixed(1) + ' ' + yOf(v).toFixed(2); open = true;
+    });
+    return p;
+  };
+  const md = ymd => `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)}`;
+  const lastLive = String(s.lastT || '') < '1530';
+  const whenOf = i => {
+    const ymd = dd[i] || ''; if (ymd.length !== 8) return ymd;
+    if (i === n - 1 && lastLive && has(s.lastT)) return `${md(ymd)} ${String(s.lastT).slice(0, 2)}:${String(s.lastT).slice(2)}`;
+    return `${md(ymd)} (${WD[new Date(+ymd.slice(0, 4), +ymd.slice(4, 6) - 1, +ymd.slice(6, 8)).getDay()]})`;
+  };
+
+  add(card, ixHead(s));
+
+  /* 범례 셋(지수 · 5일 · 20일) + 값 줄 */
+  const leg = el('div', 'ix-leg ix-leg3'); const when = el('span', 'ix-when'); add(leg, el('span'));
+  const kv = [];
+  [['지수', 0]].concat(IX_DAY_MA.map(([, name, m]) => [name, m])).forEach(([name, m]) => {
+    const k = el('span', 'ix-k'); kv.push(el('span', 'ix-kv'));
+    add(k, el('i', 'ix-sw' + (m ? ' ix-m' + m : '')), el('span', null, name)); add(leg, k);
+  });
+  add(leg, when, ...kv);
+  add(card, leg);
+
+  /* 그림 */
+  const plot = el('div', 'ix-plot'); plot.setAttribute('data-noswipe', '');
+  const svg = ixSvg('svg', null, { viewBox: `0 0 ${IX_W} ${IX_H}`, preserveAspectRatio: 'none', role: 'img',
+    'aria-label': `${s.name} 일봉 선 차트 ${n ? md(dd[0]) + ' ~ ' + md(dd[n - 1]) : ''} · 마지막 ${ixFmt(num(s.last), 2)}` });
+  const tk = ixTicks(lo, hi); const lastV = n ? c[n - 1] : null; const lastY = lastV === null ? null : yOf(lastV);
+  tk.list.forEach(v => svg.appendChild(ixSvg('line', 'ix-grid', { x1: 0, x2: IX_W, y1: yOf(v).toFixed(2), y2: yOf(v).toFixed(2) })));
+  const months = [];
+  for (let i = 1; i < n; i++) {
+    if (dd[i].slice(0, 6) === dd[i - 1].slice(0, 6)) continue;
+    months.push([i, +dd[i].slice(4, 6)]);
+    svg.appendChild(ixSvg('line', 'ix-day', { x1: xOf(i).toFixed(1), x2: xOf(i).toFixed(1), y1: 0, y2: IX_H }));
+  }
+  if (lastY !== null) svg.appendChild(ixSvg('line', 'ix-lastl', { x1: 0, x2: IX_W, y1: lastY.toFixed(2), y2: lastY.toFixed(2) }));
+  IX_DAY_MA.slice().reverse().forEach(([, , m], j) => svg.appendChild(ixSvg('path', 'ix-l' + m, { d: pathOf(mas[IX_DAY_MA.length - 1 - j]) })));
+  svg.appendChild(ixSvg('path', 'ix-l0', { d: pathOf(c) }));
+  const cross = ixSvg('line', 'ix-cross', { x1: 0, x2: 0, y1: 0, y2: IX_H }); svg.appendChild(cross);
+  add(plot, svg);
+  const dec = tk.step < 1 ? 1 : 0;
+  tk.list.forEach(v => {
+    if (lastY !== null && Math.abs(yOf(v) - lastY) < 11) return;   /* 마지막 값 표와 겹치는 눈금 글자는 뺀다 */
+    const y = el('div', 'ix-y', ixFmt(v, dec)); y.style.top = yOf(v).toFixed(2) + '%'; add(plot, y);
+  });
+  if (lastY !== null) { const tag = el('div', 'ix-tag', ixFmt(lastV, 2)); tag.style.top = lastY.toFixed(2) + '%'; add(plot, tag); }
+  add(card, plot);
+
+  /* 가로축 : 달(세로선 자리) + 오른쪽 끝 기간 */
+  const xm = el('div', 'ix-xm'); const xi = el('div', 'ix-xmi');
+  months.forEach(([i, mo]) => { const sp = el('span', null, `${mo}월`); sp.style.left = (xOf(i) / IX_W * 100).toFixed(2) + '%'; add(xi, sp); });
+  add(xm, xi, el('span', 'ix-xr', n ? `${md(dd[0])} ~ ${md(dd[n - 1])}` : ''));
+  add(card, xm);
+
+  /* 손가락·마우스 : 가장 가까운 날의 값을 범례 자리에 */
+  const show = (i, touching) => {
+    cross.setAttribute('x1', xOf(i).toFixed(1)); cross.setAttribute('x2', xOf(i).toFixed(1)); cross.style.visibility = touching ? 'visible' : 'hidden';
+    when.textContent = whenOf(i);
+    kv[0].textContent = ixFmt(c[i], 2);
+    mas.forEach((m, j) => { kv[j + 1].textContent = ixFmt(m[i], 2); });
+  };
+  const clear = () => { if (n > 0) show(n - 1, false); };
+  const onMove = e => {
+    const r = plot.getBoundingClientRect(); if (!(r.width > 0) || !n) return;
+    const x = Math.min(IX_W, Math.max(0, ((e.clientX - r.left) / r.width) * IX_W));
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < n; i++) { const dx = Math.abs(xOf(i) - x); if (dx < bd) { bd = dx; best = i; } }
     show(best, true);
   };
   clear();
@@ -1859,12 +2019,16 @@ function renderReview(rv) {
    두 층 : ① 구역 제목 옆 ? (HELP_SEC — 그 구역의 표시 → 뜻, 제목 바로 아래 펼침) ② 머리 ? (HELP — 이 탭이 무엇인가 · 보고 나서 · 공통 루틴·조작). */
 const HELP_SEC = {
   'live.index': [
-    ['검은 선', 'KRX 지수(코스피 · 코스닥) 5분봉 종가를 이은 선. 가로는 하루를 같은 폭으로(09:00~15:30) — 오늘은 왼쪽부터 자란다. 날짜가 바뀌는 자리에서는 선을 잇지 않는다(밤사이 갭). 티마 시장종합 탭 지수 차트와 같은 지수(9/17 값 대조).'],
+    ['[5분봉 | 일봉]', '구역 제목 오른쪽 단추. 두 카드(코스피 · 코스닥)가 같이 바뀐다. 처음 열면 일봉. 고른 쪽은 화면을 다시 열 때까지 유지 — 그림이 새 봉으로 바뀌어도 그대로.'],
+    ['일봉 · 5일 · 20일', '키움 지수 일봉 종가를 이은 검은 선(최근 3개월 — 거래일마다 같은 간격, 주말 · 휴장은 건너뜀, 세로선은 달이 바뀌는 날)과 5일(청록) · 20일(주황) 이동평균. 오늘 점은 지금까지 마지막 5분봉 값이라 장중엔 움직이고, 오늘의 5 · 20일선도 (앞 4 · 19거래일 종가 + 지금 값) ÷ 5 · 20 — HTS 일봉 화면과 같은 방식. 15:30 종가 봉이 실린 뒤(15:36 회차부터)엔 마감 탭 관문1 아래 코스피 · 코스닥 5 · 20일선 줄(코스닥 줄은 9/28 부터)과 같은 값(반올림으로 0.01 다를 수 있음).'],
+    ['5분봉 — 검은 선', 'KRX 지수(코스피 · 코스닥) 5분봉 종가를 이은 선. 가로는 하루를 같은 폭으로(09:00~15:30) — 오늘은 왼쪽부터 자란다. 날짜가 바뀌는 자리에서는 선을 잇지 않는다(밤사이 갭). 티마 시장종합 탭 지수 차트와 같은 지수(9/17 값 대조).'],
     ['20 · 60 · 120', '5분봉 이동평균선 — 봉 20개(100분) · 60개(5시간) · 120개(10시간, 약 하루 반). 날짜를 넘어 이어서 계산한다.'],
-    ['점선 · 오른쪽 짙은 숫자', '마지막 봉의 값. 제목 줄 ▲▼ 는 전일 종가 대비.'],
-    ['범례 아래 숫자 줄', '평소에는 마지막 봉의 시각과 지수 · 이평 값. 그림을 짚고 옆으로 움직이면 세로선이 선 그 봉의 값으로 바뀌고, 손을 떼면 마지막 봉으로 돌아간다.'],
+    ['날짜 아래 갭 · 종가', '5분봉 날짜마다. 갭 = 그날 첫 봉 시가 ÷ 전일 종가 − 1(밤사이 갭), 종가 = 그날 마지막 봉 ÷ 전일 종가 − 1(전일 대비 등락). 장중 마지막 칸은 아직 종가가 아니라 \'지금\'. 빨강 = +, 파랑 = −.'],
+    ['마지막 칸 안 옅은 점선', '전일 종가(5분봉 마지막 날짜 칸에만) — 지금 지수가 어제 종가 위인지 아래인지. 3일 그림 범위 밖이면 범위를 넓혀 늘 보이게 한다.'],
+    ['전체 폭 점선 · 오른쪽 짙은 숫자', '마지막 봉의 값. 제목 줄 ▲▼ 는 전일 종가 대비.'],
+    ['범례 아래 숫자 줄', '평소에는 마지막 봉의 시각과 지수 · 이평 값. 그림을 짚고 옆으로 움직이면 세로선이 선 그 봉의 값으로 바뀌고, 손을 떼면 마지막 봉으로 돌아간다. 일봉은 날짜(장중 오늘 점은 5분봉 시각).'],
     ['몇 시 봉까지', '실시간이 아니다 — 장중(09:01~15:41)에는 5분마다 받은 봉까지. 화면을 열어 두면 1분마다 새 봉이 왔는지 확인해 이 그림만 바꾼다(올라오는 데 1~2분). 다른 구역은 그대로 회차(매시 07분쯤 · 14:52 · 15:27) 자료. 15:30 종가 봉은 장 마감 뒤 회차에 실린다.'],
-    ['판정과 무관', '보기만 하는 그림. 판정 · 채점에 안 들어가고 기준값도 없다 — 시장 판단은 마감 탭 관문1(M1 · M2)과 그 참고 줄(M6).']],
+    ['판정과 무관', '보기만 하는 그림. 판정 · 채점에 안 들어가고 기준값도 없다 — 시장 판단은 마감 탭 관문1(M1 · M2)과 그 참고 줄(M6). 5 · 20일선은 강의 M6 이 말하는 선을 그리기만 한다 — 위/아래 색이나 "조심" 표시는 없다(판단은 사람).']],
   'live.flow': [
     ['막대 (빨강 / 파랑)', '티마 카드(섹터)마다 회차별 모멘텀 = 그 구간에 들어온 돈의 비중 − 누적 비중(%p). 빨강 = 양수(돈이 더 들어오는 중, 가속), 파랑 = 음수(아침에 끝난 테마, 감속). 막대 길이는 09:00~15:20 최대값 기준 — 15:40(종가 단일가 유입) · 저녁 막대는 같은 눈금이라 넘치면 꽉 찬 막대. 이슈가 살아있나(T6) · 무게추가 어디로 가나(T5)를 보는 자리.'],
     ['섹터 이름 옆 %', '집중도 = 그 카드 상위 4종목 거래대금 ÷ KRX+NXT 통합 상위100 주식 합 (9/17 부터. 9/16 까지는 KRX 거래대금 ÷ KRX 시장 총거래대금이라 숫자가 작다). "시장의 돈이 어디 있나"(M7). 정렬에만 쓰고 기준값은 없다.'],
@@ -1925,7 +2089,7 @@ const HELP_SEC = {
   'close.gate6': [
     ['세 층 순서', '① 진입 전 확인(지수 20일선 M6 — 아래면 매매 안 함 · 일봉 위치와 앞산 C2 · 호가 한 칸 유동성 C10 — 미달이면 종목 배제) → ② 매수 자리(돼지 물량 E6) → ③ 사람 판단(3레벨 뉴스 T2 · 재료 T6 · 악재 P4 · 내일 이벤트 · 괴리 캡처 · 재료 D-day E5).'],
     ['체크 상자', '저장되지 않는다. 그 자리에서 확인하는 순서표.'],
-    ['코스피 · 코스닥 · 20일선 (첫 항목 아래)', '관문1 아래 지수 위치 줄과 같은 값 — 코스피 종가 · 20일선(키움 지수 일봉) · 위/아래와 차이 %(M6). 통과 기준 없음. 코스닥도 같은 모양(9/28 부터 — 그 전 날짜는 HTS 차트로). 장중 탭 지수 차트의 20 은 5분봉 20개 평균이지 20일선이 아니다.'],
+    ['코스피 · 코스닥 · 20일선 (첫 항목 아래)', '관문1 아래 지수 위치 줄과 같은 값 — 코스피 종가 · 20일선(키움 지수 일봉) · 위/아래와 차이 %(M6). 통과 기준 없음. 코스닥도 같은 모양(9/28 부터 — 그 전 날짜는 HTS 차트로). 장중 탭 지수 차트는 일봉(5 · 20일선) · 5분봉(20 · 60 · 120 = 5분봉 개수) 전환 — 5분봉의 20 은 20일선이 아니다.'],
     ['1억 = 약 n주 (셋째 항목 아래 상자)', '후보 섹터의 대장·2등(티마 순서에서 대장 다음)과 피뢰침 후보만 — 왼쪽은 역할·종목·현재가, 오른쪽 굵은 숫자가 현재가로 1억 원이 몇 주인지, 호가 한 칸 유동성(C10) 확인용. 3·4등은 사지 않으므로(D1) 안 적는다. 20만 원 넘는 종목은 십 단위, 그 아래는 백 단위 반올림(표시 단위일 뿐 기준 아님). 이름 옆 (k) = KRX 전용(NXT 불가, 다음날 매도 09:00 부터).'],
     ['뉴스 링크', '대장·2등·피뢰침 후보만. 최근 소식 = 판정일 앞 1주 · 제목만 = 제목에 종목명이 있는 뉴스 · 어제부터 = 직전 거래일 ~ 판정일(악재 구간) · 공시 = DART. 링크만, 본문은 수집하지 않는다.']],
   'series.overlap': [
@@ -2016,7 +2180,7 @@ const HELP_COMMON = [
     ['지난 날짜', '날짜 줄 ◀ ▶ 또는 목록으로. 마감 탭 위쪽 "최근 거래일" 줄을 눌러도 된다. 복기 탭에는 날짜 줄이 없다(누적).']]],
   ['탭 고정 · 좌우 밀기 · 색', [
     ['탭 막대 고정', '조금이라도 스크롤하면 탭 막대가 맨 위에 붙는다. 거기서 탭을 누르면 새 탭의 처음이 막대 바로 아래에 온다.'],
-    ['좌우 밀기', '화면을 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭. 화면 가장자리는 폰의 뒤로 가기라 무시. 넓은 표(시계열 격자 · 종목 순위표) 위에서는 표가 옆으로 스크롤된다.'],
+    ['좌우 밀기', '화면을 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭. 화면 가장자리는 폰의 뒤로 가기라 무시. 넓은 표(시계열 격자 · 종목 순위표) 위에서는 표가 옆으로 스크롤된다. 지수 그림 위에서도 탭이 안 넘어간다(짚고 옆으로 끌면 값을 본다).'],
     ['새로고침', '홈 화면 앱은 5분 넘게 떠나 있다 돌아오면 자료를 다시 불러온다. 맨 위 "지금" 시계는 1분마다 갱신. 장중 탭 지수 그림만 장중에 5분마다 새 봉으로 바뀐다.'],
     ['색', '빨강 = 상승 · 가속 · 대장 · 1위, 파랑 = 하락 · 감속(HTS 원색). 주황 = 주의(괴리 · 비고 · push 실패 · 오래된 자료). 크림슨 · 연분홍 배지 = 정보.']]]
 ];
