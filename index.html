@@ -81,7 +81,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 .help-foot{font-size:11px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--rule)}
 /* 구역 제목 옆 ? (9/15 저녁, 사용자 결정 — 탭 전체가 아니라 그 구역만 그 자리에서) : .label 의 ::after 선 뒤(order 2)에 붙고, 펼침은 제목 바로 아래 */
 .hq2{order:2;flex:none;width:18px;height:18px;margin-left:6px;border-radius:50%;border:1px solid var(--roseDash);background:var(--card);color:var(--wine);font:inherit;font-size:11px;font-weight:800;line-height:1;padding:0;cursor:pointer;align-self:center}
-.hq2[aria-expanded="true"]{background:var(--wine);color:#fff;border-color:var(--wine)}
+.hq2[aria-expanded="true"]{background:var(--wineFill);color:#fff;border-color:var(--wineFill)}   /* 9/27 : 옛 --wine 은 다크에서 연분홍이라 흰 ? 가 안 보였다(대비 1.7:1) — 채운 바탕 짝 --wineFill (밝은 모드는 같은 #6e0b14) */
 .rv-sec .hq2{order:0;margin-left:2px}
 .help-inline{background:var(--noteBg);border:1px solid var(--noteLine);border-radius:12px;padding:4px 12px 6px;margin:-4px 0 10px;font-size:12px;line-height:1.55}
 .help-inline .help-r:first-child{border-top:0}
