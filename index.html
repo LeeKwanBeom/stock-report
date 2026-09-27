@@ -432,10 +432,10 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .vf-row .l2 .chip{margin-left:5px}   /* 9/24 실전 토막 칩 (15:40 봉만 · 한 시장만) */
 .vf-row .l2 .vf-rt{display:inline-block;white-space:nowrap;margin-left:.3em}   /* 9/24 실전 토막은 통째로 다음 줄로 (앞 글자는 제자리) */
 /* 9/25 트레일화면 : 목록 한 줄 아래 셋째 줄 '트레일(가정)' — 기록 · 가정이라 작은 회색 글, 값만 윗줄과 같은 부호 색(✓✕ · 승패 색 없음). 토막(vf-tc)은 통째로 다음 줄로 */
-.vf-row .vf-tl{grid-column:2;margin-top:2px;font-size:11px;color:var(--muted)}
+.vf-row .vf-tl{grid-column:2;margin-top:2px;font-size:11px;color:var(--sub)}   /* 9/27 `기록줄명암` (사용자 결정 "추천대로") : --muted → --sub — 흰 카드 명암 2.99 → 5.57 : 1(다크 4.14 → 6.70). 한 단계 낮춤은 둘째 줄(11.5px)보다 작은 11px 로 */
 .vf-row .vf-tl .vf-tc{display:inline-block;white-space:nowrap}
 /* 9/27 `신고가거리` (사용자 결정 "추천대로") : 대장 줄 맨 아래 '일봉 위치 20일 최고가 대비 +0.85% · 120일 -5.10%' — 기록이라 트레일 줄과 같은 작은 회색 글, 값도 색 없음(부호만). 토막(vf-pc)은 통째로 다음 줄로 */
-.vf-row .vf-pl{grid-column:2;margin-top:2px;font-size:11px;color:var(--muted)}
+.vf-row .vf-pl{grid-column:2;margin-top:2px;font-size:11px;color:var(--sub)}   /* 9/27 `기록줄명암` : 트레일 줄과 같이 --muted → --sub */
 .vf-row .vf-pl .vf-pc{display:inline-block;white-space:nowrap}
 .vf-row .wait{color:var(--muted)}
 /* 9/24 표 줄 누르기 → 표 아래 대장 목록 (접힌 목록 details.vf-more 대신). ▸ 닫힘 · ▾ 지금 열린 줄 */
