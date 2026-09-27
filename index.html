@@ -393,7 +393,8 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .vf-row:first-child{border-top:0}
 .vf-row .d{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;padding-top:1px}
 .vf-row .l1{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;min-width:0}
-.vf-row .nm{font-weight:700}
+.vf-row .vf-ld{font-weight:700}   /* 9/27 `섹터이름표` : 굵게는 대장 종목만(옛 .vf-row .nm 700 = 섹터 · 대장 한 덩어리) */
+.vf-sc{font-size:12px;color:var(--sub)}   /* 9/27 `섹터이름표` : 대장 앞 섹터 이름표 — 해답지 .iq-sec 와 같은 값 (사용자 결정 "추천대로") */
 .vf-row .l2{grid-column:2;margin-top:3px;font-size:11.5px;color:var(--sub)}
 .vf-row .l2 .mk{display:inline-block;width:16px}
 .vf-row .l2 .chip{margin-left:5px}   /* 9/24 실전 토막 칩 (15:40 봉만 · 한 시장만) */
@@ -415,7 +416,9 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .rc-row .d{flex:none;width:50px;color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .rc-row.cur .d{color:var(--brand);font-weight:800}
 .rc-row .b{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:2px 12px}
-.rc-row .nm{font-weight:700;white-space:nowrap}
+.rc-row .nm{white-space:nowrap}   /* 9/27 `섹터이름표` : 굵게는 .rc-ld 로 옮기고 nowrap(9/19 부터)만 — 섹터 이름표 · 대장 짝은 줄 가운데서 안 갈림 */
+.rc-row .rc-ld{font-weight:700}   /* 9/27 `섹터이름표` : 굵게는 대장 종목만 */
+.rc-sc{font-size:12px;color:var(--sub)}   /* 9/27 `섹터이름표` : 대장 앞 섹터 이름표 — 해답지 .iq-sec 와 같은 값 */
 .rc-row .none,.rc-row .wait{color:var(--muted)}
 .rc-row .chip{margin-left:5px}
 .rc-row .pc{font-size:11.5px;margin-left:4px;font-variant-numeric:tabular-nums}   /* ✓ ✕ 옆 10시까지 고가 % (9/19 "붙여줘") */
@@ -1779,10 +1782,15 @@ function vfTable(leads, real) {   // 9/25 : 옛 ref(KRX 자 참고 표) 인자 �
   add(t, pr, p2);
   add(wrap, t); return wrap;
 }
+/* 9/27 `섹터이름표` (사용자 결정 "추천대로") : 섹터 · 대장 한 덩어리(둘 다 굵게, ' · ') → 섹터 이름표(작게 · 흐리게, 해답지 .iq-sec 와 같은 값) + 공백 + 대장(굵게) + (k).
+   섹터가 비면 이름표 없이 대장만(옛 ' · 대장' 처럼 점만 남지 않게). 검증 탭 목록(vfRow)과 마감 탭 최근 거래일(rcBlock)이 같이 쓴다. pre = 'vf' | 'rc' (구역 접두사 클래스). 화면 표시일 뿐 */
+function vfPair(r, pre) {
+  const nm = el('span', 'nm');
+  return add(nm, has(r['섹터']) ? el('span', pre + '-sc', r['섹터'] + ' ') : null, el('span', pre + '-ld', r['종목'] || ''), kMark(VF_K, r['종목코드']));   /* (k) KRX 전용 9/24 — 대장 바로 뒤 */
+}
 function vfRow(r) {
   const row = el('div', 'vf-row'); const l1 = el('div', 'l1'); const l2 = el('div', 'l2');   /* 9/24 B안 : 늘 두 줄 */
-  const nm = el('span', 'nm', `${r['섹터'] || ''} · ${r['종목'] || ''}`); add(nm, kMark(VF_K, r['종목코드']));   /* (k) KRX 전용 9/24 */
-  add(l1, nm);
+  add(l1, vfPair(r, 'vf'));
   if (r['관망'] === 'Y') add(l1, el('span', 'chip warn', '관망'));
   if (has(r['목표4%_10시'])) {
     const ok = r['목표4%_10시'] === 'Y';
@@ -1840,7 +1848,7 @@ function rcBlock(ymd) {
     const b = el('div', 'b');
     if (!rows.length) add(b, el('span', 'none', '없음'));
     rows.forEach(r => {
-      const it = el('span', 'it'); const nm = el('span', 'nm', `${r['섹터'] || ''} · ${r['종목'] || ''}`); add(nm, kMark(VF_K, r['종목코드'])); add(it, nm);   /* (k) KRX 전용 9/24 */
+      const it = el('span', 'it'); add(it, vfPair(r, 'rc'));   /* 9/27 섹터이름표 — 섹터 이름표 + 대장(굵게) + (k) */
       if (r['관망'] === 'Y') add(it, el('span', 'chip warn', '관망'));
       if (has(r['목표4%_10시'])) {   // 9/19 사용자 요청 "붙여줘" : ✓ ✕ 옆에 10시까지 고가 %(D 종가 대비, 한 자리) — 얼마나 넘겼나 · 못 미쳤나
         const ok = r['목표4%_10시'] === 'Y'; add(it, el('span', 'tenmark' + (ok ? ' ok' : ' x'), ok ? ' ✓' : ' ✕'), el('span', 'pc ' + rvSign(r['D1_10시고가%']), rvPct(r['D1_10시고가%'])));
