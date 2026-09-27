@@ -11,6 +11,30 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#7a0c17" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#3e0710" media="(prefers-color-scheme: dark)">
+<script>
+/* 9/27 다크전환 (사용자 결정) : 화면 모드 = 이 폰 브라우저에 기억한 값(localStorage 'stock-report.theme' — 제목 줄 오른쪽 버튼이 적는다), 고른 적 없으면 폰 설정.
+   첫 그림 전에 <html data-theme> 를 정해 흰 화면이 번쩍이지 않게. 다크 색은 아래 :root[data-theme="dark"] 한 곳. roadmap.html · manual.html 도 같은 키를 읽는다 */
+var THEME_KEY = 'stock-report.theme';
+function savedTheme() { try { var t = localStorage.getItem(THEME_KEY); return t === 'dark' || t === 'light' ? t : null; } catch (e) { return null; } }
+function systemTheme() { try { return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e) { return 'light'; } }
+function applyTheme(t, save) {
+  document.documentElement.setAttribute('data-theme', t);
+  var m = document.querySelectorAll('meta[name="theme-color"]');   // 폰 상태 표시줄 색 = --heroA (두 줄 다 같은 값이라 폰 설정과 무관하게 맞는다)
+  for (var i = 0; i < m.length; i++) m[i].setAttribute('content', t === 'dark' ? '#3e0710' : '#7a0c17');
+  var b = document.getElementById('themeBtn');   // 처음 부를 땐 버튼이 아직 없다 — 본문 스크립트가 한 번 더 부른다
+  if (b) b.setAttribute('aria-label', t === 'dark' ? '밝은 화면으로 바꾸기' : '다크 화면으로 바꾸기');
+  if (save) { try { localStorage.setItem(THEME_KEY, t); } catch (e) { } }
+}
+applyTheme(savedTheme() || systemTheme(), false);
+try {   // 고른 적 없을 때만 폰 설정이 바뀌면 따라간다
+  var THEME_MQ = window.matchMedia('(prefers-color-scheme: dark)');
+  var onSystemTheme = function () { if (!savedTheme()) applyTheme(THEME_MQ.matches ? 'dark' : 'light', false); };
+  if (THEME_MQ.addEventListener) THEME_MQ.addEventListener('change', onSystemTheme); else THEME_MQ.addListener(onSystemTheme);
+} catch (e) { }
+// 다른 창(홈 화면 앱 · 브라우저 탭)에서 바꿨거나 뒤로 가기 캐시에서 되살아나면 기억한 값으로 다시 맞춘다
+window.addEventListener('storage', function (e) { if (e.key === THEME_KEY) applyTheme(savedTheme() || systemTheme(), false); });
+window.addEventListener('pageshow', function (e) { if (e.persisted) applyTheme(savedTheme() || systemTheme(), false); });
+</script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -31,7 +55,9 @@
   --heroA:#7a0c17;--heroFade:rgba(122,12,23,0);--heroB:#c1121f;--heroC:#e5383b;--heroShadow:0 6px 18px rgba(122,12,23,.18);
   --ixM1:#d9480f;--ixM2:#1098ad;--ixM3:#9c36b5;   /* 9/17 지수차트 이평 20·60·120 — 밝은·어두운 카드 배경 둘 다 색각 분리 검증 통과한 값이라 다크에서도 같은 값 */
 }
-@media (prefers-color-scheme:dark){:root{
+/* 9/27 다크전환 : 옛 @media (prefers-color-scheme:dark) 를 data-theme 한 곳으로 — 폰 설정은 <head> 첫 스크립트가 data-theme 로 옮긴다 (값은 그대로) */
+:root[data-theme="dark"]{
+  color-scheme:dark;   /* 날짜 목록 창 · 체크박스 · 스크롤바 같은 브라우저 기본 부품도 어둡게 (9/27 사용자 결정 — 옛 판은 폰 다크여도 흰 바탕) */
   --bg:#140b0d;--card:#1f1215;--card2:#26171b;--soft:#23151a;--line:#3a2529;--line2:#33222a;--rule:#3a2529;
   --text:#f4e8e9;--ink2:#dcc3c6;--sub:#b39699;--muted:#8c7275;--muted2:#75606a;--chip:#2c1c20;--chipInk:#dcc3c6;
   --brand:#f04a56;--wine:#ffb3ba;--wineFill:#7d1320;--rose:#3a1a20;--roseLine:#5a2a32;--roseDash:#8a3a44;--cocoa:#44302f;--onFill:#fff;
@@ -41,7 +67,7 @@
   --warn:#fac775;--warnBg:#412402;--warnLine:#6a4a1a;--alert:#e08a3c;--ok:#97c459;--bad:#f09595;
   --shadow:0 2px 10px rgba(0,0,0,.35);
   --heroA:#3e0710;--heroFade:rgba(62,7,16,0);--heroB:#7a0c17;--heroC:#a81c28;--heroShadow:0 6px 18px rgba(0,0,0,.45);
-}}
+}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;-webkit-font-smoothing:antialiased}
@@ -66,6 +92,12 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 .hrow{display:flex;align-items:center;gap:10px}
 .hbtn{flex:none;width:24px;height:24px;border-radius:50%;border:1.5px solid rgba(255,255,255,.7);background:rgba(0,0,0,.15);color:#fff;font:inherit;font-size:13px;font-weight:800;line-height:1;cursor:pointer;padding:0}
 .hbtn[aria-expanded="true"]{background:#fff;color:#7a0c17;border-color:#fff}
+/* 9/27 다크전환 : 제목 줄 오른쪽 끝 모드 버튼 — 머리 ? 와 같은 흰 테두리. 글자는 누르면 갈 모드(밝을 때 ☾ 다크 · 다크일 때 ☀ 밝게), 어느 쪽을 보일지는 CSS 가 data-theme 로 */
+.thm-btn{flex:none;margin-left:auto;display:inline-flex;align-items:center;height:24px;padding:0 10px 0 8px;border-radius:12px;border:1.5px solid rgba(255,255,255,.7);background:rgba(0,0,0,.15);color:#fff;font:inherit;font-size:12px;font-weight:700;line-height:1;cursor:pointer;white-space:nowrap}
+.thm-btn span{display:inline-flex;align-items:center;gap:4px}
+.thm-btn svg{width:13px;height:13px;flex:none}
+.thm-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+:root[data-theme="dark"] .thm-dk,:root:not([data-theme="dark"]) .thm-lt{display:none}
 .help{background:var(--card);border:1.5px solid var(--roseDash);border-radius:16px;padding:12px 14px 10px;margin:0 0 14px;box-shadow:var(--shadow);font-size:12.5px;line-height:1.6}
 .help-h{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .help-h b{font-size:14px;font-weight:800;color:var(--wine);flex:1}
@@ -436,7 +468,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
       <button data-tab="verify">검증</button>
       <button data-tab="review">복기</button>
     </div>
-    <div class="hrow"><h1 id="heroTitle">마감</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button></div>
+    <div class="hrow"><h1 id="heroTitle">마감</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button><button class="thm-btn" id="themeBtn" type="button"><span class="thm-dk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/></svg>다크</span><span class="thm-lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>밝게</span></button></div>
     <div class="hsrow"><div class="hsub" id="heroSub">15:20 KRX 기준 · NXT 제외</div><div class="rm-links"><a class="rm-link" href="roadmap.html">로드맵 ↗</a> · <a class="rm-link" href="manual.html">설명서 ↗</a></div></div>
     <div class="hq" id="heroQ" hidden>손실이 났을 때 — <b>기준이 틀렸나, 내가 안 지켰나</b></div>
   </div>
@@ -2242,6 +2274,9 @@ function toggleHelp(on) {
   if (HELP_OPEN) renderHelp(CUR); else document.getElementById('help').hidden = true;
 }
 document.getElementById('helpBtn').onclick = () => toggleHelp();
+// 9/27 다크전환 : 누르면 다크 ↔ 밝게 + 이 폰에 기억 (applyTheme · 처음 모드는 <head> 첫 스크립트)
+document.getElementById('themeBtn').onclick = () => applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
+applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light', false);   // 버튼 읽기 이름(aria-label)만 채움 — 모드는 그대로
 
 let DATES = [];
 let CUR = 'close';
