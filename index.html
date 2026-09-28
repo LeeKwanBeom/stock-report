@@ -211,12 +211,14 @@ details.more .card strong{font-size:14.5px}
 .pv-det .pv-h{font-size:12px;font-weight:800;color:var(--muted);margin:8px 0 4px}
 .pv-det .list{margin-bottom:6px}
 /* 9/28 `섹터판정펼치기` (사용자 결정) : 마감 탭 '섹터 판정' 목록 셋(잠정 · 확정 · 자세히 안) 줄을 누르면 그 줄 바로 아래에 후보 카드 모양의 카드 — 개별이슈 줄은 안 펼침. jl- 접두사 (rules\screen.md).
-   ▸ ▾ = details.more summary::before 와 같은 글자 · 색, 자리는 목록 왼쪽 여백(사용자 결정 (나) — 글자 앞에 두면 375px 에서 맨 위 관문3제외 줄이 두 줄로. 닫힌 줄의 글자 위치 · 줄 수는 옛 판 그대로).
+   ▸ ▾ = details.more summary::before 와 같은 글자 · 색. 자리는 목록 테두리에서 오른쪽 여백과 같은 14px(목록 안쪽 여백) — 이름은 ▸ 다음 1em 칸부터, 두 줄이면 둘째 줄도 이름 밑(padding + 음수 text-indent), 개별이슈 줄 이름도 같은 칸(.jl-pad, ▸ · 누르기 없음).
+   사용자 요청 9/28 22:40 "▸ 와 테두리 여백이 너무 적다, 오른쪽 여백만큼" — 처음 판(여백 안 · 사용자 결정 (나))은 테두리에 붙었다. 375px 에서 맨 위 관문3제외 줄이 두 줄이 되는 것은 사용자 결정으로 감수(390 · 412px 는 위 두 목록 그대로).
    카드는 열 때 끼우고 닫을 때 지운다. 자세히(details.more) 안 자손 규칙(.card margin-top 6px · .card strong 14.5px)은 되돌려 잠정 · 확정 목록과 같게 */
 .jl-row{cursor:pointer}
-.jl-row .jl-nm{position:relative}
-.jl-row .jl-nm::before{content:"▸";position:absolute;right:100%;margin-right:3px;color:var(--muted)}
+.jl-row .jl-nm{padding-left:1em;text-indent:-1em}
+.jl-row .jl-nm::before{content:"▸";display:inline-block;width:1em;text-indent:0;color:var(--muted)}
 .jl-row[aria-expanded="true"] .jl-nm::before{content:"▾"}
+.list .jl-pad{padding-left:1em}
 .list .card.jl-card{margin-top:0}
 .card.jl-card .head strong{font-size:17px}
 .card.jl-card{--srlw:28px}   /* .card.cand 와 같은 값 — 후보가 아닌 카드(cand 없음)도 순번 칸 · D+1 들여쓰기가 후보 카드와 같은 자리 */
@@ -853,7 +855,7 @@ function renderClose(d, dates) {
   // 섹터 판정 목록 본체 — 9/17 함수로 묶음 : 15:20 확정과 14:50 잠정(위 live 분기)이 같은 목록을 그린다. 내용은 그대로
   //   9/23 lead=true (잠정 자세히 전용) : 집중도 뒤에 " · 대장이름" 한 칸. 확정·잠정 띠 목록은 lead 없이 종전 그대로
   //   9/28 `섹터판정펼치기` : x(jlOpt 의 목록 시각 · 종류)가 있으면 개별이슈를 뺀 줄을 누르기 · Enter · Space 로 — 줄 바로 뒤에 candCards 카드를 끼우고, 다시 누르면 지운다(미리 만들어 숨기지 않음).
-  //   줄마다 따로, 여러 줄 동시. 줄 글자는 그대로 — ▸ ▾ 는 CSS ::before(.jl-nm, 목록 왼쪽 여백)라 글자 밖. 개별이슈 줄은 role · ▸ 없이 옛 모양 그대로(사용자 결정 "눌러도 안 보이게")
+  //   줄마다 따로, 여러 줄 동시. 줄 글자는 그대로 — ▸ ▾ 는 CSS ::before(.jl-nm, 이름 앞 1em 칸)라 글자 밖. 개별이슈 줄은 role · ▸ 없이(사용자 결정 "눌러도 안 보이게"), 이름만 같은 칸으로 들여씀(.jl-pad — 세로줄 맞춤)
   function judgeList(parent, rows, lead, x) {
     const list = el('div', 'list');
     rows.slice().sort((a, b) => (num(b['집중도%']) ?? 0) - (num(a['집중도%']) ?? 0)).forEach(r => {
@@ -863,7 +865,8 @@ function renderClose(d, dates) {
       const rt = el('span', 'sub', `모멘텀 ${r['모멘텀'] ?? '—'} · 2따 ${r['2따스코어'] ?? '—'} · `);
       add(rt, el('span', r['판정'] === '후보' ? 'acc' : null, r['판정'] || '—'));
       add(list, add(row, nm, rt));
-      if (!x || r['판정'] === '개별이슈') return;
+      if (!x) return;
+      if (r['판정'] === '개별이슈') { nm.classList.add('jl-pad'); return; }
       row.classList.add('jl-row'); nm.classList.add('jl-nm');
       row.setAttribute('role', 'button'); row.tabIndex = 0; row.setAttribute('aria-expanded', 'false');
       const go = () => {
