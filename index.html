@@ -1897,17 +1897,29 @@ function vfBlock(leads, real) {
   paint(); add(blk, tw, lw); return blk;
 }
 /* ── 마감 탭 "최근 거래일" (9/19 `최근거래일` 세션, 사용자 결정 A안 + ✓✕ 보임 → 같은 날 오후 B안 : 위쪽 5줄) ─────────────────────
-   마감 탭 위쪽(날짜 제목·상태 줄 아래, 관문1·후보 카드 앞)에 최근 RC_DAYS 거래일을 후보 없는 날까지 한 줄씩 — "추세 먼저, 당일 상세는 그 다음". 자료는 검증 탭과 같은 verify.json(result_log 후보·대장 행) + dates.json(날짜 목록) — 새 수집·새 칸 없음.
+   마감 탭 위쪽(날짜 제목·상태 줄 아래, 관문1·후보 카드 앞)에 보는 날짜 둘레 RC_DAYS 거래일을(9/28 `최근거래일이동` 전에는 늘 최근 RC_DAYS) 후보 없는 날까지 한 줄씩 — "추세 먼저, 당일 상세는 그 다음". 자료는 검증 탭과 같은 verify.json(result_log 후보·대장 행) + dates.json(날짜 목록) — 새 수집·새 칸 없음.
    ✓ ✕ = 검증 탭과 같은 10시 채점(목표4%_10시), 채점 전 ⏳, 관망 칩. 줄을 누르면 그 날짜 마감 탭(날짜 줄 ◀▶ 와 같은 loadDate). 옛 alFrom 전(KRX 자) 흐린 줄은 9/25 뺌 — 최근 5거래일이 9/17 뒤라 이미 안 나오던 표시.
    잠정(14:50·15:00) 후보는 안 들어간다(15:20 표본만). 판정·채점 무관, 화면만. 인계문서 8-6 "월 달력·날짜별 상태 점" 의 첫 판 — 한 달치 쌓이면 이 목록 위에 달력 칸을 얹는다.
-   9/24 : 종목명 옆 (k) = KRX 전용(NXT 불가) — verify.json krxOnly(pages-export v2.8), 장중 탭과 같은 표시. */
-const RC_DAYS = 5;   // 9/19 B안(사용자 결정) : 위쪽으로 올리며 10 → 5 — 후보 카드가 첫 화면에 걸리게. 10거래일 전체는 검증 탭
+   9/24 : 종목명 옆 (k) = KRX 전용(NXT 불가) — verify.json krxOnly(pages-export v2.8), 장중 탭과 같은 표시.
+   9/28 `최근거래일이동` (사용자 결정 — 승인 예) : 보는 날짜가 가운데 오게 앞뒤 거래일로 채우고 끝에 닿으면 반대쪽으로(rcDays). 목록 날짜는 alFrom(9/17, 통합 자) 부터 —
+   그 전(KRX 자)은 안 넣는다(9/25 검증 탭과 같은 방향). 보는 날짜가 목록에 없으면(9/16 이전) 가까운 끝 RC_DAYS 줄 · 빨간 줄 없음. 맨 아래 줄을 누르면 목록이 옛날로 밀린다(이전 목록 보기).
+   그날 행이 verify.json 에 하나도 없으면(20:05 채점 전) 오늘 '기록 전 · 20:05 뒤' · 지난 날 '기록 없음', 행은 있는데 후보가 없으면 '없음'. 자료 · pages-export 는 그대로 */
+const RC_DAYS = 5;   // 9/19 B안(사용자 결정) : 위쪽으로 올리며 10 → 5 — 후보 카드가 첫 화면에 걸리게. 전체는 검증 탭 · 9/28 줄 수 그대로, 보는 날짜 둘레로 움직임(rcDays)
 let VF_ROWS = null, VF_K = {};   // renderVerify 가 채운다(null = 아직, false = 못 불러옴). verify.json 이 마감 탭보다 늦게 오면 rcRefresh 가 구역만 다시 그린다. VF_K = verify.json 통째 — krxOnly 로 (k) (9/24)
+function rcDays(ymd) {   // 9/28 `최근거래일이동` : 보는 날짜 둘레 RC_DAYS 거래일 (최근 순)
+  const alFrom = String(VF_K.alFrom || '20260917');   // renderVerify 와 같은 기본값
+  const days = DATES.filter(x => x >= alFrom);   // DATES 는 최근 순 · 통합 자 날짜만
+  let i = days.indexOf(ymd);
+  if (i < 0) i = ymd ? days.filter(x => x > ymd).length : 0;   // 목록에 없는 날짜 = 들어갈 자리 (9/16 이전이면 맨 끝 → 가장 옛 RC_DAYS 줄)
+  const s = Math.max(0, Math.min(i - Math.floor(RC_DAYS / 2), days.length - RC_DAYS));
+  return days.slice(s, s + RC_DAYS);
+}
 function rcBlock(ymd) {
   const wrap = el('div', 'rc-wrap'); wrap.dataset.ymd = ymd;
   add(wrap, labelWith('최근 거래일', 'close.recent'));
   const lst = el('div', 'rc-list');
-  const days = DATES.slice(0, RC_DAYS);   // DATES 는 최근 순
+  const days = rcDays(ymd);
+  const now = new Date(); const td = String(now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate());   // 오늘 (isPastView 와 같은 판별)
   if (VF_ROWS === null) add(lst, el('div', 'empty', '검증 자료 불러오는 중'));
   else if (VF_ROWS === false) add(lst, el('div', 'empty', '검증 자료를 못 불러와 목록을 못 그립니다'));
   else if (!days.length) add(lst, el('div', 'empty', '날짜 목록이 없습니다'));
@@ -1918,7 +1930,7 @@ function rcBlock(ymd) {
     const wdx = WD[new Date(+x.slice(0, 4), +x.slice(4, 6) - 1, +x.slice(6, 8)).getDay()];
     add(row, el('span', 'd', `${vfMd(x)} ${wdx}`));
     const b = el('div', 'b');
-    if (!rows.length) add(b, el('span', 'none', '없음'));
+    if (!rows.length) add(b, el('span', 'none', VF_ROWS.some(r => String(r['일자']) === x) ? '없음' : (x === td ? '기록 전 · 20:05 뒤' : '기록 없음')));   // 9/28 : 그날 행이 하나도 없으면(후보 · 배경 · 관문 제외 전부) 20:05 채점 전 — '없음' 과 같은 회색
     rows.forEach(r => {
       const it = el('span', 'it'); add(it, vfPair(r, 'rc'));   /* 9/27 섹터이름표 — 섹터 이름표 + 대장(굵게) + (k) */
       if (r['관망'] === 'Y') add(it, el('span', 'chip warn', '관망'));
@@ -2163,7 +2175,8 @@ const HELP_SEC = {
   'close.judge': [
     ['섹터명 % · 모멘텀 · 2따 · 판정', '모든 카드의 집중도 순 목록. 판정 = 후보 / 배경(모멘텀 음수) / 관문3제외(2따 부족) / 대장없음 / 개별이슈.']],
   'close.recent': [
-    ['날짜 · 섹터 · 대장', '최근 5거래일을 후보 없는 날까지 한 줄씩(10거래일은 검증 탭). 검증 탭 후보 목록과 같은 자료 — 15:20 후보 섹터와 그 대장. 잠정(14:50·15:00) 후보는 안 들어간다.'],
+    ['날짜 · 섹터 · 대장', '보는 날짜 둘레 5거래일, 9/17 부터. 후보 없는 날까지 한 줄씩(10거래일은 검증 탭). 검증 탭 후보 목록과 같은 자료 — 15:20 후보 섹터와 그 대장. 잠정(14:50·15:00) 후보는 안 들어간다.'],
+    ['없음 · 기록 전 · 기록 없음', '그날 기록은 20:05 채점 때 생긴다. 오늘 줄은 그 전까지 "기록 전 · 20:05 뒤"(15:50 뒤 아래 후보 카드가 있어도). 지난 날짜인데 기록이 하나도 없으면 "기록 없음". "없음" = 기록은 있는데 15:20 후보가 없던 날.'],
     ['(k)', 'KRX 전용 종목(NXT 거래 불가) — 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목이라 08:00 프리마켓부터(사용자 결정 9/15, 장중 탭과 같은 표시). 종목마스터에 없는 종목은 표시 없음. 판정 · 채점 무관.'],
     ['✓ ✕ +n% ⏳ · 관망', '✓ ✕ = 검증 탭과 같은 10시 채점(D 종가 매수 → D+1 10:00 까지 고가 +4%). 옆 % = D 종가 대비 10시까지의 고가 — 얼마나 넘겼나 · 못 미쳤나. ⏳ = 아직 채점 전. 관망 = 관문1 불통과인데 후보. 지난 기록이지 오늘 판정의 조건이 아니다.'],
     ['누르면', '그 날짜의 마감 탭으로(빨간 날짜 = 지금 보는 날). "검증 탭 전체 ▸" 는 전체 목록 · 적중률.']],
