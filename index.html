@@ -312,6 +312,13 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .sg-lead{font-size:12.5px;line-height:1.6;margin:0 0 6px}
 .sg-lead b{color:var(--wine)}
 .sg-leg{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
+/* 9/28 `조건식목록` — 상태 줄 아래 접힌 한 줄 '조건검색 두 식의 조건'. 접기 모양은 전역 details summary 그대로(빠진 종목 접힘과 같음), 새 색 없음 */
+.sg-cdet{margin:-8px 0 6px}
+.sg-cond{font-size:12.5px;line-height:1.6;padding:0 0 4px}
+.sg-cond-i{padding-left:1.5em;text-indent:-.6em}
+.sg-cond-i + .sg-cond-h{margin-top:4px}
+.sg-cond-c{margin-top:6px;color:var(--sub)}
+.sg-cond-c span{white-space:nowrap}
 @media (min-width:860px){.wrap{max-width:960px}.hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 18px}.stick .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 12px 6px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 .cols > *{min-width:0}   /* 9/19 시계열PC : 격자 열(1fr)의 min-width 기본값 auto 는 안쪽 표(첫 열 96 + 34px × 회차)의 폭이라 두 열이 wrap 밖으로 밀렸다(980px 에서 738+738). 0 이면 열이 반씩 나뉘고 넓은 표는 .sg 안에서 옆으로 스크롤 */
 #series .cols{display:block}   /* 9/19 시계열PC : 시계열 탭은 PC 에서도 한 열 — 표 다섯 장(최대 708px)이 936px 안에 통째로 보이게, 폰과 같은 순서 */}
@@ -1501,6 +1508,20 @@ function renderSeries(d) {
   const h = el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 강의 네 기준 격자`); h.style.fontSize = '18px'; h.style.margin = '0'; add(box, h);
   const serLast = [...new Set([...arr(d.condTimes).map(String), ...arr(d.inqFlow).map(r => String(r['시각'])), ...arr(d.sectorFlow).map(r => String(r['시각']))])].sort().pop() || '';   // 9/15 저녁 : 저녁 회차 포함 마지막 시각
   add(box, el('div', 'status', (d.stage === 'live' ? (has(d.at) ? `${tLabel(d.at)} 까지 · 판정 전 · ` : '수집 전 · ') : (serLast > '1530' ? `${tLabel(serLast)} 까지 (16:00 부터 애프터마켓, 점선 오른쪽) · ` : '15:20 까지 · ')) + '시각 × 종목, 칸 = 그 회차에 걸려 있었나 · 관찰 전용, 판정에 안 쓴다'));
+  /* 9/28 `조건식목록` (사용자 요청 — 두 식의 조건을 격자 보면서 바로 확인) : 접힌 한 줄, 접기 모양은 조건검색 카드의 '빠진 종목' 과 같은 맨 details.
+     글은 인계문서 3-2 표(9/11 영웅문 저장본 대조) · 대조표 C3 · C4 에서 손으로 옮긴 고정 글 — 새 숫자 0. 키움 API 는 조건식 이름만 주고 내용은 안 줘서 자동으로 못 맞춘다.
+     **영웅문에서 조건식을 바꾸면 이 화면 글도 같이 고친다** (인계문서 3-2 에도 같은 줄). 판정 · 채점 · 수집 무관, 각 카드 ? 도움말에는 안 넣는다 */
+  const cdDet = el('details', 'sg-cdet'); add(cdDet, el('summary', null, '조건검색 두 식의 조건'));
+  const cdBox = el('div', 'sg-cond');
+  [['당일주도주_강의', '둘 다 맞으면', ['거래대금 순위 상위 35', '전일 대비 등락률 순위 상위 100']],
+   ['120일 신고가_강의', '셋 다 맞으면', ['오늘 거래대금 300억 이상', '오늘 고가가 어제 종가보다 +5% 이상 (종가 아님)', '오늘 종가가 120봉 중 가장 높은 종가']]].forEach(([nm, how, list]) => {
+    const hd = el('div', 'sg-cond-h'); add(hd, el('b', null, nm)); hd.appendChild(document.createTextNode(` — ${how}`)); add(cdBox, hd);
+    list.forEach(s => add(cdBox, el('div', 'sg-cond-i', `· ${s}`)));
+  });
+  const cdCom = el('div', 'sg-cond-c');   // 줄은 ' · ' 자리에서만 바뀌게 — 토막(점까지)을 안 끊기는 span 으로, 글자는 그대로
+  '두 식 공통 : 업종 전체 · 거래정지 · 정리매매 · ETF · ETN 제외 · 양봉 조건 없음'.split(' · ').forEach((s, i, a) => { if (i) cdCom.appendChild(document.createTextNode(' ')); add(cdCom, el('span', null, i < a.length - 1 ? `${s} ·` : s)); });
+  add(cdBox, cdCom);
+  add(box, add(cdDet, cdBox));
 
   // 네 기준 → M[기준][시각][종목명] = 값. 티마 대장은 sectorFlow 의 거래대금1위(개별이슈 카드 제외, 장중 탭과 같음), 이름은 OCR 글자라 코드 없이 종목명으로 맞춘다
   const KEYS = ['tima', 'lead', 'high', 'inq'];
