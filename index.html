@@ -417,7 +417,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .rv-rules .g:first-child{margin-top:8px}
 /* 9/28 `복기매매묶음` : '주문 기록' 묶음은 접어 두고 제목 줄(줄 전체 폭)을 누르면 펼침. ▸ ▾ 는 마감 탭 섹터 판정 목록 줄(.jl-nm)과 같은 방식 — ::before 라 글자 밖 */
 .rv-rules .rv-og{cursor:pointer}
-.rv-rules .rv-og::before{content:"▸";display:inline-block;width:1em;color:var(--muted)}
+.rv-rules .rv-og::before{content:"▸";display:inline-block;width:1em;color:var(--sub)}   /* 9/29 사용자 결정 (나) : ▸ ▾ 만 한 단계 진하게(--sub) — 제목 글자는 다른 묶음 제목과 같은 --muted, 누르는 곳이라는 표시만 */
 .rv-rules .rv-og[aria-expanded="true"]::before{content:"▾"}
 .rv-rule{display:flex;align-items:flex-start;gap:9px;padding:3px 0;font-size:13px}
 .rv-rule .mk{margin-top:1px}
