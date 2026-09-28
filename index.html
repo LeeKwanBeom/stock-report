@@ -309,6 +309,8 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .sg td.dot{color:var(--brand);font-size:10px}
 .sg td.top{font-weight:800;color:var(--wine)}
 .sg td.up,.sg td.down{font-weight:600}
+.sg-sc{font-size:10px;font-weight:400;color:var(--sub)}   /* 9/28 `시계열섹터이름표` : 격자 이름 칸 위 줄 = 15:20(장중은 마지막) 티마 카드 섹터명. 9/27 이름표 문법(보통 굵기 · --sub)에서 크기만 격자 머리글(.sg th)과 같은 10px — 격자 글자 11.5px 보다 작게. 전역 .sub 와 안 겹치게 sg- 접두사 */
+.sg-sc,.sg-nm{overflow:hidden;text-overflow:ellipsis}   /* 이름표가 붙은 칸의 두 줄(이름표 · 종목명)도 줄마다 … — nowrap 은 .sg td 에서 물려받는다 */
 .sg-lead{font-size:12.5px;line-height:1.6;margin:0 0 6px}
 .sg-lead b{color:var(--wine)}
 .sg-leg{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45}
@@ -1544,6 +1546,23 @@ function renderSeries(d) {
   const putNC = (nm, cd) => { if (has(nm) && has(cd) && !NC[nm]) NC[nm] = cd; };
   arr(d.condFlow).forEach(r => putNC(r['종목명'], r['코드'])); arr(d.inqFlow).forEach(r => putNC(r['종목명'], r['코드']));
   arr(d.stockFlow).forEach(r => putNC(r['종목명'], r['종목코드'])); arr(d.stocks).forEach(s => arr(s['종목']).forEach(r => putNC(r['종목명'], r['종목코드'])));
+  /* 9/28 `시계열섹터이름표` (사용자 제안, 회차 · 모양 "추천대로") : 격자 다섯 장 이름 칸 위 줄에 티마 섹터 이름표 — 장중 조회순위(9/23 iqSec) 규칙 ①②③ 을 한 회차로. JSON · pages-export 변경 0.
+     회차 = stockFlow 시각 중 15:20 이하 마지막(마감이면 15:20, 장중이면 지금까지 마지막 티마 회차), 저녁 회차는 안 본다. 조건검색 본표 기준과 같은 생각이지만 condBase 는 condTimes 에서 고른 값이고 아래에서 선언돼 여기서 못 쓴다.
+     열쇠 = 종목코드, 'NM:'(마스터에 못 맞춘 OCR 이름) 행은 종목명. 격자 행은 NC[종목명] 코드로 찾고 못 찾으면 종목명으로 — 코드로만 맞추면 카드에 든 종목도 빈다(9/22 120일 신고가 '인제니아테라퓨틱스(R' : condFlow 는 진짜 코드, 15:20 카드 행은 NM:).
+     두 카드면 '·' 로 둘 다 · 개별이슈 카드도 이름표로 · 그 회차 카드(카드당 4종목)에 없으면 안 붙임. 한 회차만 보는 이유는 종목이 하루에 카드를 옮겨 다녀서(그날 전부면 둘 이상이 흔함). 화면 표시일 뿐 판정에 안 쓴다 */
+  const secT = [...new Set(arr(d.stockFlow).map(r => String(r['시각'])))].sort().filter(t => t <= '1520').pop();
+  const secC = {}, secN = {};   // 종목코드 → 섹터명 목록 / 'NM:' 행은 종목명 → 섹터명 목록 (진짜 코드로 풀리면 secC 에도)
+  arr(d.stockFlow).forEach(r => {
+    if (String(r['시각']) !== secT || !has(r['섹터명'])) return;
+    const putS = (m, k) => { if (!has(k)) return; if (!m[k]) m[k] = []; if (!m[k].includes(r['섹터명'])) m[k].push(r['섹터명']); };
+    const c = String(r['종목코드'] || '').trim();
+    if (!c.startsWith('NM:')) { putS(secC, c); return; }
+    putS(secN, r['종목명']);
+    /* 'NM:' 행의 OCR 이름이 NC(조건검색 · 조회순위 · 티마 종목 행)에서 진짜 코드로 풀리면 그 코드 열쇠에도 — 이름이 조금 다른 격자 줄도 맞게
+       (사용자 결정 (가) 9/28 : 9/22 개별이슈 카드 'NM:인제니아테라퓨틱스(R' 이 조회순위 줄 '인제니아테라퓨틱스(Reg.S)' 에선 빈칸이라 도움말 '빈칸 = 카드에 없는 종목' 과 어긋났다) */
+    const rc = String(NC[r['종목명']] || '').trim(); if (has(rc) && !rc.startsWith('NM:')) putS(secC, rc);
+  });
+  const secOf = nm => (has(NC[nm]) && secC[String(NC[nm])]) || secN[nm] || null;
   const condT = [...new Set(arr(d.condTimes).map(String))].sort();
   const T = {
     tima: [...new Set(Object.keys(M.tima))].sort(),
@@ -1561,7 +1580,10 @@ function renderSeries(d) {
     times.forEach(() => { const c = el('col'); c.style.width = '34px'; cg.appendChild(c); }); tb.appendChild(cg);
     const hr = el('tr'); hr.appendChild(el('th', null, head || '')); times.forEach((t, i) => hr.appendChild(el('th', isAft1(times, i) ? 'aft1' : null, tShort(t)))); tb.appendChild(hr);
     names.forEach(nm => {
-      const tr = el('tr'); const td0 = el('td', null, nm); td0.title = nm; add(td0, kMark(d, NC[nm])); tr.appendChild(td0);   // (k) 9/15 저녁
+      const tr = el('tr'); const secs = secOf(nm); let td0;
+      if (secs) { td0 = el('td'); add(td0, el('div', 'sg-sc', secs.join('·')), add(el('div', 'sg-nm', nm), kMark(d, NC[nm]))); }   // 9/28 시계열섹터이름표 : 위 줄 섹터 이름표 · 아래 줄 종목명(+ (k)), 이름 칸 폭 96 그대로
+      else { td0 = el('td', null, nm); add(td0, kMark(d, NC[nm])); }   // 이름표 없는 줄은 옛 모양 그대로 한 줄
+      td0.title = nm; tr.appendChild(td0);   // (k) 9/15 저녁
       times.forEach((t, i) => { const c = cell(nm, t); const td = el('td', ((c && c.cls) ? c.cls : '') + (isAft1(times, i) ? ' aft1' : ''), c ? c.text : ''); if (c && c.title) td.title = c.title; tr.appendChild(td); });   // 9/15 저녁 : 16:00 앞 점선
       tb.appendChild(tr);
     });
@@ -2191,7 +2213,8 @@ const HELP_SEC = {
     ['n시에 2개 이상', '마지막 회차에 두 기준 넘게 걸린 종목과 언제부터인지.'],
     ['마감 탭과의 관계', '후보 카드의 "겹침" 칩과 같은 수. 후보가 아닌데 넷에 다 걸린 종목이 있으면 그 이유만 기록한다(월 1회 점검 재료, 기준은 안 바꾼다).'],
     ['(k) — 격자 다섯 장 공통', 'KRX 전용 종목(NXT 불가). 다음날 매도 09:00 부터, 없으면 NXT 도 되는 종목이라 08:00 부터. 이름은 조건검색 · 조회순위 · 티마 종목 행의 코드로 맞춘다 — 티마 대장(OCR 이름)에만 걸린 종목은 코드가 없어 표시 없음.'],
-    ['점선 (16:00 앞) — 격자 공통', '점선 오른쪽 = 애프터마켓 회차(16:00~20:02). 조건검색 · 조회순위도 저녁에 그대로 수집한다. 관찰만, 판정은 15:20.']],
+    ['점선 (16:00 앞) — 격자 공통', '점선 오른쪽 = 애프터마켓 회차(16:00~20:02). 조건검색 · 조회순위도 저녁에 그대로 수집한다. 관찰만, 판정은 15:20.'],
+    ['섹터명 (이름 위) — 격자 다섯 장 공통', '15:20(장중엔 지금까지 마지막 회차) 티마 카드의 섹터명. 빈칸 = 그 회차 캡처된 티마 카드(카드당 4종목)에 없는 종목. 두 카드에 든 종목은 · 로 둘 다. 관찰 표시일 뿐 판정에 안 쓴다.']],
   'series.tima': [
     ['●', '그 회차 티마 카드 한 장의 누적 거래대금 1위(●2 = 카드 두 장). 개별이슈 카드 제외, 이름은 OCR 글자 그대로.']],
   'series.lead': [
