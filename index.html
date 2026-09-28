@@ -205,10 +205,22 @@ details.more summary::before{content:"▸ ";color:var(--muted)}
 details.more[open] summary::before{content:"▾ "}
 details.more .card{margin-top:6px}
 details.more .card strong{font-size:14.5px}
-/* 9/23 잠정 자세히 (A안, 사용자 결정) : 확정 뒤 "14:50 후보 : … → 15:00 후보 : …" 줄 아래 접힌 "▸ 자세히" — 그날 잠정 화면의 "섹터 판정 (잠정)" 목록 둘. pv- 접두사 (rules\screen.md) */
+/* 9/23 잠정 자세히 (A안, 사용자 결정) : 확정 뒤 "14:50 후보 : … → 15:00 후보 : …" 줄 아래 접힌 "▸ 자세히" — 그날 잠정 화면의 "섹터 판정 (잠정)" 목록 둘. pv- 접두사 (rules\screen.md)
+   9/28 `섹터판정펼치기` : 이 안의 목록 줄도 누르면 그 잠정 시각의 섹터 카드(아래 jl-) — 기본 접힘은 그대로 */
 .pv-det{margin:-6px 0 12px}
 .pv-det .pv-h{font-size:12px;font-weight:800;color:var(--muted);margin:8px 0 4px}
 .pv-det .list{margin-bottom:6px}
+/* 9/28 `섹터판정펼치기` (사용자 결정) : 마감 탭 '섹터 판정' 목록 셋(잠정 · 확정 · 자세히 안) 줄을 누르면 그 줄 바로 아래에 후보 카드 모양의 카드 — 개별이슈 줄은 안 펼침. jl- 접두사 (rules\screen.md).
+   ▸ ▾ = details.more summary::before 와 같은 글자 · 색, 자리는 목록 왼쪽 여백(사용자 결정 (나) — 글자 앞에 두면 375px 에서 맨 위 관문3제외 줄이 두 줄로. 닫힌 줄의 글자 위치 · 줄 수는 옛 판 그대로).
+   카드는 열 때 끼우고 닫을 때 지운다. 자세히(details.more) 안 자손 규칙(.card margin-top 6px · .card strong 14.5px)은 되돌려 잠정 · 확정 목록과 같게 */
+.jl-row{cursor:pointer}
+.jl-row .jl-nm{position:relative}
+.jl-row .jl-nm::before{content:"▸";position:absolute;right:100%;margin-right:3px;color:var(--muted)}
+.jl-row[aria-expanded="true"] .jl-nm::before{content:"▾"}
+.list .card.jl-card{margin-top:0}
+.card.jl-card .head strong{font-size:17px}
+.card.jl-card{--srlw:28px}   /* .card.cand 와 같은 값 — 후보가 아닌 카드(cand 없음)도 순번 칸 · D+1 들여쓰기가 후보 카드와 같은 자리 */
+.jl-bdg{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;background:var(--chip);color:var(--chipInk)}   /* 후보가 아닌 카드 머리 배지 = 판정 이름 회색 칩 (.badge 크기 · .b-skip · .rv-chip 색 조합) */
 .links{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 2px}
 .links .who{font-size:12px;color:var(--ink2);font-weight:700;margin-right:2px}
 .links a{font-size:11.5px;padding:3px 10px;border-radius:14px;border:1px solid var(--line);background:var(--card2);color:var(--wine);text-decoration:none;font-weight:700}
@@ -546,6 +558,7 @@ function renderClose(d, dates) {
   const stockMap = {}; arr(d.stocks).forEach(s => { stockMap[s['섹터명']] = arr(s['종목']); });
   const resMap = {}; arr(d.result).forEach(r => { resMap[r['섹터'] + '|' + r['종목']] = r; });
   const inqMap = {}; arr(d.inq).forEach(r => { inqMap[String(r['코드'])] = r['조회순위']; });
+  const jlFlow = {};   // 9/28 `섹터판정펼치기` : 목록 시각(HHMM) → 섹터명 → stockFlow 그 시각 행(누적억 큰 순). 아래 live 분기보다 먼저 선언 — 잠정 목록 줄을 누를 때도 쓴다
   const j1450 = arr(d.judge1450);   // 9/16 `1450회차` : 14:52 에(9/19 `잠정3분` 전에는 14:57) 14:50 자료로 미리 돌린 잠정 판정 (JSON v9, pages-export v2.1). 없으면 빈 배열
   const j1500 = arr(d.judge1500);   // 9/19 `잠정1500` : 15:02 에 15:00 자료로 미리 돌린 잠정 판정 (JSON v12, pages-export v2.6). 없으면 빈 배열 (9/18 이전 JSON 은 키 자체가 없음 → arr 이 [])
   const jProv = j1500.length ? j1500 : j1450;   // 마지막 잠정 하나 (9/19 사용자 결정 B : 띠·후보 카드·섹터 판정 목록은 마지막 잠정, 둘 다 있으면 "잠정 흐름" 한 줄)
@@ -586,7 +599,7 @@ function renderClose(d, dates) {
     add(c1p, labelWith(pc.length ? '종베 후보 (잠정)' : '종베 후보 (잠정) — 없음', 'close.cand'));
     candCards(c1p, pc);
     add(c1p, labelWith('섹터 판정 (잠정)', 'close.judge'));
-    judgeList(c1p, jProv);
+    judgeList(c1p, jProv, false, { at: provAt.replace(':', ''), k: 1 });
     add(box, el('div', 'foot', `검증 기간 — 기록만, 매매 안 함 · 잠정 ${provAt} · 생성 ${d.generated || '—'}`));
     return;
   }
@@ -653,18 +666,23 @@ function renderClose(d, dates) {
   add(c1, labelWith(cands.length ? '종베 후보' : '종베 후보 — 없음', 'close.cand'));
   candCards(c1, cands);
   // 후보 카드 본체 — 9/16 함수로 묶음 : 15:20 확정과 14:50 잠정(위 live 분기)이 같은 카드를 그린다. 내용은 9/14 후보카드 그대로
-  function candCards(c1, cands) {
+  //   9/28 `섹터판정펼치기` : o = 섹터 판정 목록 줄을 눌러 펼치는 카드(jlOpt) — 없으면 지금과 같다(위 후보 카드는 인자 없이 부른다).
+  //   o.stocks 종목표(섹터명 → 행) · o.inq 조회순위(null = 조회 칩 없음) · o.vol false = 거래대금배수 칩 없음 · o.d1 false = D+1 줄 · 대기 문구 없음 ·
+  //   o.plain = 판정 이름 회색 배지 · 빨간 테두리 없음 · 1억 칩 없음 · o.noRole = 역할 글자 · 대장 빨강 없음(대장없음) · o.jl = 펼친 카드 표시(jl-card)
+  function candCards(c1, cands, o) {
+  o = o || {};
+  const sMap = o.stocks || stockMap, iMap = o.inq === undefined ? inqMap : o.inq;
   const roles = ['대장', '2등', '3등', '4등'];
   // 8-3 ② 후보 카드 펼치기 (9/14 밤, `후보카드` 세션) — 판정 v2.0 이 judge CSV 에 이미 쓴 기록 칸(인계문서 4절 표)을 칩·표시로 펼친다.
   //   순위(결정 3) · 관망(결정 2, 관문1 불통과여도 후보를 막지 않음) · 신고가20/120 과 비중 축소(결정 1) · JBT · 연속양봉부담(4강 Tip) · 겹침(1강 네 가지) ·
   //   모멘텀 양수구간 · 종목 트랙 · 대장 시장순위 · 관문2~4 근거 한 줄. 값은 그대로 보여줄 뿐 여기서 다시 계산하지 않는다 (임계값 없음).
   cands.forEach(r => {
-    const card = el('div', 'card cand');
+    const card = el('div', o.plain ? 'card jl-card' : ('card cand' + (o.jl ? ' jl-card' : '')));
     const top = el('div', 'head');
     const ttl = el('div'); add(ttl, el('strong', null, r['섹터명']));
     if (has(r['순위'])) add(ttl, el('span', 'flag', r['순위']));
     if (r['관망'] === 'Y') add(ttl, el('span', 'flag warn', '관망 · 관문1 불통과'));
-    add(top, ttl, el('span', 'badge cand', '후보 · 어종'));
+    add(top, ttl, o.plain ? el('span', 'jl-bdg', r['판정'] || '—') : el('span', 'badge cand', '후보 · 어종'));
     add(card, top);
     const chips = el('div', 'chips');
     [['집중도', r['집중도%'], '%'], ['모멘텀', r['모멘텀'], ''], ['2따', r['2따스코어'], ''], ['유입', r['유입패턴'], ''], ['대장견인', r['대장견인'], ''], ['연속', r['연속'], '']]
@@ -677,10 +695,10 @@ function renderClose(d, dates) {
     if (isPref(r['대장코드'])) chips.appendChild(el('span', 'chip warn', '대장 우선주 · 안 함'));   // 9/15 저녁 사용자 결정, 표시만
     if (has(r['겹침'])) chips.appendChild(el('span', 'chip', `겹침 ${r['겹침']}`));
     if (has(r['대장시장순위'])) chips.appendChild(el('span', 'chip', r['대장시장순위'] === '100위밖' ? '대장 대금 100위 밖' : `대장 대금 ${r['대장시장순위']}위`));   // 종목 행에 두면 폰 너비에서 줄이 넘친다
-    const vr = volRatioOf(d, r['대장코드']); if (vr) chips.appendChild(volChip(vr, '대장 대금 '));   // 8-0★ E 거래대금배수 (JSON v7) — 숫자만, 기준 없음
-    const rows = stockMap[r['섹터명']] || [];
+    const vr = o.vol === false ? null : volRatioOf(d, r['대장코드']); if (vr) chips.appendChild(volChip(vr, '대장 대금 '));   // 8-0★ E 거래대금배수 (JSON v7) — 숫자만, 기준 없음
+    const rows = sMap[r['섹터명']] || [];
     const lead = rows.find(s => s['종목명'] === r['대장']) || rows[0];   // 8-3 ⑧ 대장 현재가로 1억 = 몇 주 (목업 B). 종목별 값은 관문6 첫 블록
-    const leadSh = lead ? sharesPer1eok(lead['현재가']) : null;
+    const leadSh = lead && !o.plain ? sharesPer1eok(lead['현재가']) : null;
     if (leadSh !== null) chips.appendChild(el('span', 'chip', `1억 = 약 ${leadSh.toLocaleString()}주`));
     add(card, chips);
     const basis = ['관문2', '관문3', '관문4'].filter(k => has(r[k])).map(k => `${k} ${r[k]}`);
@@ -688,26 +706,51 @@ function renderClose(d, dates) {
     let filled = 0;
     rows.forEach((s, i) => {
       const row = el('div', 'row');
-      const isLead = s['종목명'] === r['대장'];
-      const nm = el('span'); add(nm, el('span', 'sub srl', (roles[i] || '') + ' '), el('span', isLead ? 'lead1' : null, s['종목명']));
+      const isLead = !o.noRole && s['종목명'] === r['대장'];
+      const nm = el('span'); add(nm, o.noRole ? null : el('span', 'sub srl', (roles[i] || '') + ' '), el('span', isLead ? 'lead1' : null, s['종목명']));
       if (has(s['트랙'])) add(nm, el('span', 'trk', s['트랙']));
-      if (has(inqMap[String(s['종목코드'])])) add(nm, el('span', 'flag', '조회 ' + inqMap[String(s['종목코드'])] + '위'));
+      if (iMap && has(iMap[String(s['종목코드'])])) add(nm, el('span', 'flag', '조회 ' + iMap[String(s['종목코드'])] + '위'));
       if (isPref(s['종목코드'])) add(nm, el('span', 'flag warn', '우선주'));
       add(nm, kMark(d, s['종목코드']));   // 9/15 저녁 (k) = KRX 전용
       const rt = el('span'); add(rt, el('span', null, (s['누적억'] || '—') + '억 '), pctEl(s['등락률']));
       const res = resMap[r['섹터명'] + '|' + s['종목명']];
       add(card, add(row, nm, rt));
       // 9/19 : D+1 결과는 종목 줄 안이 아니라 그 아래 둘째 줄(.d1ln, 순번 칸 .srl 너비만큼 들여쓰기 = 이름 밑). 9/16 의 한 줄 방식은 오른쪽이 길어 PC·폰에서 "A"·"위" 만 다음 줄로 떨어졌다 (사용자 결정 추천안, 화살표 없음)
-      const d1 = d1Frag(res, 'd1 d1ln'); if (d1) { filled++; row.classList.add('hasd1'); add(card, d1); }
+      const d1 = o.d1 === false ? null : d1Frag(res, 'd1 d1ln'); if (d1) { filled++; row.classList.add('hasd1'); add(card, d1); }
     });
     if (!rows.length) add(card, el('div', 'muted', '종목 표 없음 (stock_delta 확인)'));
     if (r['괴리'] === 'Y' && rows.length) {
       const hi = rows.slice().sort((a, b) => (num(b['등락률']) ?? -999) - (num(a['등락률']) ?? -999))[0];
       add(card, el('div', 'note', `괴리 — 등락 1위 ${hi['종목명']} ${hi['등락률']}%. 거래대금 1위를 대장으로, 차트로 확인`));
     }
-    if (rows.length && !filled) add(card, el('div', 'muted', 'D+1 결과 — 10시 고가·저가는 다음 거래일 10:07 뒤, 종가는 20:05 뒤'));
+    if (o.d1 !== false && rows.length && !filled) add(card, el('div', 'muted', 'D+1 결과 — 10시 고가·저가는 다음 거래일 10:07 뒤, 종가는 20:05 뒤'));
     add(c1, card);
   });
+  }
+  // 9/28 `섹터판정펼치기` : 목록 줄 하나를 펼칠 카드의 인자 (candCards 의 o). x = { at: 목록 시각 HHMM, k: 1 잠정 목록 · 2 확정 목록 · 3 자세히 안 목록 }
+  //   종목 = 목록 시각이 d.sdTime 과 같으면 후보 카드와 같은 d.stocks, 다르면 d.stockFlow 의 그 시각 행을 누적억 큰 순으로(15:27 회차부터 d.stocks 는 15:20 인데 잠정 목록은 15:00 판정).
+  //   stockFlow 행에는 현재가가 없어 그 카드에는 1억 칩이 없다. 조회 칩 = 확정 목록은 후보 카드와 같은 d.inq, 잠정 목록은 d.inqTime 이 그 시각일 때만, 자세히 안은 없음.
+  //   거래대금배수 칩(하루 일봉 값)은 자세히 안에만 없음. D+1 = 확정 목록의 후보 · 배경 · 관문3제외(result_log 가 같은 자로 채점, 표본 아님) + 잠정 목록의 후보(위 후보 카드와 같게).
+  //   후보 모양(빨간 테두리 · 후보 · 어종 배지 · 1억) = 잠정 · 확정 목록의 후보 줄만 — 자세히 안 후보는 다른 판정과 같은 회색 배지(9/23 '확정 카드와 같은 무게로 안 읽히게')
+  function jlOpt(r, x) {
+    const cand = r['판정'] === '후보', noLead = r['판정'] === '대장없음';
+    if (!jlFlow[x.at]) {
+      const m = {};
+      if (String(d.sdTime) !== x.at) {
+        arr(d.stockFlow).forEach(s => { if (String(s['시각']) === x.at) (m[s['섹터명']] = m[s['섹터명']] || []).push(s); });
+        Object.keys(m).forEach(k => m[k].sort((a, b) => (num(b['누적억']) ?? -1) - (num(a['누적억']) ?? -1)));
+      }
+      jlFlow[x.at] = m;
+    }
+    return {
+      jl: true,
+      stocks: String(d.sdTime) === x.at ? stockMap : jlFlow[x.at],
+      inq: x.k === 2 || (x.k === 1 && String(d.inqTime) === x.at) ? inqMap : null,
+      vol: x.k !== 3,
+      d1: !noLead && (x.k === 2 || (x.k === 1 && cand)),
+      plain: !cand || x.k === 3,
+      noRole: noLead,
+    };
   }
 
   const j14 = arr(d.judge1400);
@@ -725,12 +768,13 @@ function renderClose(d, dates) {
     add(c1, el('div', 'status', `${parts.join(' → ')} ${sameSecs(provSecs(jProv), cands.map(r => r['섹터명'])) ? '(15:20 과 같음)' : '(15:20 과 다름)'}`));
     // 9/23 A안 (사용자 결정 "14:50·15:00 후보를 시간이 지나고 다시 보고 싶다") : 그 줄 아래 접힌 "▸ 자세히" — 그날 잠정 화면에 있던 "섹터 판정 (잠정)" 목록을 14:50 → 15:00 차례로 그대로,
     //   대장 이름 한 칸만 더 (judgeList 의 lead). 기본 접힘 — 잠정은 표본이 아니라 확정 후보 카드와 같은 무게로 읽히지 않게, 후보 없는 날 탭이 길어지지 않게.
-    //   종목 줄(대장·2등·3등·4등)은 안 그린다 — 마감 JSON 의 종목표(d.stocks)는 15:20 것이라 잠정 시각과 맞지 않는다. 자료는 JSON 에 이미 있던 judge1450·judge1500 그대로, 새 수집·새 칸 없음
+    //   9/28 `섹터판정펼치기` : 줄을 누르면 그 잠정 시각의 섹터 카드 — 마감 JSON 의 종목표(d.stocks)는 15:20 것이라 종목 줄은 d.stockFlow 의 그 시각 행으로(jlOpt).
+    //   9/23 에 종목 줄을 안 그린 이유(시각이 안 맞음)가 이걸로 풀린다. 후보 줄도 회색 배지 · 빨간 테두리 · 1억 · D+1 없음(같은 무게 피하기). 자료는 JSON 에 이미 있던 칸 그대로, 새 수집·새 칸 없음
     const det = el('details', 'more pv-det'); add(det, el('summary', null, '자세히 (잠정 14:50 · 15:00 섹터 판정)'));
     [['14:50', j1450], ['15:00', j1500]].forEach(([t, rows]) => {
       if (!rows.length) return;
       add(det, el('div', 'pv-h', `잠정 ${t}`));
-      judgeList(det, rows, true);
+      judgeList(det, rows, true, { at: t.replace(':', ''), k: 3 });
     });
     add(c1, det);
   }
@@ -805,10 +849,12 @@ function renderClose(d, dates) {
   else if (!piroAll.length) add(c1, el('div', 'state', '피뢰침 자료 없음 — pirochim CSV 가 비어 있습니다'));
 
   add(c2, labelWith('섹터 판정', 'close.judge'));
-  judgeList(c2, judge);
+  judgeList(c2, judge, false, { at: '1520', k: 2 });
   // 섹터 판정 목록 본체 — 9/17 함수로 묶음 : 15:20 확정과 14:50 잠정(위 live 분기)이 같은 목록을 그린다. 내용은 그대로
-  //   9/23 lead=true (잠정 자세히 전용) : 집중도 뒤에 " · 대장이름" 한 칸. 확정·잠정 띠 목록은 인자 없이 종전 그대로
-  function judgeList(parent, rows, lead) {
+  //   9/23 lead=true (잠정 자세히 전용) : 집중도 뒤에 " · 대장이름" 한 칸. 확정·잠정 띠 목록은 lead 없이 종전 그대로
+  //   9/28 `섹터판정펼치기` : x(jlOpt 의 목록 시각 · 종류)가 있으면 개별이슈를 뺀 줄을 누르기 · Enter · Space 로 — 줄 바로 뒤에 candCards 카드를 끼우고, 다시 누르면 지운다(미리 만들어 숨기지 않음).
+  //   줄마다 따로, 여러 줄 동시. 줄 글자는 그대로 — ▸ ▾ 는 CSS ::before(.jl-nm, 목록 왼쪽 여백)라 글자 밖. 개별이슈 줄은 role · ▸ 없이 옛 모양 그대로(사용자 결정 "눌러도 안 보이게")
+  function judgeList(parent, rows, lead, x) {
     const list = el('div', 'list');
     rows.slice().sort((a, b) => (num(b['집중도%']) ?? 0) - (num(a['집중도%']) ?? 0)).forEach(r => {
       const row = el('div', 'row');
@@ -817,6 +863,17 @@ function renderClose(d, dates) {
       const rt = el('span', 'sub', `모멘텀 ${r['모멘텀'] ?? '—'} · 2따 ${r['2따스코어'] ?? '—'} · `);
       add(rt, el('span', r['판정'] === '후보' ? 'acc' : null, r['판정'] || '—'));
       add(list, add(row, nm, rt));
+      if (!x || r['판정'] === '개별이슈') return;
+      row.classList.add('jl-row'); nm.classList.add('jl-nm');
+      row.setAttribute('role', 'button'); row.tabIndex = 0; row.setAttribute('aria-expanded', 'false');
+      const go = () => {
+        const nx = row.nextElementSibling;
+        if (nx && nx.classList.contains('jl-card')) { nx.remove(); row.setAttribute('aria-expanded', 'false'); return; }
+        const tmp = el('div'); candCards(tmp, [r], jlOpt(r, x));
+        if (!tmp.firstElementChild) return;
+        row.insertAdjacentElement('afterend', tmp.firstElementChild); row.setAttribute('aria-expanded', 'true');
+      };
+      row.onclick = go; row.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
     });
     add(parent, list);
   }
@@ -2195,7 +2252,8 @@ const HELP_SEC = {
     ['악재 · 매매 원칙 줄', '악재가 없어야 한다(P4)는 사람 몫. 진입 · 매도 원칙은 P5 · P6.'],
     ['(k)', '종목명 옆 (k) = KRX 전용(NXT 불가) — 다음날 매도 09:00 부터. 없으면 NXT 도 되는 종목이라 08:00 부터.']],
   'close.judge': [
-    ['섹터명 % · 모멘텀 · 2따 · 판정', '모든 카드의 집중도 순 목록. 판정 = 후보 / 배경(모멘텀 음수) / 관문3제외(2따 부족) / 대장없음 / 개별이슈.']],
+    ['섹터명 % · 모멘텀 · 2따 · 판정', '모든 카드의 집중도 순 목록. 판정 = 후보 / 배경(모멘텀 0 이하) / 관문3제외(2따 부족) / 대장없음 / 개별이슈.'],
+    ['누르면', '줄을 누르면 그 섹터 카드(대장 · 종목 네 줄 · 칩)가 줄 바로 아래에 펼쳐진다. 다시 누르면 접힌다. 후보가 아닌 섹터는 머리에 판정 이름. \'자세히\' 안 목록과 15:27 뒤 잠정 목록은 그 잠정 시각의 종목. 개별이슈 줄은 펼치지 않는다.']],
   'close.recent': [
     ['날짜 · 섹터 · 대장', '보는 날짜 둘레 5거래일, 9/17 부터. 후보 없는 날까지 한 줄씩(전체는 검증 탭). 검증 탭 후보 목록과 같은 자료 — 15:20 후보 섹터와 그 대장. 잠정(14:50·15:00) 후보는 안 들어간다.'],
     ['없음 · 기록 전 · 기록 없음', '그날 기록은 20:05 채점 때 생긴다. 오늘 줄은 그 전까지 "기록 전 · 20:05 뒤"(15:50 뒤 아래 후보 카드가 있어도). 지난 날짜인데 기록이 하나도 없으면 "기록 없음". "없음" = 기록은 있는데 15:20 후보가 없던 날.'],
@@ -2274,7 +2332,7 @@ const HELP = {
       ['m/d (요일) 15:20 판정', '판정 시각. 오른쪽 배지는 비고(만기일 등).'],
       ['수집 · OCR 경고 · push', '수집 = 마지막 수집 시각, OCR 경고 = 티마 읽기 경고 수, push = 이 화면이 올라간 시각. OK 가 아니면 빨강 — 화면이 최신이 아닐 수 있다. 이 화면 파일을 마지막으로 만든 시점의 값이라 최신 날짜에서만 보인다 (지난 날짜는 숨김).'],
       ['판정 전', '장중 자료만 있는 날은 후보 · 관문1 을 그리지 않는다. "후보 없음" 으로 읽지 말 것.'],
-      ['잠정 14:50 · 15:00 (노란 띠)', '14:52 에 14:50 자료로, 15:02 에 15:00 자료로 미리 돌린 판정 (폰에는 14:53~54 · 15:03~04). 띠·후보 카드·"섹터 판정 (잠정)" 목록은 마지막 잠정 하나(15:00 이 오면 15:00 으로 바뀜), 둘 다 있으면 "잠정 흐름 : 14:50 … → 15:00 …" 한 줄에 같음/다름. 15:50 확정과 다를 수 있고 표본이 아니다. 후보가 없는 날은 목록에서 어느 섹터가 어디서 빠졌는지 본다. 확정 뒤에는 "14:50 후보 : … → 15:00 후보 : … (15:20 과 같음/다름)" 한 줄로 남고, 그 아래 "▸ 자세히" 를 누르면 그날 잠정 14:50 · 15:00 의 섹터 판정 목록이 대장 이름과 함께 펼쳐진다(종목 줄은 없음, 표본 아님). 일치 여부는 매일 기록된다(judge_match). 1주 연습은 주문 직전 마지막 잠정(보통 15:00) 후보의 대장 1주 — 잠정끼리 다르면 관문6(사람 판단).']]],
+      ['잠정 14:50 · 15:00 (노란 띠)', '14:52 에 14:50 자료로, 15:02 에 15:00 자료로 미리 돌린 판정 (폰에는 14:53~54 · 15:03~04). 띠·후보 카드·"섹터 판정 (잠정)" 목록은 마지막 잠정 하나(15:00 이 오면 15:00 으로 바뀜), 둘 다 있으면 "잠정 흐름 : 14:50 … → 15:00 …" 한 줄에 같음/다름. 15:50 확정과 다를 수 있고 표본이 아니다. 후보가 없는 날은 목록에서 어느 섹터가 어디서 빠졌는지 본다. 확정 뒤에는 "14:50 후보 : … → 15:00 후보 : … (15:20 과 같음/다름)" 한 줄로 남고, 그 아래 "▸ 자세히" 를 누르면 그날 잠정 14:50 · 15:00 의 섹터 판정 목록이 대장 이름과 함께 펼쳐진다(줄을 누르면 그 잠정 시각의 섹터 카드 · 표본 아님). 일치 여부는 매일 기록된다(judge_match). 1주 연습은 주문 직전 마지막 잠정(보통 15:00) 후보의 대장 1주 — 잠정끼리 다르면 관문6(사람 판단).']]],
     ['보고 나서', [
       ['검증 기간', '후보가 있어도 매매하지 않는다. 관문6 을 사람이 하고, 다음날 20:05 뒤 → D+1 칸을 본다.'],
       ['표본', '15:20 후보 섹터 1개 = 표본 1(관문6 에서 사람이 제외한 것은 표본 아님). 표본 30개 + 무결성 2주 뒤 실매매 전환.']]]] },
