@@ -219,6 +219,7 @@ details.more .card strong{font-size:14.5px}
 .jl-row .jl-nm::before{content:"▸";display:inline-block;width:1em;text-indent:0;color:var(--muted)}
 .jl-row[aria-expanded="true"] .jl-nm::before{content:"▾"}
 .list .jl-pad{padding-left:1em}
+.jl-seg{white-space:nowrap}   /* 9/28 `확정목록이름표` : 목록 줄 오른쪽 글자 조각('모멘텀 7.97 ·' · '2따 0 ·' · '관문3제외') — 조각 사이 공백에서만 줄바꿈 (조건검색 '두 식 공통' 줄과 같은 방식) */
 .list .card.jl-card{margin-top:0}
 .card.jl-card .head strong{font-size:17px}
 .card.jl-card{--srlw:28px}   /* .card.cand 와 같은 값 — 후보가 아닌 카드(cand 없음)도 순번 칸 · D+1 들여쓰기가 후보 카드와 같은 자리 */
@@ -850,7 +851,7 @@ function renderClose(d, dates) {
   if (!piroAll) add(c1, el('div', 'state', '피뢰침 자료 없음 — 이 날짜 JSON 에 pirochim 이 없습니다 (version 3 이전)'));
   else if (!piroAll.length) add(c1, el('div', 'state', '피뢰침 자료 없음 — pirochim CSV 가 비어 있습니다'));
 
-  add(c2, labelWith('섹터 판정', 'close.judge'));
+  add(c2, labelWith('섹터 판정 (15:20 확정)', 'close.judge'));   // 9/28 `확정목록이름표` (사용자 결정) : 잠정 '섹터 판정 (잠정)' · 자세히 '잠정 14:50' 과 구별되게 시각을 붙임
   judgeList(c2, judge, false, { at: '1520', k: 2 });
   // 섹터 판정 목록 본체 — 9/17 함수로 묶음 : 15:20 확정과 14:50 잠정(위 live 분기)이 같은 목록을 그린다. 내용은 그대로
   //   9/23 lead=true (잠정 자세히 전용) : 집중도 뒤에 " · 대장이름" 한 칸. 확정·잠정 띠 목록은 lead 없이 종전 그대로
@@ -862,8 +863,10 @@ function renderClose(d, dates) {
       const row = el('div', 'row');
       const nm = el('span'); add(nm, el('span', null, r['섹터명'] + ' '), el('span', 'muted', has(r['집중도%']) ? r['집중도%'] + '%' : ''));
       if (lead && has(r['대장'])) add(nm, el('span', 'muted', ' · ' + r['대장']));
-      const rt = el('span', 'sub', `모멘텀 ${r['모멘텀'] ?? '—'} · 2따 ${r['2따스코어'] ?? '—'} · `);
-      add(rt, el('span', r['판정'] === '후보' ? 'acc' : null, r['판정'] || '—'));
+      // 9/28 `확정목록이름표` : 오른쪽 글자는 조각마다 한 덩어리(.jl-seg, nowrap) — 줄은 ' · ' 뒤 공백(조각 밖)에서만 바뀌고 '관문3제 / 외' 처럼 낱말 가운데서 안 끊긴다. 글자는 그대로
+      const rt = el('span', 'sub');
+      [`모멘텀 ${r['모멘텀'] ?? '—'} ·`, `2따 ${r['2따스코어'] ?? '—'} ·`].forEach(s => add(rt, el('span', 'jl-seg', s), document.createTextNode(' ')));
+      add(rt, el('span', 'jl-seg' + (r['판정'] === '후보' ? ' acc' : ''), r['판정'] || '—'));
       add(list, add(row, nm, rt));
       if (!x) return;
       if (r['판정'] === '개별이슈') { nm.classList.add('jl-pad'); return; }
