@@ -191,7 +191,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
 <div class="kpis">
   <div class="kpi now"><span class="l">300만원 실매매 조건</span><span class="v">표본 30 + 2주</span><span class="s">후보 표본 30개 · 무결성 오류 0 이 2주 연속</span></div>
   <div class="kpi now"><span class="l">연습 매매</span><span class="v">2종목 · 50%</span><span class="s">15:00 띠 후보 대장 2종목까지 · 합계 50% · 2종목이면 종목당 75만</span></div>
-  <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">매수는 내가 여기서 낸다. 자동은 매도 · 취소만</span></div>
+  <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">종베 매수는 내가 낸다. 자동은 매도 · 다음날 F존 추매(켠 뒤)</span></div>
   <div class="kpi"><span class="l">판정 기준</span><span class="v">동결</span><span class="s">매매 결과로 고치지 않는다</span></div>
 </div>
 
@@ -209,7 +209,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
     <div class="tr me key"><div class="t">08:00<br>~10:00</div>
       <div class="h"><span class="tag me">나</span>어제 산 종목 — 매도는 자동</div>
       <div class="d">목표는 <b>10:00 봉까지 +4%</b>, 못 가면 <b>시간 손절</b>. 08:00 · 08:55 에 매입가 +4% 지정가가 걸리고, 10:00 에 시장가로 전량 팔린다. 어제 저녁에 팔렸으면 할 일 없음. <b>손으로 매도 주문을 따로 걸지 않는다</b> — 회차마다 취소하고 다시 건다.</div>
-      <div class="d"><b>추매</b> : 많이 떨어져 <b>F존</b>이면 내가 판단해 <b>돼지 물량에 나눠</b> 산다 — <b>10:00 전 주문</b> · 어제 종가 매수 금액 이하 · 피뢰침은 없음 · 종목 쪽 악재(경고 · 주의)면 안 한다. 추매하면 자동매도가 <b>보유 전량을 새 평단 본전</b>에 다시 건다(불타기만이면 +4%). 손 매도 주문은 걸지 않는다.</div>
+      <div class="d"><b>추매</b> : <b>F존 자동을 켠 뒤</b> 'F존을 쓰는 종목' 은 도구가 한다 — <b>3라인 추매 · 4라인 아래면 전량 손절 · 추매 뒤 전량을 추매 기준가 +4% 에 매도</b>, 폰 알림으로 온다. 이 종목엔 <b>손으로 추매하지 않는다</b>. 켜기 전이거나 알림이 '쓰지 않음 · 판단 못 함' 인 종목은 내가 <b>돼지 물량에</b> — 10:00 전 · 어제 매수 금액 이하 · 피뢰침 · 경고 종목은 안 함, 자동매도가 전량 새 평단 본전에 다시 건다.</div>
       <div class="d"><b>아침확인</b> : 09:15 뒤(어제 샀으면 10:10 뒤) 채팅에 "아침확인" — 어젯밤 · 오늘 아침 자동 회차(자동매도 포함)가 돌았는지 Claude 가 본다.</div></div>
 
     <div class="tr me"><div class="t">11:00<br>~14:30</div>
@@ -262,13 +262,14 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
 </section>
 
 <section>
-  <div class="sec-head"><h2>매매 규칙 — 복기 탭이 검사하는 것</h2><span class="muted">채점 1 + 계좌 규칙 4</span></div>
+  <div class="sec-head"><h2>매매 규칙 — 복기 탭이 검사하는 것</h2><span class="muted">채점 1 + 계좌 규칙 5</span></div>
   <div class="rules">
     <div class="rule score"><span class="id">채점</span><div><b>D 종가 매수 → D+1 10:00 봉까지 고가 +4% 이상인가</b><div class="muted">채점은 이 한 가지 — 하루 전체 고가와 예외 매매는 뺀다.</div></div></div>
     <div class="rule"><span class="id">U1</span><div><b>종베 합계 50% · 추매 포함 100% · 하루 최대 2종목</b><div class="muted">그날 산 종목 전부의 매수 ÷ 매수 직전 추정자산(= 예수금). 1종목이면 그 종목에 50% 까지. 추정자산은 자동으로 받는다.</div></div></div>
     <div class="rule"><span class="id">U2</span><div><b>추매는 D+1 10:00 전 주문 · 그 종목 종가 매수 금액 이하</b><div class="muted">주력은 종가 쪽이다.</div></div></div>
     <div class="rule"><span class="id">U3</span><div><b>피뢰침은 추매 없음</b><div class="muted">매도는 어종과 같다 — 목표 4%, 손절은 10시 안에.</div></div></div>
-    <div class="rule"><span class="id">U4</span><div><b>추매 뒤 매도 : 물타기 추매가 한 번이라도 있으면 전량 새 평단 본전</b><div class="muted">물타기 = 추매 체결가가 어제 매수 평균(저녁 체결 포함)보다 낮은 것. 불타기만이면 +4%. 10:00 에 못 판 것은 시장가 그대로. 자동매도가 이대로 다시 건다.</div></div></div>
+    <div class="rule"><span class="id">U4</span><div><b>추매 뒤 매도 : 물타기 추매가 한 번이라도 있으면 전량 새 평단 본전</b><div class="muted">물타기 = 추매 체결가가 어제 매수 평균(저녁 체결 포함)보다 낮은 것. 불타기만이면 +4%. 10:00 에 못 판 것은 시장가 그대로. 손으로 추매한 종목에 쓴다.</div></div></div>
+    <div class="rule"><span class="id">U5</span><div><b>F존 자동(켠 뒤) : 3라인 추매 · 4라인 아래 손절 · 추매 뒤 +4%</b><div class="muted">산 값이 3라인보다 높은 종목만. 통합 1분봉 F존의 3라인 = 고가라인 −8% · 4라인 −10%, 산 뒤로 따라 올라간다. 추매는 어제 산 수량만큼, 매도는 추매 기준가 +4%.</div></div></div>
   </div>
 </section>
 
