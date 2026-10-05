@@ -246,6 +246,7 @@ details.more .card strong{font-size:14.5px}
 .bar i.p{bottom:50%;background:var(--up)}.bar i.n{top:50%;background:var(--down)}
 .flag{font-size:10.5px;padding:1px 7px;border-radius:10px;background:var(--rose);color:var(--wine);margin-left:4px}
 .flag.warn{background:var(--warnBg);color:var(--warn)}
+.nl-flag{white-space:nowrap}   /* 10/6 `신규주칩` 캡처 정정 : 섹터 카드 종목 줄에서 이름이 길면 '신규 / 주' 로 표시 가운데가 갈라져 — 표시째 다음 줄로 (9/23 .iq-nm .flag 와 같은 방식) */
 .kmk{font-size:10.5px;color:var(--muted);margin-left:3px;font-weight:400}
 .iq-out{text-decoration:line-through;color:var(--muted)}   /* 9/17 사용자 결정 ① : 대금 35위 밖(강의 당일주도주 검색식 숫자, 대조표 C4)은 종목명만 취소선 + 회색. 오른쪽 숫자·선행은 그대로. 판정에 안 씀 */
 .iq-rk{font-size:10.5px;padding:1px 7px;border-radius:10px;background:var(--chip);color:var(--chipInk);margin:0 5px 0 7px;white-space:nowrap}   /* 9/17 조회순위 해답지 : 거래대금 순위 칩 (사용자 결정 ②) — 전역 .chip 과 이름 안 겹치게 iq- 접두사 */
@@ -713,6 +714,7 @@ function renderClose(d, dates) {
     if (r['JBT'] === 'Y') chips.appendChild(el('span', 'chip warn', 'JBT'));
     if (r['연속양봉부담'] === 'Y') chips.appendChild(el('span', 'chip warn', '연속양봉 부담'));
     if (isPref(r['대장코드'])) chips.appendChild(el('span', 'chip warn', '대장 우선주 · 안 함'));   // 9/15 저녁 사용자 결정, 표시만
+    const nl1 = newDays(d, r['대장코드']); if (nl1 !== null) chips.appendChild(el('span', 'chip warn', `대장 신규주(상장 ${nl1}일) · 안 함`));   // 10/6 신규주칩 (9/29 사용자 결정), 표시만
     if (has(r['겹침'])) chips.appendChild(el('span', 'chip', `겹침 ${r['겹침']}`));
     if (has(r['대장시장순위'])) chips.appendChild(el('span', 'chip', r['대장시장순위'] === '100위밖' ? '대장 대금 100위 밖' : `대장 대금 ${r['대장시장순위']}위`));   // 종목 행에 두면 폰 너비에서 줄이 넘친다
     const vr = o.vol === false ? null : volRatioOf(d, r['대장코드']); if (vr) chips.appendChild(volChip(vr, '대장 대금 '));   // 8-0★ E 거래대금배수 (JSON v7) — 숫자만, 기준 없음
@@ -731,6 +733,7 @@ function renderClose(d, dates) {
       if (has(s['트랙'])) add(nm, el('span', 'trk', s['트랙']));
       if (iMap && has(iMap[String(s['종목코드'])])) add(nm, el('span', 'flag', '조회 ' + iMap[String(s['종목코드'])] + '위'));
       if (isPref(s['종목코드'])) add(nm, el('span', 'flag warn', '우선주'));
+      if (newDays(d, s['종목코드']) !== null) add(nm, el('span', 'flag warn nl-flag', '신규주'));   // 10/6 신규주칩
       add(nm, kMark(d, s['종목코드']));   // 9/15 저녁 (k) = KRX 전용
       const rt = el('span'); add(rt, el('span', null, (s['누적억'] || '—') + '억 '), pctEl(s['등락률']));
       const res = resMap[r['섹터명'] + '|' + s['종목명']];
@@ -824,6 +827,7 @@ function renderClose(d, dates) {
     add(chips, el('span', 'chip', '고가 ' + signPct(p['오늘고가%'])), el('span', 'chip', '고가 대비 ' + signPct(p['고가대비%'])), el('span', 'chip', eokText(p['거래대금억'])));
     const sh = sharesPer1eok(p['현재가']); if (sh !== null) chips.appendChild(el('span', 'chip', `1억 = 약 ${sh.toLocaleString()}주`));   // 8-3 ⑧
     if (isPref(p['코드'])) chips.appendChild(el('span', 'chip warn', '우선주 · 안 함'));   // 9/15 저녁
+    const nlP = newDays(d, p['코드']); if (nlP !== null) chips.appendChild(el('span', 'chip warn', `신규주(상장 ${nlP}일) · 안 함`));   // 10/6 신규주칩
     const pvr = volRatioOf(d, p['코드']); if (pvr) chips.appendChild(volChip(pvr, '대금 '));   // 8-0★ E
     add(card, chips);
     const facts = [];
@@ -965,6 +969,17 @@ function renderClose(d, dates) {
 // ---- 우선주 표시 (9/15 저녁, 사용자 결정 : 우선주는 매매하지 않는다) ----
 //   KRX 종목코드 끝자리 0 = 보통주, 그 밖 = 우선주(5·7·9 등). 표시만 — 판정은 거르지 않는다(검색식 제외 설정 거래정지·정리매매·ETF·ETN 에도 우선주는 없음, 인계문서 3-2). 임계값 없음.
 function isPref(code) { const s = String(code || '').trim(); return /^\d{6}$/.test(s) && !s.endsWith('0'); }
+
+// ---- 신규주 표시 (10/6 `신규주칩`, 로드맵 7-77 — 사용자 결정 9/29 : 신규주 = 상장 30일(달력일) 이내는 매수 기준 밖, 관문6 안 봄) ----
+//   JSON 의 newListing(pages-export v3.2 — 이 JSON 날짜 − 상장일(종목마스터 regDay) 이 0~30일인 코드 : 일수, 상장 당일 0)에 있으면 우선주 표시 바로 뒤에 같은 주황.
+//   30일은 사용자 숫자(gate6 README) — 강의 기준 아님, 고르기는 pages-export 가 한다(여기서 다시 계산 안 함). 표시만 — 판정 · 채점 · 관문 무관.
+//   상장일을 모르는 종목(마스터에 없음 · 'NM:' 이름 코드 · regDay 못 읽음)은 목록에 없어 표시 없음 — (k) 와 같은 원칙. 옛 JSON 은 newListing 이 없어 아무 데도 안 붙는다.
+//   오후확인 3번이 gate6 reason '신규주(상장 n일)' 를 적을 때 이 n 을 그대로 쓴다. 반환 = 일수 또는 null
+function newDays(d, code) {
+  const s = String(code || '').trim(); if (!d || !/^[0-9A-Z]{6}$/.test(s)) return null;
+  const m = d.newListing; if (!m || typeof m !== 'object' || !Object.prototype.hasOwnProperty.call(m, s)) return null;
+  const n = m[s]; return Number.isInteger(n) && n >= 0 ? n : null;
+}
 
 // ---- (k) KRX 전용 표시 (9/15 저녁, 사용자 결정) ----
 //   JSON v8 의 krxOnly(종목마스터 nxtEnable = N 인 코드 목록)에 있으면 종목명 옆 (k). NXT 거래 불가 → 다음날 매도는 09:00 부터.
@@ -1463,6 +1478,7 @@ function renderLive(d) {
       names.forEach(nm => {
         const tr = el('tr'); const tdn = el('td', 'nm', nm);
         const cd = tms.map(tt => (sb[tt][nm] || {})['종목코드']).find(Boolean); if (isPref(cd)) tdn.appendChild(el('span', 'flag warn', '우선주'));   // 9/15 저녁
+        if (newDays(d, cd) !== null) tdn.appendChild(el('span', 'flag warn', '신규주'));   // 10/6 신규주칩
         add(tdn, kMark(d, cd));   // (k) 9/15 저녁
         tr.appendChild(tdn);
         tms.forEach((tt, ti) => {
@@ -2284,7 +2300,7 @@ const HELP_SEC = {
     ['가속 · 감속 · 양수 n/m', '마지막 회차 모멘텀의 부호와, 기록된 회차 중 양수였던 횟수. 판정은 15:20 한 구간 값만 쓴다 — 하루 흐름은 판정에 안 들어간다.'],
     ['카드 2장 13시', '같은 회차 티마에 같은 이름 카드가 두 장 있었다(섹터 금액 큰 쪽을 씀).'],
     ['괴리', '거래대금 1위와 등락률 1위가 다른 종목. 대장은 거래대금 1위(D2 실질적 대장)이고, 사람이 차트로 확인한다(관문4).'],
-    ['▾ 종목 순위 보기', '섹터를 누르면 회차별 카드 안 누적 거래대금 순위표. 빨간 칸 = 1위 · ₩ = 그 구간 돈이 가장 많이 들어온 종목 · — = 카드 4종목에 없음. "대장 변천" = 1위가 바뀐 흐름(D3 1·2등 체인지 유의). 우선주(주황) = 매매하지 않는 종목(사용자 결정 9/15), 표시만. (k) = KRX 전용(NXT 불가) — 다음날 매도 09:00 부터, 없으면 NXT 도 되는 종목이라 08:00 부터. 머리글은 이름 칸 때문에 좁아서 같은 시가 이어지면 분 위첨자만(15 ²⁰ ⁴⁰ = 15:00·15:20·15:40).'],
+    ['▾ 종목 순위 보기', '섹터를 누르면 회차별 카드 안 누적 거래대금 순위표. 빨간 칸 = 1위 · ₩ = 그 구간 돈이 가장 많이 들어온 종목 · — = 카드 4종목에 없음. "대장 변천" = 1위가 바뀐 흐름(D3 1·2등 체인지 유의). 우선주(주황) = 매매하지 않는 종목(사용자 결정 9/15), 표시만. 신규주(주황) = 상장 30일(달력일) 이내 — 매수 기준 밖(사용자 결정 9/29), 표시만. (k) = KRX 전용(NXT 불가) — 다음날 매도 09:00 부터, 없으면 NXT 도 되는 종목이라 08:00 부터. 머리글은 이름 칸 때문에 좁아서 같은 시가 이어지면 분 위첨자만(15 ²⁰ ⁴⁰ = 15:00·15:20·15:40).'],
     ['15:20 에 없는 카드', '마지막 회차 카드에서 사라진 섹터. 테마 종료 · 이름 바뀜 · OCR 오독 중 하나.'],
     ['점선 (16:00 앞) · 머리글 15²⁰', '점선 오른쪽 = KRX 애프터마켓(16:00~20:00, 9/14 개설) 회차. 열 머리글은 시 + 작은 위첨자 분 — 정각은 시만(10 · 18), 나머지는 15²⁰ · 15⁴⁰ · 19⁵⁰ · 20⁰²(= 15:20 …). 15:20 을 그대로 쓰면 옆 칸과 겹쳐서(9/16 밤, 사용자 결정). 15:40 은 장후 시간외 종가라 점선 왼쪽. 같은 계산(통합 스냅 금액 · 통합 상위100 분모 — 9/17 부터)이지만 판정은 15:20 한 구간뿐 — 저녁 흐름은 관찰만(사용자 결정 9/15).']],
   'live.inq': [
@@ -2316,6 +2332,7 @@ const HELP_SEC = {
     ['1억 = 약 n주', '대장 현재가로 1억 원이 몇 주인지 — 호가 한 칸 유동성 확인용(C10).'],
     ['주황 칩', '후보를 막지 않는 주의. 비중 = 신고가가 아니라 비중 축소 · JBT = 그냥 사는 매매 유형 · 연속양봉 부담 = 4강 Tip.'],
     ['우선주 (주황)', '종목코드 끝자리가 0 이 아닌 종목. 사용자 결정(9/15) : 우선주는 매매하지 않는다. 판정은 거르지 않고 표시만 — 검색식 제외(거래정지 · 정리매매 · ETF · ETN)에도 우선주는 없다.'],
+    ['신규주 (주황)', '상장 30일(달력일) 이내 종목 — 괄호 안 = 이 날짜에 상장 며칠째(상장 당일 0), 상장일은 종목마스터(키움 regDay). 사용자 결정(9/29) : 신규주는 매수 기준 밖이라 관문6 을 보지 않는다. 판정은 거르지 않고 표시만 — 30일은 사용자 숫자(강의 기준 아님). 상장일을 모르는 종목(마스터에 없음)은 표시 없음.'],
     ['(k)', 'KRX 전용 종목(NXT 거래 불가). 다음날 매도는 09:00 부터. 표시가 없으면 NXT 도 되는 종목 — 08:00 프리마켓부터 봐야 한다(사용자 결정 9/15). 종목마스터(주 1회 갱신)에 없는 종목은 표시 없음. 판정 · 채점 무관.'],
     ['대장 · 2등 · 3등 · 4등', '티마 카드 4종목. 대장(빨강 굵게) = 거래대금 1위(관문4). 누적 거래대금(억) · 등락률, 조회 n위 = 그 판정 시각(확정 15:20 · 잠정 14:50 · 15:00) 회차의 키움 실시간 조회순위, 20위 안만.'],
     ['10시 고가 ✓ ✕ · 저가 · D+1 종가 (종목 줄 아래)', '다음 거래일 결과 — 종목 줄 아래 둘째 줄. 10시 고가(D 종가 대비, 10:00 봉까지)와 ✓ = +4% 도달 · ✕ = 미달, 10시 저가(D 종가 대비, 10:00 봉까지 최저 — 그때까지 견뎌야 했던 눌림. 기준값 없음, 기록만)는 D+1 10:07 뒤, D+1 종가(D 종가 대비)는 20:05 뒤 채워진다. 채점은 D 종가 매수 → D+1 10:00 까지 한 가지(S1 · S9) — ✓ ✕ 가 그 채점. 저가는 채점에 안 쓴다.'],
