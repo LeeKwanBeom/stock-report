@@ -1596,7 +1596,8 @@ function renderLive(d) {
      collector v1.4 → pages-export v3.3 inq3Flow) 중 15:20 이하 마지막 회차(15:02 화면이면 15:00, 저녁 화면이면 15:20)에 세 표 모두 20위 안인 종목만, 당일누적 순위 순.
      섹터 이름표 = 해답지 iqSec 규칙(같은 회차 티마 카드, 두 카드면 '·', 없으면 안 붙임). n/m = 09:00 뒤 그 회차까지 inq3 파일이 있는 회차 m 중 세 표 모두 든 회차 n.
      사용자 매수 습관(세 간격 · 14위)이지 강의 기준이 아니다(D7 은 30초 간격) — 순위만, 기준선 · 색 · 칩 없음(새 숫자 0). 관문6 을 돕는 표시, 판정 · 채점 무관.
-     빈 행(코드 빈칸) = 그 간격 수집 실패 자리표시. 세 간격 수집 첫날(IQ3_FROM) 전 날짜는 '수집 전' 한 줄, 그 뒤인데 회차가 하나도 없으면 카드를 안 그린다 */
+     빈 행(코드 빈칸) = 자리표시 : 종목명 '(0종목)' 은 응답은 정상인데 코드 있는 항목 0(실패 아님 → 겹침 없음), 그 밖('(수집 실패)' 등)은 그 간격 수집 실패.
+     세 간격 수집 첫날(IQ3_FROM) 전 날짜는 '수집 전' 한 줄, 그 뒤인데 회차가 하나도 없으면 카드를 안 그린다 */
   const IQ3_FROM = '20261007';
   const IQ3_GAPS = ['당일누적', '1시간', '10분'];
   const iq3 = arr(d.inq3Flow).filter(r => String(r['시각']) <= '1520');
@@ -1607,18 +1608,20 @@ function renderLive(d) {
     if (!iq3At) add(c2, el('div', 'empty', '이날은 세 간격 수집 전 (지난 기록은 1분 간격뿐)'));
     else {
       const iq3By = {};   // 시각 → 간격 → 코드 → 행 (빈 행은 안 넣는다)
+      const iq3Zero = {};   // 시각 → 간격 → true : '(0종목)' 자리표시 — 받았는데 코드 있는 항목 0
       iq3.forEach(r => {
-        const c = String(r['코드'] || '').trim(); if (!c) return;
+        const c = String(r['코드'] || '').trim();
         const t = String(r['시각']), g = String(r['간격']);
+        if (!c) { if (String(r['종목명']) === '(0종목)') (iq3Zero[t] = iq3Zero[t] || {})[g] = true; return; }
         const m = (iq3By[t] = iq3By[t] || {}); (m[g] = m[g] || {})[c] = r;
       });
       const cur = iq3By[iq3At] || {};
-      const miss = IQ3_GAPS.filter(g => !cur[g]);
+      const miss = IQ3_GAPS.filter(g => !cur[g] && !(iq3Zero[iq3At] && iq3Zero[iq3At][g]));
       if (miss.length) add(c2, el('div', 'empty', `이 회차 ${miss.join(' · ')} 간격 수집 실패`));
       else {
         const in3 = (t, c) => IQ3_GAPS.every(g => iq3By[t] && iq3By[t][g] && iq3By[t][g][c]);
         const rk3 = (c, g) => cur[g][c]['조회순위'];
-        const codes = Object.keys(cur['당일누적']).filter(c => in3(iq3At, c)).sort((a, b) => (num(rk3(a, '당일누적')) ?? 99) - (num(rk3(b, '당일누적')) ?? 99));
+        const codes = Object.keys(cur['당일누적'] || {}).filter(c => in3(iq3At, c)).sort((a, b) => (num(rk3(a, '당일누적')) ?? 99) - (num(rk3(b, '당일누적')) ?? 99));
         if (!codes.length) add(c2, el('div', 'empty', '세 표에 모두 든 종목 없음'));
         else {
           const iq3Sec = {};   // 해답지 iqSec 와 같은 규칙, 회차만 이 카드의 회차
