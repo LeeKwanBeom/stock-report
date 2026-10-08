@@ -509,8 +509,8 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
   <div class="wrap">
     <div class="tabs">
       <button data-tab="live">장중</button>
-      <button data-tab="close" class="on">마감</button>
       <button data-tab="series">시계열</button>
+      <button data-tab="close" class="on">마감</button>
       <button data-tab="verify">검증</button>
       <button data-tab="review">복기</button>
     </div>
@@ -2667,7 +2667,7 @@ const HERO_TABS = HERO_EL.querySelector('.tabs');
 const STICK = document.getElementById('stick');
 STICK.firstElementChild.appendChild(HERO_TABS.cloneNode(true));
 
-const TAB_ORDER = ['live', 'close', 'series', 'verify', 'review'];
+const TAB_ORDER = ['live', 'series', 'close', 'verify', 'review'];
 // how : 'stick' = 고정 막대에서 누름 / 'swipe' = 좌우로 밈 — 둘 다 새 탭의 처음이 막대 바로 아래에 오게
 function switchTab(tab, how) {
   CUR = tab;
