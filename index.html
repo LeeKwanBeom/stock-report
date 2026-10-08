@@ -508,14 +508,14 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 <header class="hero">
   <div class="wrap">
     <div class="tabs">
-      <button data-tab="live">장중</button>
+      <button data-tab="live" class="on">장중</button>
       <button data-tab="series">시계열</button>
-      <button data-tab="close" class="on">마감</button>
+      <button data-tab="close">마감</button>
       <button data-tab="verify">검증</button>
       <button data-tab="review">복기</button>
     </div>
-    <div class="hrow"><h1 id="heroTitle">마감</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button><button class="thm-btn" id="themeBtn" type="button"><span class="thm-dk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/></svg>다크</span><span class="thm-lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>밝게</span></button></div>
-    <div class="hsrow"><div class="hsub" id="heroSub">15:20 KRX 기준 · NXT 제외</div><div class="rm-links"><a class="rm-link" href="roadmap.html">로드맵 ↗</a> · <a class="rm-link" href="manual.html">설명서 ↗</a></div></div>
+    <div class="hrow"><h1 id="heroTitle">장중</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button><button class="thm-btn" id="themeBtn" type="button"><span class="thm-dk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/></svg>다크</span><span class="thm-lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>밝게</span></button></div>
+    <div class="hsrow"><div class="hsub" id="heroSub">매시 07분 갱신 · 저녁 20:12 까지</div><div class="rm-links"><a class="rm-link" href="roadmap.html">로드맵 ↗</a> · <a class="rm-link" href="manual.html">설명서 ↗</a></div></div>
     <div class="hq" id="heroQ" hidden>손실이 났을 때 — <b>기준이 틀렸나, 내가 안 지켰나</b></div>
   </div>
 </header>
@@ -523,8 +523,8 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 <div class="wrap">
   <div id="help" class="help" hidden></div>
   <div class="datebar" id="datebar" hidden></div>
-  <section id="live" hidden><div class="empty">장중 페이지는 다음 단계에서 만듭니다</div></section>
-  <section id="close"><div class="empty">불러오는 중</div></section>
+  <section id="live"><div class="empty">불러오는 중</div></section>
+  <section id="close" hidden><div class="empty">불러오는 중</div></section>
   <section id="series" hidden><div class="empty">불러오는 중</div></section>
   <section id="verify" hidden><div class="empty">불러오는 중</div></section>
   <section id="review" hidden><div class="empty">불러오는 중</div></section>
@@ -2616,7 +2616,7 @@ applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dar
 //   rcDays · renderVerify 의 alFrom 기본값도 이 값(verify.json 은 날짜 줄보다 늦게 와서 그 alFrom 을 기다리지 않는다)
 const AL_FROM = '20260917';
 let DATES = [];
-let CUR = 'close';
+let CUR = 'live';   // 10/8 사용자 요청 : 처음 열면 언제나 장중 탭 (옛 8-3 ① '판정 전이면 장중, 판정 뒤엔 마감' 을 대신함)
 const HERO = { live: ['장중', '매시 07분 갱신 · 저녁 20:12 까지'], close: ['마감', '15:20 KRX 기준 · NXT 제외'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], verify: ['검증', '표본 0 / 30 · 통합 자 9/17 부터'], review: ['복기', ''] };
 // 9/16 합산전환 : JSON v10 amtBasis '통합'(9/17 부터, 거래대금 = KRX+NXT 통합 · 가격 = KRX) / 'KRX'(9/16 까지). 마감 탭 부제만 이 값으로 (사용자 승인 문구)
 let AMT_BASIS = 'KRX';
@@ -2656,11 +2656,8 @@ async function loadDate(ymd, dates) {
   IX_D = d; pollIndexLive(true);   /* 9/17 지수5분 : 5분 회차 파일이 더 새 것이면 지수 그림만 바꾼다 (기다리지 않는다) */
   try { renderSeries(d); } catch (e) { add(document.getElementById('series'), el('div', 'empty', '시계열 화면 오류 : ' + e.message)); }
   renderDatebar(String(d.date || ''));
-  setHero(CUR);
-  // 8-3 ① : 처음 열었을 때 최근 자료가 판정 전(장중) 이면 장중 탭부터. 그 뒤 탭 이동은 사용자 몫 (5분 뒤 다시 불러와도 안 바꿈)
-  if (!FIRST_SHOWN) { FIRST_SHOWN = true; if (d.stage === 'live' && !ymd) switchTab('live', null); }
+  setHero(CUR);   // 처음 탭은 CUR 기본값(장중) 하나로 — 자료를 다시 불러와도 탭은 안 바꾼다(탭 이동은 사용자 몫)
 }
-let FIRST_SHOWN = false;
 
 const HERO_EL = document.querySelector('.hero');
 const HERO_TABS = HERO_EL.querySelector('.tabs');
