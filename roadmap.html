@@ -177,7 +177,7 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
     <p>개발은 거의 끝났고, 지금은 후보 표본 30개와 무결성 오류 0 이 2주 연속 쌓이기를 기다리는 단계다. 9/17 부터 거래대금을 KRX+NXT 통합 자로 재며 표본을 0 부터 다시 센다.</p>
   </div>
   <div class="stamp">
-    <div class="num">마지막 갱신 2026-10-08 20:48</div>
+    <div class="num">마지막 갱신 2026-10-08 22:48</div>
     <div class="big">6<small>/ 9 단계</small></div>
     <div class="muted">표본 축적 · 연습 2종목 · 종베 합계 50%</div>
   </div>
@@ -186,8 +186,8 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
 <div class="kpis">
   <div class="kpi"><span class="l">개발 작업 진행</span><span class="v">85~90<span style="font-size:14px">%</span></span><span class="s">남은 세션 약 16~18</span></div>
   <div class="kpi now"><span class="l">검증 진행 (달력 축)</span><span class="v">약 43<span style="font-size:14px">%</span></span><span class="s">표본 16/30 · 무결성 16/10</span></div>
-  <div class="kpi"><span class="l">조건 없이 지금 할 수 있는 일</span><span class="v">1<span style="font-size:14px">건</span></span><span class="s">저녁재주문 ③ 구현</span></div>
-  <div class="kpi"><span class="l">다음 세션</span><span class="v" style="font-size:20px">저녁재주문 ③</span><span class="s">지금 가능 · 10/12 아침확인</span></div>
+  <div class="kpi"><span class="l">조건 없이 지금 할 수 있는 일</span><span class="v">2<span style="font-size:14px">건</span></span><span class="s">캡처순서되돌림 · 저녁재주문 ③</span></div>
+  <div class="kpi"><span class="l">다음 세션</span><span class="v" style="font-size:20px">캡처순서되돌림</span><span class="s">지금 가능 · 10/12 07:00 전</span></div>
 </div>
 
 <section>
@@ -257,8 +257,9 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
 </section>
 
 <section>
-  <div class="sec-head"><h2>남은 일</h2><span class="muted">세션 111건 · 완료 106 · 대기 5 · 조건 없는 항목 1</span></div>
+  <div class="sec-head"><h2>남은 일</h2><span class="muted">세션 113건 · 완료 107 · 대기 6 · 조건 없는 항목 2</span></div>
   <div class="wait">
+    <div class="wrow"><span class="id">7-106</span><span>캡처순서되돌림 — tima-shot 이 창 순서를 되돌릴 때 최소화된 앞 창 아래로 티마를 묻는 버그 · tima-note 방식 옮기기</span><span class="cond">지금 해도 됨</span></div>
     <div class="wrow"><span class="id">7-103</span><span>저녁재주문 — 저녁 16:00 뒤 매수 체결 시 새 평단 +4% 다시 걸기 · ①② ✅(설계안 B) → ③ 구현 새 세션</span><span class="cond">지금 해도 됨</span></div>
     <div class="wrow"><span class="id">7-90</span><span>CLAUDE정리 — CLAUDE.md 줄이기(판단 기준 · 제약만 남기고 이력은 md 로) · ①~④ ✅(막음 0) · ⑥ 병합 ✅ → 1주 써 보기</span><span class="cond">10/13 뒤</span></div>
     <div class="wrow"><span class="id">7-86</span><span>F존자동추매손절 — 10/2 첫 실사용 ✅(추매 체결 0 · 손절 0) · 켠 그대로 — 추매 체결 · 손절 · 프리마켓은 아직 실물 없음</span><span class="cond">그 일이 생기는 날</span></div>
@@ -267,7 +268,7 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
     <div class="wrow"><span class="id">6</span><span>매수 시각별 D+1 10시 비교 (4가격 · evening_price · snap_al)</span><span class="cond">표본 뒤</span></div>
         <div class="wrow"><span class="id">10</span><span>월 1회 점검 43항목 (인계문서 8-5)</span><span class="cond">표본 30</span></div>
   </div>
-  <div class="muted" style="margin-top:6px">완료 106</div>
+  <div class="muted" style="margin-top:6px">완료 107</div>
   <div class="done-cloud">
     <span class="chip">코드감사 close-judge v2.3 <span class="num">9/15</span></span>
     <span class="chip">KRX·합산 병행 기록 <span class="num">9/15</span></span>
@@ -379,14 +380,15 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
     <span class="chip">세표빈별 ☆ <span class="num">10/8</span></span>
     <span class="chip">첫 탭 장중 <span class="num">10/8</span></span>
     <span class="chip">7-104 캡처 켜진 탭 확인 <span class="num">10/8</span></span>
+    <span class="chip">7-105 노트창 덮임 확인 <span class="num">10/8</span></span>
   </div>
 </section>
 
 <section class="next">
   <div class="sec-head"><h2>다음 세션과 반복 잡무</h2></div>
   <div class="flow">
-    <span class="p first">저녁재주문 ③ 구현(지금 가능)</span>
-    <span class="pair"><span class="arr">→</span><span class="p second">10/12 아침확인 · 오후확인</span></span>
+    <span class="p first">캡처순서되돌림(지금 가능)</span>
+    <span class="pair"><span class="arr">→</span><span class="p second">저녁재주문 ③ · 10/12 아침확인</span></span>
     <span class="pair"><span class="arr">→</span><span class="p">7-90 1주 써 보기 10/7~10/13</span></span>
   </div>
   <div class="muted">그날 확인할 항목은 인계문서 '다음 세션' — 확인 스킬이 읽는다</div>
