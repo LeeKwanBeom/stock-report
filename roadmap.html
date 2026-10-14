@@ -185,9 +185,9 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
 
 <div class="kpis">
   <div class="kpi"><span class="l">개발 작업 진행</span><span class="v">85~90<span style="font-size:14px">%</span></span><span class="s">남은 세션 약 18~20</span></div>
-  <div class="kpi now"><span class="l">검증 진행 (달력 축)</span><span class="v">약 43<span style="font-size:14px">%</span></span><span class="s">표본 16/30 · 무결성 18/10</span></div>
-  <div class="kpi"><span class="l">조건 없이 지금 할 수 있는 일</span><span class="v">1<span style="font-size:14px">건</span></span><span class="s">7-110 F존상태없음</span></div>
-  <div class="kpi"><span class="l">다음 세션</span><span class="v" style="font-size:20px">10/14 오후확인</span><span class="s">경고칩 첫 실사용 · 7-110</span></div>
+  <div class="kpi now"><span class="l">검증 진행 (달력 축)</span><span class="v">약 43<span style="font-size:14px">%</span></span><span class="s">표본 16/30 · 무결성 0/10</span></div>
+  <div class="kpi"><span class="l">조건 없이 지금 할 수 있는 일</span><span class="v">2<span style="font-size:14px">건</span></span><span class="s">7-110 · 7-111 금액주표시</span></div>
+  <div class="kpi"><span class="l">다음 세션</span><span class="v" style="font-size:20px">7-111 ① 설계</span><span class="s">10/15 아침확인 · 7-110</span></div>
 </div>
 
 <section>
@@ -225,27 +225,27 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
       <div><h3>후보 표본</h3><div class="muted">섹터 1개 = 1 · 9/17 부터 통합 자로 다시 셈</div></div>
     </div>
     <div class="g">
-      <svg viewBox="0 0 104 104" role="img" aria-label="무결성 오류 0 연속 18 / 10 거래일">
+      <svg viewBox="0 0 104 104" role="img" aria-label="무결성 오류 0 연속 0 / 10 거래일">
         <circle class="ring-bg" cx="52" cy="52" r="44"/>
-        <circle class="ring" cx="52" cy="52" r="44" stroke-dasharray="276.5" stroke-dashoffset="276.5" data-pct="100"/>
-        <text class="c" x="52" y="50" text-anchor="middle">18</text>
+        <circle class="ring" cx="52" cy="52" r="44" stroke-dasharray="276.5" stroke-dashoffset="276.5" data-pct="0"/>
+        <text class="c" x="52" y="50" text-anchor="middle">0</text>
         <text class="cs" x="52" y="66" text-anchor="middle">/ 10 거래일</text>
       </svg>
-      <div><h3>무결성 오류 0 연속</h3><div class="muted">9/14 부터 · 목표 2주 · 오후확인이 매일 셈, 예외는 사람 판단</div></div>
+      <div><h3>무결성 오류 0 연속</h3><div class="muted">10/14 끊김 → 10/15 부터 다시 · 목표 2주 · 예외는 사람 판단</div></div>
     </div>
     <div class="g">
-      <svg viewBox="0 0 104 104" role="img" aria-label="판정일 누적 15 / 약 40~60 거래일, KRX 자 5일 참고">
+      <svg viewBox="0 0 104 104" role="img" aria-label="판정일 누적 16 / 약 40~60 거래일, KRX 자 5일 참고">
         <circle class="ring-bg" cx="52" cy="52" r="44"/>
         <circle class="ring-ref" cx="52" cy="52" r="44" stroke-dasharray="27.6 248.9" transform="rotate(-90 52 52)"/>
-        <circle class="ring" cx="52" cy="52" r="44" stroke-dasharray="276.5" stroke-dashoffset="276.5" data-pct="30"/>
-        <text class="c" x="52" y="50" text-anchor="middle">15</text>
+        <circle class="ring" cx="52" cy="52" r="44" stroke-dasharray="276.5" stroke-dashoffset="276.5" data-pct="32"/>
+        <text class="c" x="52" y="50" text-anchor="middle">16</text>
         <text class="cs" x="52" y="66" text-anchor="middle">/ 약 50</text>
       </svg>
       <div><h3>판정일 누적</h3><div class="muted">통합 자, 9/17 부터 · 목표 약 40~60 거래일 · 점선은 KRX 자 5일(참고)</div></div>
     </div>
   </div>
   <div class="strip">
-    <div class="sec-head"><h3 style="font-family:var(--font-body);font-weight:500;font-size:14px">거래일 달력 띠 · 판정일 50칸</h3><span class="muted num">10/13 = 15일차</span></div>
+    <div class="sec-head"><h3 style="font-family:var(--font-body);font-weight:500;font-size:14px">거래일 달력 띠 · 판정일 50칸</h3><span class="muted num">10/14 = 16일차</span></div>
     <div class="row" id="strip"></div>
     <div class="legend">
       <span><i class="cell ref" style="display:inline-block"></i> KRX 자 참고 5일</span>
@@ -257,8 +257,9 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
 </section>
 
 <section>
-  <div class="sec-head"><h2>남은 일</h2><span class="muted">세션 117건 · 완료 112 · 대기 5 · 조건 없는 항목 1</span></div>
+  <div class="sec-head"><h2>남은 일</h2><span class="muted">세션 118건 · 완료 112 · 대기 6 · 조건 없는 항목 2</span></div>
   <div class="wait">
+    <div class="wrow"><span class="id">7-111</span><span>금액주표시 — 티마가 15:20 종목 금액을 '주' 로 보인 회차에 100위 밖 종목 금액을 키움 조회로 메우기 (10/14 자산주 대장 빈 카드)</span><span class="cond">없음</span></div>
     <div class="wrow"><span class="id">7-110</span><span>F존상태없음 — Sync 가 F존 상태 파일을 순간 '없음' 으로 읽어 F존 종목을 맡는 틈 막기 (10/14 08:34 · 피해 0)</span><span class="cond">없음</span></div>
     <div class="wrow"><span class="id">7-90</span><span>CLAUDE정리 — CLAUDE.md 줄이기(판단 기준 · 제약만 남기고 이력은 md 로) · ①~④ ✅(막음 0) · ⑥ 병합 ✅ → 1주 써 보기</span><span class="cond">10/13 뒤</span></div>
     <div class="wrow"><span class="id">7-86</span><span>F존자동추매손절 — 10/2 첫 실사용 ✅(추매 체결 0 · 손절 0) · 켠 그대로 — 추매 체결 · 손절 · 프리마켓은 아직 실물 없음</span><span class="cond">그 일이 생기는 날</span></div>
@@ -391,9 +392,9 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
 <section class="next">
   <div class="sec-head"><h2>다음 세션과 반복 잡무</h2></div>
   <div class="flow">
-    <span class="p first">10/14 아침확인</span>
-    <span class="pair"><span class="arr">→</span><span class="p second">10/14 오후확인 · 경고칩</span></span>
-    <span class="pair"><span class="arr">→</span><span class="p">7-110 F존상태없음</span></span>
+    <span class="p first">7-111 금액주표시 ① 설계</span>
+    <span class="pair"><span class="arr">→</span><span class="p second">7-110 F존상태없음</span></span>
+    <span class="pair"><span class="arr">→</span><span class="p">10/15 아침확인</span></span>
   </div>
   <div class="muted">그날 확인할 항목은 인계문서 '다음 세션' — 확인 스킬이 읽는다</div>
   <div class="chores">
@@ -429,8 +430,9 @@ section>.sec-head{border-bottom:1px solid var(--line);padding-bottom:8px}
   html+='<span class="cell fill" title="10/8 판정 완료"></span>';
   html+='<span class="cell fill" title="10/12 판정 완료"></span>';
   html+='<span class="cell fill" title="10/13 판정 완료"></span>';
-  html+='<span class="cell today" title="10/14 다음 판정일"></span>';
-  for(var j=16;j<50;j++)html+='<span class="cell"></span>';
+  html+='<span class="cell fill" title="10/14 판정 완료"></span>';
+  html+='<span class="cell today" title="10/15 다음 판정일"></span>';
+  for(var j=17;j<50;j++)html+='<span class="cell"></span>';
   strip.innerHTML=html;
   var rings=document.querySelectorAll('.g .ring');
   var C=276.5;
