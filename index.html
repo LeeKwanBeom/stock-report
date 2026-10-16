@@ -258,6 +258,7 @@ details.more .card strong{font-size:14.5px}
    ★ = '15위 안 n/m회차' 의 n = m (09:00 뒤 모든 회차 세 표 모두 15위 안), 윗줄 섹터 이름표 앞. 회차 수 하한 없음(새 숫자 0). 10/8 `세표빈별` : n = m − 1 (n ≥ 1) 은 같은 클래스로 ☆ */
 .wc-st{font-size:12px;color:var(--sub);margin:2px 0 6px}.wc-line{display:flex;flex-wrap:wrap;gap:4px;padding:3px 0 0 1em}.wc-on,.wc-calc,.wc-na{font-size:10.5px;padding:1px 7px;border-radius:10px;white-space:nowrap}.wc-on{background:var(--warnBg);color:var(--warn)}.wc-calc{border:1px dashed var(--warn);color:var(--warn);padding:0 6px}.wc-na{border:1px solid var(--sub);color:var(--sub);padding:0 6px}   /* 10/13 `경고칩` (사용자 결정 ② 6 — 추천대로) : 세 표 겹침 카드 종목의 셋째 줄(칩이 있는 종목만, 윗줄 · 아랫줄 그대로). ① 지정 = 채움(우선주 · 신규주 .flag.warn 과 같은 톤) · ② 요건 = 점선 테두리 · 모름(지정? · 요건?) = 실선 --sub.
    테두리 칩은 padding 을 1px 줄여 채운 칩과 높이가 같다. 머리 상태 줄 .wc-st 는 읽을 글이라 --sub(.status 의 --muted 는 흰 카드 명암 2.99:1). 다크는 변수만(새 다크 규칙 0). 전역 .chip · .flag · .status 와 이름 안 겹치게 wc- 접두사 */
+.hg-on,.hg-no,.hg-na{font-size:10.5px;padding:0 6px;border-radius:10px;white-space:nowrap}.hg-on{background:var(--rose);color:var(--wine);border:1px solid var(--roseLine)}.hg-no{border:1px dashed var(--sub);color:var(--sub)}.hg-na{border:1px solid var(--sub);color:var(--sub)}   /* 10/16 `호가1억칩` (사용자 결정 ③ — 추천대로) : 세 표 겹침 카드 셋째 줄 맨 앞. 통과 = 채움(복기 '지킴' .b-ok 와 같은 톤 — 경고칩 .wc-on 의 경고 색과 가른다) · 1억 없음 = 점선 회색 · 못 받음(호가?) = 실선 회색. 높이는 .wc-* 와 같게(테두리 1px + padding 0). 다크는 변수만 */
 .gapline{font-size:11px;color:var(--muted);margin-top:4px}
 .hint{font-size:11px;color:var(--wine);margin-top:6px}
 .secblk.tap{cursor:pointer}
@@ -1627,6 +1628,11 @@ function renderLive(d) {
   const WC_FROM = '20261014';   // 10/13 `경고칩` 첫 실사용일 = ⑥ 병합(10/13 저녁) 다음 거래일 — 그 전 날짜 카드엔 머리 줄 없음
   const WC_AT = ['1450', '1500', '1510', '1520'];   // collector v1.5 가 칩을 계산하는 회차 (고른 답 4)
   const IQ3_GAPS = ['당일누적', '1시간', '10분'];
+  /* 10/16 `호가1억칩` (사용자 결정 ③ 칩 — 375px 시안 그대로) : 셋째 줄(.wc-line) 맨 앞, 경고칩은 그 뒤. 값은 pages-export v3.6 이 inq3Card 행에 붙인 칸 셋
+     (호가상태 · 호가최대가 · 호가최대금액 — collector v1.7 hoga-chip, 통합 호가 매수 1~10칸 중 가장 큰 칸)과 inq3Card.호가(상태 있음/없음).
+     통과(가장 큰 칸 ≥ 1억) = 채운 칩 '1억 <가격>원 <n.nn>억' · 미달 = 점선 '1억 없음 · 최대 <n.nn>억' · 못 받음(행 상태가 ok 아님 · 칸 없음 · 호가.상태 '없음') = '호가?'.
+     키가 없으면(옛 JSON · 첫 수집일 10/19 전 날짜) 칩 없음 = 그 전과 같은 화면. 1억 = 대조표 C10 강의 숫자(새 숫자 0) — 표시만, 판정 · 채점에 안 쓴다 */
+  const HG_WON = 100000000;   // 매수 10칸 중 한 칸이라도 가격 × 잔량 ≥ 이 값이면 채운 칩
   const IQ3_N = 15;   // 10/7 `조회순위15위` : 'n/m회차' 의 n 을 세는 순위 (사용자 숫자, 카드 종목은 20위 그대로)
   const iq3 = arr(d.inq3Flow).filter(r => String(r['시각']) <= '1520');
   const iq3T = [...new Set(iq3.map(r => String(r['시각'])))].sort();
@@ -1637,6 +1643,7 @@ function renderLive(d) {
     else {
       const wcObj = d.inq3Card && String(d.inq3Card['시각']) === iq3At && d.inq3Card['경고칩'] ? d.inq3Card['경고칩'] : null;   // 10/13 `경고칩` — 옛 JSON 은 키 없음
       const wcHas = !!wcObj && wcObj['상태'] === '있음';
+      const hgObj = d.inq3Card && String(d.inq3Card['시각']) === iq3At && d.inq3Card['호가'] ? d.inq3Card['호가'] : null;   // 10/16 `호가1억칩` — 옛 JSON 은 키 없음 · '없음' 이면 모든 종목 '호가?'
       const wcMd = s => { s = String(s || ''); return s.length === 8 ? `${+s.slice(4, 6)}/${+s.slice(6)}` : '—'; };
       const wcSt = wcObj && WC_AT.includes(iq3At) && ymd >= WC_FROM ? el('div', 'wc-st', wcHas ? `경고칩 ${wcObj['계산시각'] || '—'} 계산 · 마스터 ${wcMd(wcObj['마스터'])}` : '경고칩 없음 — 이 회차 계산 안 됨') : null;
       const wcN = { na: 0, fail: 0, late: 0 };   // 보이는 종목 중 지정? · 요건?(실패) · 요건?(시간초과) 수 — 머리 줄 꼬리
@@ -1693,14 +1700,23 @@ function renderLive(d) {
             const seg = el('span', 'iq3-seg');   // 10/7 밤 `세표숫자별` : 글자(--sub)와 순위 숫자(굵게)를 span 으로 가른다 — 글자 내용은 그대로
             [['누적 ', '당일누적'], [' · 1시간 ', '1시간'], [' · 10분 ', '10분']].forEach(([lb, g]) => add(seg, el('span', 'iq3-lb', lb), el('span', 'iq3-v', rk3(c, g))));
             add(l2, seg, el('span', 'iq3-seg sub', `${IQ3_N}위 안 ${n15}/${iq3Up.length}회차`));
-            let wcL = null;   // 10/13 `경고칩` 셋째 줄 — 칩이 하나라도 있을 때만
+            let hgC = null;   // 10/16 `호가1억칩` : 셋째 줄 맨 앞 — inq3Card.호가 키가 없으면(옛 JSON · 첫 수집일 전 날짜) 안 그린다
+            if (hgObj) {
+              const hw = a ? num(a['호가최대금액']) : null, hp = a ? num(a['호가최대가']) : null;
+              if (hgObj['상태'] === '있음' && a && a['호가상태'] === 'ok' && hw !== null && hp !== null) {
+                let he = (hw / 1e8).toFixed(2);
+                if (hw < HG_WON && he === '1.00') he = '0.99';   // 0.996억이 '1억 없음 · 최대 1.00억' 으로 보이지 않게
+                hgC = hw >= HG_WON ? el('span', 'hg-on', `1억 ${hp.toLocaleString()}원 ${he}억`) : el('span', 'hg-no', `1억 없음 · 최대 ${he}억`);
+              } else hgC = el('span', 'hg-na', '호가?');
+            }
+            let wcL = hgC ? add(el('div', 'wc-line'), hgC) : null;   // 10/13 `경고칩` 셋째 줄 — 칩이 하나라도 있을 때만 (10/16 호가 칩 먼저)
             if (wcHas && a) {
               const ji = String(a['지정'] || '').split(' · ').filter(Boolean), yo = String(a['요건'] || '').split(' · ').filter(Boolean);
               const jiNa = a['지정상태'] === '불명', ys = String(a['요건상태'] || ''), yoNa = ys !== '' && ys !== 'ok' && !ys.startsWith('제외');
               if (jiNa) wcN.na++;
               if (yoNa) { if (ys === '시간초과') wcN.late++; else wcN.fail++; }
               if (ji.length || jiNa || yo.length || yoNa) {
-                wcL = el('div', 'wc-line');
+                if (!wcL) wcL = el('div', 'wc-line');
                 ji.forEach(t => add(wcL, el('span', 'wc-on', t)));
                 if (jiNa) add(wcL, el('span', 'wc-na', '지정?'));
                 yo.forEach(t => add(wcL, el('span', 'wc-calc', t)));
@@ -2447,6 +2463,10 @@ const HELP_SEC = {
     ['☆ (이름 앞)', '15위 안 n/m회차 에서 n = m − 1 — 딱 한 회차만 빠진 종목. 어느 회차가 빠졌는지는 적지 않는다(아랫줄 지금 순위로 본다). 09:05 화면(0/1)엔 안 붙고, 10:00 화면은 1/2 종목에 붙는다. 수집 실패한 회차가 하나 있는 날은 원래 ★ 종목이 ☆ 로 나온다(n/m 과 같은 뜻).'],
     ['수집 실패 · 수집 전', '그 회차에 한 간격이라도 못 받았으면 겹침을 세지 않고 못 받은 간격만 한 줄. 세 간격 수집은 10/7 부터라 그 전 날짜는 1분 간격(해답지)뿐 — 키움 조회에 날짜 칸이 없어 지난 날짜로는 만들 수 없다.'],
     ['▸ 1분 조회 20위 (해답지)', '전에 따로 있던 조회순위 해답지(1분 간격 20위 · 대금 순위 · 선행 · 35위 취소선)를 이 카드 밑에 접어 둔 것 — 누르면 펼쳐진다. 세 표에 안 든 종목(1분 표에서만 튄 종목)은 여기서 본다. 세 간격 기록이 없는 날은 펼친 채로 나온다.'],
+    ['[1억 8,600원 1.75억] 연분홍 칩 (셋째 줄 맨 앞)', '호가 한 칸 1억 통과 — 대조표 C10(강의 "1억을 세팅하라"). 그 회차 수집 끝에 받은 KRX+NXT 통합 호가의 매수 1~10호가 중 한 칸이라도 가격 × 잔량이 1억 이상이면 붙는다. 글자 = 가장 두꺼운 매수 칸의 가격과 그 칸 금액(억, 소수 둘째 자리). 이 카드에서 강의 숫자로 색을 가르는 것은 이 칩뿐이다.'],
+    ['[1억 없음 · 최대 0.37억] 점선 칩', '매수 10칸 모두 1억 미만 — 숫자는 가장 두꺼운 칸의 금액. C10 은 미달이면 그 종목은 사지 않는다는 기준이지만, 빼는 것은 사람(관문6)이 한다 — 화면이 종목을 지우지 않는다.'],
+    ['호가? (회색 칩)', '그 회차 호가를 못 받았다는 표시 — 1억이 없다는 뜻이 아니다(조회 실패 · 시간 초과 · 토큰 없음 · 그 회차 호가 파일 없음). 호가 칩은 10/19 부터라 그 전 날짜엔 아무 칩도 없다.'],
+    ['호가 칩은 순간 값', '09:05 ~ 15:20 수집 회차 끝에 한 번 받은 값이다(14:50 · 15:00 · 15:10 · 15:20 은 경고칩 계산이 끝난 뒤라 조금 늦다). 호가는 1초 뒤에도 바뀌고 걸었다 빼는 물량도 있어 사기 직전엔 HTS 호가창으로 다시 본다. 15:20 회차는 종가 동시호가 중의 잔량이다. 판정 · 채점에 안 쓴다.'],
     ['[단기과열] 채운 칩 (셋째 줄)', '오늘 이미 걸린 상태 — 07:30 종목마스터(키움 종목정보)의 값 그대로 : 단기과열 · 투자경고 · 투자위험 · 정리매매 · 투자주의 · 관리종목 · 거래정지 · 환기종목(투자주의환기종목). 지정 · 해제는 장 마친 뒤 공시라 아침 값을 쓴다. 키움 칸 하나가 관리종목 · 거래정지 · 환기종목이면 그 이름이 보이는 대신 투자주의는 가려질 수 있다.'],
     ['[단기과열 예고] 점선 칩', '오늘 이 가격으로 마감하면 요건에 닿는다 — 뉴하트 1강 HTS 수식(단기과열적출 · 단기과열발동 · 투자경고예고)을 글자 그대로 키움 일봉(KRX 단독)에 넣어 계산. 오늘 봉 = 그 회차(14:50 · 15:00 · 15:10 · 15:20) 진행 값이라 마감 값과 다를 수 있다. 지난 종가는 정규장 15:30 종가로 되돌려 쓰지만 고가 · 저가 · 거래대금은 애프터마켓 체결이 섞인 값이다. 영웅문 HTS 일봉 화살표는 애프터마켓까지 든 종가로 그려서 가끔 하루 갈린다(10/13 대조 10종목 25거래일 중 3일 — 동양고속 10/8 예고 · 코셈 9/28 · 9/29). 같은 종류가 이미 지정이면(단기과열 → 단기과열 예고 · 발동, 투자경고 · 투자위험 → 투자경고 예고) 안 보인다. 우선주 · 일봉이 56일 안 되는 신규주는 계산하지 않는다(칩 없음).'],
     ['지정? · 요건? (회색 칩)', '모른다는 표시 — 칩이 없는 것(해당 없음)과 다르다. 지정? = 종목마스터가 오늘 것이 아님(07:30 갱신 실패) · 투자주의 칸이 없는 마스터 · 이 종목 계산 기록 없음. 요건? = 일봉을 못 받음 · 오늘 봉 없음 · 종가 되돌리기 실패 · 토큰 없음 · 시간 초과(이유 수는 제목 밑 줄).'],
