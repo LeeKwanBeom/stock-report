@@ -490,6 +490,8 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .vf-tbl tr.vf-r1[data-key].on td:first-child::before{content:"▾";color:var(--wine)}
 .vf-tbl tr.vf-r1[data-key].on td:first-child{font-weight:800}
 .vf-selh{font-size:11.5px;font-weight:700;color:var(--sub);margin:0 2px 6px;word-break:keep-all}   /* 9/25 실전합침 : 먼저 닿은 창 꼬리로 길어져 두 줄 — 낱말 가운데서 안 꺾이게 */
+.uc-2{font-size:11px;color:var(--sub)}   /* 10/19 내조건기록 : 2등 표시 (대장은 이름 굵게 — 섹터이름표 문법) */
+.vf-row .uc-buy{padding:1px 7px}   /* 10/19 내조건기록 : 그날 실제로 산 종목 */
 /* ── 마감 탭 "최근 거래일" (9/19 사용자 결정 A안 + ✓✕ 보임) — 검증 탭과 같은 verify.json 자료, 후보 없는 날까지 한 줄씩. 줄을 누르면 그 날짜 마감 탭 ── */
 .rc-list{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 12px;margin-bottom:10px}
 .rc-row{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-top:1px solid var(--line2);font-size:12.5px;cursor:pointer}
@@ -2162,6 +2164,37 @@ function vfBlock(leads, real) {
   });
   paint(); add(blk, tw, lw); return blk;
 }
+/* 10/19 `내조건기록` (사용자 결정 "화면에도 넣는다") : 검증 탭 '내 조건 (기록)' — 사용자가 1주 연습에서 쓰는 매수 조건(세 표 겹침 · 티마 섹터 ·
+   대금 주식 35위 · 카드 안 1·2등, 초대형주 먼저 뺌)에 맞은 15:00 회차 후보와 그 D+1 결과. 자료 = verify.json user(pages-export — data\result_user.csv 칸을 옮기기만).
+   기록 · 채점 원본 아님 — 셈 · 평균 · 적중률 없음(해석은 표본 30 뒤 월 1회). ✓✕ · 실전 토막은 검증 표 목록과 같은 모양, 셋째 줄은 그 회차 조건 값 */
+function ucRow(r) {
+  const row = el('div', 'vf-row'); const l1 = el('div', 'l1'); const l2 = el('div', 'l2');
+  const lead = r['역할'] === '대장';
+  const nm = el('span', 'nm');
+  add(nm, has(r['섹터']) ? el('span', 'vf-sc', r['섹터'] + ' ') : null, el('span', lead ? 'vf-ld' : 'uc-nm', r['종목'] || ''), kMark(VF_K, r['종목코드']));
+  add(l1, nm, lead ? null : el('span', 'uc-2', '2등'), r['실제매수'] === 'Y' ? el('span', 'chip uc-buy', '산 것') : null);
+  if (has(r['목표4%_10시'])) {
+    const ok = r['목표4%_10시'] === 'Y';
+    add(l2, el('span', 'mk tenmark' + (ok ? ' ok' : ' x'), ok ? '✓' : '✕'), el('span', 'sub', '10시 고가 '), pctEl(r['D1_10시고가%']), el('span', 'sub', ' · 저가 '), pctEl(r['D1_10시저가%']));
+    const v = r['목표4%_실전'];
+    const rt = v === 'Y' ? [el('span', 'sub', '· 실전 '), el('span', 'tenmark ok', '✓'), el('span', 'sub', ' ' + (r['실전첫도달창'] || ''))]
+      : v === 'N' ? [el('span', 'sub', '· 실전 '), el('span', 'tenmark x', '✕')] : [el('span', 'sub', '· 실전 '), el('span', 'wait', '⏳')];
+    add(l2, add(el('span', 'vf-rt'), ...rt));
+  } else add(l2, el('span', 'mk wait', '⏳'), el('span', 'wait', '채점 대기'));
+  const ranks = [r['당일누적순위'], r['1시간순위'], r['10분순위']].map(x => String(x ?? '')).join('·');
+  const l3 = el('div', 'vf-tl', `세 표 ${ranks}위 · 대금 ${r['대금순위'] || '—'}위`);
+  const b = vfPosPct(r['고가거리120%']); if (b !== null) l3.appendChild(document.createTextNode(` · 120일 최고가 대비 ${b}`));
+  add(row, el('span', 'd', vfMd(r['일자'])), l1, l2, l3);
+  return row;
+}
+function ucBlock(rows) {
+  const blk = el('div', 'uc-blk');
+  add(blk, el('div', 'vf-selh', `${rows.length}건 · 최근 순`));
+  const lst = el('div', 'vf-list');
+  if (rows.length) rows.forEach(r => add(lst, ucRow(r)));
+  else add(lst, el('div', 'empty', '아직 기록이 없습니다 — 20:05 회차부터 쌓입니다'));
+  add(blk, lst); return blk;
+}
 /* ── 마감 탭 "최근 거래일" (9/19 `최근거래일` 세션, 사용자 결정 A안 + ✓✕ 보임 → 같은 날 오후 B안 : 위쪽 5줄) ─────────────────────
    마감 탭 위쪽(날짜 제목·상태 줄 아래, 관문1·후보 카드 앞)에 보는 날짜 둘레 RC_DAYS 거래일을(9/28 `최근거래일이동` 전에는 늘 최근 RC_DAYS) 후보 없는 날까지 한 줄씩 — "추세 먼저, 당일 상세는 그 다음". 자료는 검증 탭과 같은 verify.json(result_log 후보·대장 행) + dates.json(날짜 목록) — 새 수집·새 칸 없음.
    ✓ ✕ = 검증 탭과 같은 10시 채점(목표4%_10시), 채점 전 ⏳, 관망 칩. 줄을 누르면 그 날짜 마감 탭(날짜 줄 ◀▶ 와 같은 loadDate). 옛 alFrom 전(KRX 자) 흐린 줄은 9/25 뺌 — 최근 5거래일이 9/17 뒤라 이미 안 나오던 표시.
@@ -2235,6 +2268,10 @@ function renderVerify(vf) {
   const gh = el('div', 'rv-sec'); add(gh, el('h2', null, '관문 순서'), el('span', 'ln')); add(box, gh, vfGateTable());
   add(box, sec('표본 · 적중률', `통합 자 ${vfMd(alFrom)} 부터 · 후보 줄만 표본${real.length ? ' · 실전 칸은 기록 · 채점 원본 아님' : ''}`, 'vf-sech', 'verify.table'));
   add(box, vfBlock(al, real.length > 0));   /* 9/24 : 표 + 누른 줄의 대장 목록 (옛 '표본 목록' 구역 합침) · 9/25 `실전합침` : 옛 '실전 (기록)' 구역은 이 표의 칸으로 */
+  if (vf.user) {   /* 10/19 `내조건기록` : 사용자 매수 조건 기록 (옛 verify.json 이면 키가 없어 구역 없음) */
+    const uc = arr(vf.user.rows).filter(r => String(r['회차']) === '1500').sort(byDate);
+    add(box, sec('내 조건 (기록)', `15:00 회차 · ${vfMd(vf.user.from || '')} 부터 · 기록 · 채점 원본 아님`, 'vf-sech', 'verify.mine'), ucBlock(uc));
+  }
   add(box, el('div', 'foot', `채점 한 가지 — D 종가 매수 → D+1 10:00 봉까지 고가 +4% (next-day, 칸 불변) · 계산은 화면에서 · 생성 ${vf.generated || '—'}`));
   if (CUR === 'verify') setHero('verify');
 }
@@ -2564,6 +2601,10 @@ const HELP_SEC = {
     ['· 트레일(가정)', "목록 한 줄 아래 셋째 줄 — 올라가다 꺾이면 팔았다면(트레일) · 자동매도대로 팔았다면. 트레일은 지금 감시 규칙(9/26 부터 자동매도와 같은 창)대로 산 날 15:40 부터 본다 — 고점은 밤을 넘어 다음날 아침까지 이어진다. 이유 : 꺾임 = 고점이 +3% 이상이 된 뒤 고점 대비 −1.5% 에 팔림(갭 = 문턱보다 낮은 첫 가격에 팔림) · 목표 = +4% 에 닿아 팔림 · 10시 = 다음날 10:00 봉 종가. 발동 없음 = 고점이 +3% 에 못 미쳐 자동매도대로와 같음. 자동매도대로 = 세 창에서 +4% 에 먼저 닿으면 그 값, 아니면 다음날 10:00 봉 종가 — 10시 채점과 다르다. 시각 앞 '저녁' = 산 날 저녁, 없으면 다음날. 시각에 초가 있으면 틱으로 순서를 가린 날. 한 분 안의 순서를 1분봉으로 못 가린 날은 두 값이 다르면 '또는' 으로 둘 다(고가 먼저 · 저가 먼저), 같으면 한 값(시각은 고가 먼저 쪽). 아침만 감시 = 다음날 08:00 부터만 감시했다면(9/26 전 감시 규칙 — 산 날 저녁은 +4% 지정가만) — 판 값이 다를 때만. ⏳ = 창이 덜 끝남. 추매 뒤 본전 · 새 평단(U4)은 반영하지 않는다 — 실제 매도는 복기 탭."],
     ['트레일 가정', '발동 +3% · 고점 대비 −1.5% 는 사용자 예시값(강의에 없는 숫자)이라 기록 · 가정일 뿐 — 채점 · 표본 · 적중률 · 매매 규칙이 아니다. 기준가는 D 종가(계좌 매입가 아님), 가격은 KRX+NXT 합이라 윗줄 10시 고가%(KRX)와 다를 수 있다. 창은 실전(기록)과 같은 셋이고, 닿으면 팔렸다고 가정한다. 실매도로 쓸지는 표본 30 뒤 월 검토.'],
     ['· 일봉 위치', "대장 줄 맨 아래 — 산 날(D) 고가가 앞 119거래일 일봉 고가 중 가장 높은 값(최고가 선)보다 몇 % 위(+) · 아래(−)인지. + = 그 선을 뚫음. HTS 차트 최고가 선처럼 고가로 잰다 — 마감 탭 신고가 칩은 종가로 재서(강의 판정의 자) 120일 칩이 Y 인데 여기가 − 일 수 있다. D 고가는 정규장(09:00~15:30) 값, 앞날 고가는 일봉이라 9/14 뒤 날은 저녁(16~20시) 체결이 섞일 수 있다. 상장 120거래일이 안 된 종목은 이 줄이 없다. 강의에 '몇 % 안이면 좋다' 는 숫자가 없어 기록 · 표시만 — 기준 · 색 · 평균이 없고, 결과와 견주는 건 표본 30 뒤 월 검토."]],
+  'verify.mine': [
+    ['조건', '사용자가 1주 연습에서 쓰는 매수 조건(10/19)을 15:00 회차 자료로 — ① 실시간 조회순위 세 표(당일누적 · 1시간 · 10분, 각 20위)에 모두 ② 티마 섹터 카드에 든 종목(개별이슈 카드 빼고) ③ 거래대금 주식 순위(ETF · ETN 뺌) 35위 안 ④ 그 카드 안 통합 거래대금 1 · 2등 — 초대형주(삼성전자 · 삼성전자우 · SK하이닉스 · 삼성전기 · 삼성SDI)는 먼저 뺀다. 강의 판정(위 표)과 다른 기록이다.'],
+    ['한 줄', '위 : 날짜 · 섹터 · 종목(대장은 굵게, 2등은 옆에 2등) · 산 것 = 그날 실제로 산 종목(복기 탭 매매). 가운데 : ✓ ✕ = 다음날 10시까지 고가 +4%(위 표와 같은 채점) · 실전 = 실전(기록)과 같은 세 창 중 먼저 닿은 창. 아래 : 그 회차 세 표 순위(당일누적 · 1시간 · 10분) · 대금 주식 순위 · 120일 최고가 대비(일봉 위치와 같은 값).'],
+    ['기록', '기준이 아니라 기록 — 셈 · 평균 · 적중률을 내지 않는다. 신고가 부근은 숫자 기준이 없어 값만. 쌓이면 표본 30 뒤 월 1회 본다. 판정 · 채점 · 표본 무관.']],
   'review.sum': [
     ['기준 준수율', '규칙을 다 지킨 매매 ÷ 전체.'],
     ['연속 손실', '손실 날이 이어진 날수 — 그날 산 종목들의 순손익 합이 마이너스인 날. 쉬는 날 판단은 계좌 규칙(대조표 8절).'],
