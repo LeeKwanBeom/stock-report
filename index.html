@@ -413,6 +413,14 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .rv-th[aria-expanded="true"] .nm::before{content:"▾"}
 .rv-badge{margin-left:auto;font-size:11px;font-weight:700;border-radius:20px;padding:3px 10px;white-space:nowrap}
 .b-chk{background:var(--card);color:var(--brand);border:1.5px dashed var(--brand)}.b-ok{background:var(--rose);color:var(--wine);border:1px solid var(--roseLine)}.b-luck{background:var(--wineFill);color:var(--onFill)}.b-exec{background:var(--cocoa);color:var(--onFill)}.b-skip{background:var(--chip);color:var(--chipInk);border:1px solid var(--line)}
+/* 10/20 `복기손익색` (사용자 승인 추천1) : 머리 줄 = 첫 줄 [▸ 종목명 ……… 수익률 배지] · 둘째 줄 날짜. 수익 빨강 · 손실 파랑은 데이터 = HTS 원색(--up · --down).
+   배지 칸 최소 92px(가장 넓은 '▲ 운 · 가장 위험')로 숫자 오른쪽 끝을 세로로 맞춘다. 375px 계측 : 모든 카드 두 줄 46px(긴 이름 · ±12.3% 합성 자료 포함) */
+.rv-trade.ok{color:inherit;font-weight:inherit}   /* 카드 클래스 ok 가 전역 .ok(초록 굵게)와 겹쳐 '정상' 카드 글자가 전부 초록 굵게 보이던 것을 끊는다 */
+.rv-th .nm.rv-up,.rv-th .rv-rt.rv-up{color:var(--up)}.rv-th .nm.rv-down,.rv-th .rv-rt.rv-down{color:var(--down)}
+.rv-th .rv-rb{margin-left:auto;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.rv-th .rv-rb .rv-badge{margin-left:0;min-width:92px;text-align:center}
+.rv-th .rv-rt{font-size:14px;font-weight:800;letter-spacing:-.2px;font-variant-numeric:tabular-nums;color:var(--sub)}
+.rv-th .mt{order:3;flex-basis:100%;padding-left:12px;margin-top:-6px}
 .rv-chips{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 11px}
 .rv-chip{font-size:11px;color:var(--chipInk);background:var(--chip);border-radius:14px;padding:3px 9px}
 .rv-chip.red{color:var(--wine);background:var(--rose)}
@@ -2398,6 +2406,7 @@ function renderReview(rv) {
   [['y', 'm-y', '지킴'], ['n', 'm-n', '어김'], ['na', 'm-na', '해당 없음'], ['q', 'm-q', '사람 확인 필요']].forEach(([k, c, t]) => { const s = el('span'); add(s, el('i', 'mk ' + c, RV_MARK[k]), document.createTextNode(t)); leg.appendChild(s); });
   add(s2, leg);
   add(s2, none);
+  const acctOn = new Set(trades.map(t => t.account).filter(Boolean)).size > 1;   /* 10/20 `복기손익색` : 계좌가 하나뿐이면 머리 줄에 별칭을 안 붙인다(사용자 결정 — 지금은 연습계좌 하나). 둘 이상이 되면 다시 붙는다 */
 
   trades.forEach((t, ti) => {
     const kind = RV_BADGE[t.kind] ? t.kind : 'ok';
@@ -2406,7 +2415,10 @@ function renderReview(rv) {
     const card = el('article', 'rv-trade ' + (hold ? 'skip' : kind));
     card.dataset.grp = grpOf[ti]; cards.push(card);
     const th = el('div', 'rv-th');
-    add(th, el('span', 'nm', t.name), el('span', 'mt', `${t.dates || ''}${t.account ? ' · ' + t.account : ''}${t.track ? ' · ' + t.track + '트랙' : ''}`), el('span', 'rv-badge b-' + (hold ? 'skip' : kind), hold ? RV_HOLD : RV_BADGE[kind]));
+    /* 10/20 `복기손익색` : 수익 = 빨강 · 손실 = 파랑(t.rate = 수수료 · 세금 뺀 수익률) — 종목명과 배지 앞 숫자. 0 = 회색 '0.0%' · 보유 중 = 색 · 숫자 없음 · 시험 매매도 손익대로(돈이 오간 사실 — 회색 띠 · 배지가 '복기 제외' 를 말한다) */
+    const nmSg = hold ? '' : rvSign(t.rate);
+    add(th, el('span', 'nm' + (nmSg ? ' rv-' + nmSg : ''), t.name), el('span', 'mt', `${t.dates || ''}${acctOn && t.account ? ' · ' + t.account : ''}${t.track ? ' · ' + t.track + '트랙' : ''}`),
+      add(el('span', 'rv-rb'), !hold && has(t.rate) ? el('span', 'rv-rt' + (nmSg ? ' rv-' + nmSg : ''), nmSg ? rvPct(t.rate) : '0.0%') : null, el('span', 'rv-badge b-' + (hold ? 'skip' : kind), hold ? RV_HOLD : RV_BADGE[kind])));
     add(card, th);
     /* 9/29 `복기목록접기` : 머리 줄 아래는 덩어리 하나(주문 기록의 into 처럼 클래스 없는 div)에 담아 처음엔 접어 둔다.
        접힌 카드는 아무 데나(틀 여백 포함), 펼친 카드는 머리 줄만 누르면 여닫음 — 덩어리 안(칩 · 표 · 규칙 줄 · 주문 기록) 누름은 거른다.
@@ -2623,11 +2635,12 @@ const HELP_SEC = {
     ['어긴 유형 막대', '어긴 규칙별 건수. 누적 밖 카드(보유 중 · 당일 매도 · 이틀 이상 보유 · NXT·애프터 매수만)의 ✕ 도 센다 — 시험 매매만 뺀다.']],
   'review.trades': [
     ['지킨 매매 · 어긴 매매 · 누적 밖', '제목 아래 단추 — 누른 묶음의 카드만 보인다(처음엔 지킨 매매). 지킨 매매 = 네 칸의 정상 · 기준 점검, 어긴 매매 = 운 · 실행 문제 — 둘 다 예외 칩이 없는 카드로 누적 구역에 드는 매매. 누적 밖 = 그 밖 전부 — 시험 매매 · 예외 칩 카드(보유 중 · 당일 매도 · 이틀 이상 보유 · NXT·애프터 매수만). 누적 밖 카드에 네 칸 배지가 붙어 있어도 준수율 · 네 칸 · 평균에는 안 든다(✕ 는 어긴 유형 막대에 센다). 단추 숫자는 카드 수. 아래 ✓ ✕ – ? 는 카드 안 규칙 줄마다의 표시라 이 묶음과 다르다.'],
-    ['▸ 카드', '처음엔 머리 줄(종목 · 날짜 · 계좌 · 배지)만 보인다 — 누르면 그 매매의 칩 · 표 · 규칙 체크가 펼쳐지고, 머리 줄을 다시 누르면 접힌다. 카드마다 따로.'],
+    ['▸ 카드', '처음엔 머리 줄(종목 · 수익률 · 배지, 아래 줄 날짜)만 보인다 — 누르면 그 매매의 칩 · 표 · 규칙 체크가 펼쳐지고, 머리 줄을 다시 누르면 접힌다. 카드마다 따로.'],
+    ['종목명 색 · 숫자', '수익 = 빨강 · 손실 = 파랑. 배지 앞 숫자가 그 수익률(수수료 · 세금 뺀 값 — 펼친 표의 수익률과 같다). 0% 는 회색 0.0%, 보유 중은 색 · 숫자 없음, 시험 매매도 손익대로 칠한다. 장중 탭의 빨간 종목명(섹터 1위 대장)과는 뜻이 다르다.'],
     ['왼쪽 띠 · 배지', '네 칸 분류. 점선 = 기준 점검 · 회색 = 시험 매매(복기 제외) · 보유 중.'],
     ['칩', '판정(후보 · 피뢰침 · 배경) · 역할(대장 · 2등 …) · 트랙 등 그날 판정 기록. 빨강 칩 = 어김과 관련.'],
     ['매수 · 매도 · 수익률 · 비중', '매수 · 매도 시각(가중평균). 수익률 = 순손익 ÷ 매수합(수수료 · 세금 뺀 값). 비중 = 이 종목 매수 금액(추매 포함) ÷ 매수 직전 추정자산. 규칙(U1)은 그날 합계로 — 규칙 줄에. 추정자산이 없으면 ❓.'],
-    ['금액 두 줄 (9/19)', '매수 금액 · 매도 금액 · 순손익(수수료 · 세금 뺀 원화) · 수수료·세금(당일매매일지, 없으면 ?) / 매수 · 매도 수량 × 평균 단가 · 추매 금액(D+1 매수) · 추정자산(비중의 분모 — API 날짜 = 키움 일별추정예탁자산 행, 수동 = asset.csv). 카드 머리의 "연습계좌" 는 별칭이고 계좌번호는 어디에도 없다.'],
+    ['금액 두 줄 (9/19)', '매수 금액 · 매도 금액 · 순손익(수수료 · 세금 뺀 원화) · 수수료·세금(당일매매일지, 없으면 ?) / 매수 · 매도 수량 × 평균 단가 · 추매 금액(D+1 매수) · 추정자산(비중의 분모 — API 날짜 = 키움 일별추정예탁자산 행, 수동 = asset.csv). 계좌는 별칭(연습계좌)뿐이고 계좌번호는 어디에도 없다 — 별칭은 계좌가 둘 이상일 때만 카드 머리 날짜 뒤에 붙는다.'],
     ['기준대로였다면', '판정 · 채점 자료(15:20 후보 · 10시 채점)와 실제 매매를 대조한 줄.'],
     ['규칙 체크 ✓ ✕ – ?', '✓ 지킴 · ✕ 어김 · – 해당 없음 · ? 사람 확인 필요. 종목(후보였나) · 매수 시각(E2) · 비중(U1) · 추매(U2 시각 · 금액, 피뢰침은 U3 금지) · 매도(익일 오전 S9 — KRX 09:00~10:00 · NXT 되는 종목은 08:00~10:00 · 자동매도 당일 저녁 +4% 체결, 목표 = 자동매도 주문가(매입가 +4% 호가 올림) — 추매 뒤엔 새 평단 기준, 물타기 추매분은 새 평단 본전(U4) · S1 · S6) · 계좌 규칙.'],
     ['▸ 주문 기록', '펼친 카드 안에서도 접혀 있다 — 누르면 그 매매의 주문 줄(체결 · 미체결 · 취소 · 정정)이 펼쳐지고, 다시 누르면 접힌다. 기록일 뿐 검사가 아니고(전부 –), 몇 번 걸었는지 세지 않는다.'],
