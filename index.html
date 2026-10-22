@@ -255,6 +255,7 @@ details.more .card strong{font-size:14.5px}
 .row.iq3-row{display:block}.iq3-l1{display:flex;justify-content:space-between;align-items:center;gap:8px}.iq3-name{display:inline-block;font-weight:700}.iq3-l2{display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:10px;padding:2px 0 0 1em}.iq3-seg{white-space:nowrap;font-variant-numeric:tabular-nums}   /* 10/6 조회순위세표 : 세 표 겹침 한 종목 = 두 줄(사용자 결정 10/6 밤) — 윗줄 이름(섹터 이름표는 해답지 .iq-sec) + 해답지 줄 오른쪽(.iq-rt · .iq-rk 그대로), 아랫줄(들여쓰기) 세 순위 · n/m회차.
    10/7 밤 `세표종목굵게` (사용자 결정 A안 · 이 카드만) : 섹터 이름표와 종목명이 한눈에 안 갈려 종목명만 700 — 9/27 '굵게 = 대장' 문법의 예외(이 카드는 대장 목록이 아니라 조회순위 종목 목록), 해답지 .iq-nm 은 보통 그대로 */
 .iq3-code{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}   /* 10/20 `세표종목코드` (사용자 요청 — 예시 '★반도체대형주 삼성전자 (132456)') : 종목명 오른쪽 ' (6자리 코드)'. 섹터 이름표(.iq-sec)와 같은 크기 · 색, 종목명 취소선(.iq-out)은 안 받는다. 표시만 */
+.iq3-lk{color:inherit;text-decoration:none}   /* 10/22 `세표영웅문링크` : 종목명 + 코드를 감싼 링크 — 글자 모양 · 색 · 취소선은 안쪽 .iq3-name · .iq3-code 그대로(밑줄 · 링크색 없음, 사용자 결정 '예시대로') */
 .iq3-l3{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;column-gap:10px;padding:3px 0 0 1em}.iq3-l3>:last-child{margin-left:auto}   /* 10/20 `세표네줄` (사용자 결정 — 사용자가 보낸 배치 그대로) : 셋째 줄 = 호가 칩(왼쪽) + '15위 안 n/m회차'(오른쪽). 자리가 모자라 밀려도 오른쪽 끝(margin-left:auto) — 375px 실측(오늘 · 10/19 · 경고칩 2개 가정)엔 밀림 0. 경고칩은 넷째 줄 .wc-line */
 .iq3-lb{color:var(--sub)}.iq3-v{font-weight:700}.iq3-star{color:var(--brand);margin-right:3px}   /* 10/7 밤 `세표숫자별` (사용자 결정 — 추천대로) : 아랫줄 '누적 · 1시간 · 10분' 글자는 --sub, 순위 숫자만 700 — 모양만 가른다(순위 값에 따른 색 · 기준선 없음).
    ★ = '15위 안 n/m회차' 의 n = m (09:00 뒤 모든 회차 세 표 모두 15위 안), 윗줄 섹터 이름표 앞. 회차 수 하한 없음(새 숫자 0). 10/8 `세표빈별` : n = m − 1 (n ≥ 1) 은 같은 클래스로 ☆ */
@@ -1650,6 +1651,19 @@ function renderLive(d) {
      키가 없으면(옛 JSON · 첫 수집일 10/19 전 날짜) 칩 없음 = 그 전과 같은 화면. 1억 = 대조표 C10 강의 숫자(새 숫자 0) — 표시만, 판정 · 채점에 안 쓴다 */
   const HG_WON = 100000000;   // 매수 10칸 중 한 칸이라도 가격 × 잔량 ≥ 이 값이면 채운 칩
   const IQ3_N = 15;   // 10/7 `조회순위15위` : 'n/m회차' 의 n 을 세는 순위 (사용자 숫자, 카드 종목은 20위 그대로)
+  /* 10/22 `세표영웅문링크` (사용자 결정 — 예시대로) : 안드로이드에서 세 표 카드의 '종목명 (코드)' 를 누르면 영웅문S# 호가주문이 그 종목으로 바뀐다. 주소는 영웅문S# '화면 공유' → 카톡 카드의
+     '자세히 보기' 가 쓰는 것 그대로(menu=1110 호가주문, 10/22 폰 실측 — 숫자 · 영숫자 코드 · 분할화면 오른쪽 칸 그대로 · 확인 창 · 재로그인 없음). 키움이 공개하지 않은 주소라
+     앱 업데이트로 바뀌면 반응이 없거나 오류 화면이 뜬다(뒤로 가기 뒤 돋보기로). 확인 창 없이 바로 바뀌어 잘못 누르면 호가주문 종목이 바뀐다 — 주문 전 영웅문 종목명 확인.
+     길게 누르면 글자 선택 대신 링크 메뉴(검토 3관점 막음 0 — 10/22). 앞의 kakao 번호는 영웅문S# 앱 안에 든 키움의 카톡 앱 번호(비밀 아님). 화면을 여는 것까지만 — 주문은 사람, 판정 · 채점 무관.
+     PC 브라우저는 링크 없이 글자 그대로. 폴드를 펼친 크롬이 '데스크톱 사이트' 로 열면 UA 에 Android 가 없어 Linux + 터치로 가른다 */
+  const ua = navigator.userAgent || '';
+  const HERO_ON = /Android/i.test(ua) || (/Linux/i.test(ua) && !/CrOS/i.test(ua) && navigator.maxTouchPoints > 0);
+  const heroLink = (c, kids) => {
+    if (!HERO_ON || !has(c)) return null;
+    const a = add(el('a', 'iq3-lk'), ...kids);
+    a.href = `kakao7a20b5d3446c9e89c8247905e6249222://kakaolink?cmd=pageLink&menu=1110&code=${encodeURIComponent(c)}&overseaType=`;
+    return a;
+  };
   const iq3 = arr(d.inq3Flow).filter(r => String(r['시각']) <= '1520');
   const iq3T = [...new Set(iq3.map(r => String(r['시각'])))].sort();
   const iq3At = iq3T.length ? iq3T[iq3T.length - 1] : '';
@@ -1711,7 +1725,9 @@ function renderLive(d) {
             const out35 = !!a && (rkA === null || rkA > IQ_OUT);   // 10/7 밤 `세표취소선` (사용자 결정 — 추천대로) : 해답지와 같이 대금 35위 밖(100위 밖 포함)은 종목명만 취소선 + 회색(.iq-out), 대금 값이 없으면(inq3Card 없음) 안 긋는다
             const outT = String(cur['당일누적'][c]['종목명']).includes('레버리지') || (iq3Tima && (!secs || secs.every(s => s === '개별이슈'))) || newDays(d, c) !== null;   // 10/16 `세표테마취소선` · 10/20 `세표신규주취소선` : 신규주
             const star = iq3Up.length && n15 === iq3Up.length ? '★' : (n15 >= 1 && n15 === iq3Up.length - 1 ? '☆' : '');   // 10/8 `세표빈별` : 한 회차만 빠지면 ☆ (0/1 은 안 붙임)
-            const nm = el('span', 'iq3-nm'); add(nm, star ? el('span', 'iq3-star', star) : null, secs ? el('span', 'iq-sec', secs.join('·') + ' ') : null, el('span', 'iq3-name' + (out35 || outT ? ' iq-out' : ''), cur['당일누적'][c]['종목명']), el('span', 'iq3-code', ` (${c})`));   // 10/20 `세표종목코드` : 이름 뒤 6자리 코드
+            const nmCd = [el('span', 'iq3-name' + (out35 || outT ? ' iq-out' : ''), cur['당일누적'][c]['종목명']), el('span', 'iq3-code', ` (${c})`)];   // 10/20 `세표종목코드` : 이름 뒤 6자리 코드
+            const nmLk = heroLink(c, nmCd);   // 10/22 `세표영웅문링크` : 안드로이드면 이름 + 코드를 링크로 감싼다, 아니면 그 전과 같은 두 span
+            const nm = el('span', 'iq3-nm'); add(nm, star ? el('span', 'iq3-star', star) : null, secs ? el('span', 'iq-sec', secs.join('·') + ' ') : null, ...(nmLk ? [nmLk] : nmCd));
             const rt = el('span', 'iq-rt'), rt2 = el('span', 'iq-rt');   // 해답지 줄 오른쪽과 같은 모양 — 값이 없으면(inq3Card 없는 JSON) 비운다. 10/20 `세표네줄` : 등락률은 윗줄(rt), 대금 칩 · 억은 둘째 줄(rt2)
             if (a) {
               const rk = num(a['거래대금순위']), eok = num(a['거래대금억']);
