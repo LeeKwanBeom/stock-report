@@ -182,7 +182,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
     <p>매수는 3시부터 장 마감까지 어종 한 가지, 매도는 +4% — 자동으로 걸리고, 다음날 10:00 봉까지 못 가면 시간 손절.</p>
   </div>
   <div class="stamp">
-    <div class="num">작성 2026-10-23 · 연습 중 · 300만원 실매매 전환 전</div>
+    <div class="num">작성 2026-10-26 · 연습 중 · 300만원 실매매 전환 전</div>
     <div class="big">D → D+1 10:00</div>
     <div class="muted">종가 매수 → 다음날 10시 봉까지 +4%</div>
   </div>
@@ -191,7 +191,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
 <div class="kpis">
   <div class="kpi now"><span class="l">300만원 실매매 조건</span><span class="v">표본 30 + 2주</span><span class="s">후보 표본 30개 · 무결성 오류 0 이 2주 연속</span></div>
   <div class="kpi now"><span class="l">연습 매매</span><span class="v">2종목 · 50%</span><span class="s">15:00 띠 후보 대장 2종목까지 · 1종목 100만 · 2종목 종목당 50만</span></div>
-  <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">종베 매수는 내가 낸다. 자동은 매도 · 다음날 추매(켠 뒤)</span></div>
+  <div class="kpi"><span class="l">주문</span><span class="v">HTS · MTS</span><span class="s">종베 매수는 내가. 자동은 매도 · 다음날 추매 · 계획 매수</span></div>
   <div class="kpi"><span class="l">판정 기준</span><span class="v">동결</span><span class="s">매매 결과로 고치지 않는다</span></div>
 </div>
 
@@ -207,10 +207,11 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
       <div class="d"><b>계좌 규칙</b> : 3일 연속 손실(그날 산 종목 합계)이면 하루 쉰다 · 연패 중엔 늦은 종베만 · 금요일 비중 축소 · 계좌가 나쁠수록 축소 · 복구 매매 금지.</div></div>
 
     <div class="tr me key"><div class="t">08:00<br>~10:00</div>
-      <div class="h"><span class="tag me">나</span>어제 산 종목 — 매도는 자동</div>
-      <div class="d">목표는 <b>10:00 봉까지 +4%</b>, 못 가면 <b>시간 손절</b>. 08:00 · 08:55 에 매입가 +4% 지정가가 걸리고, 10:00 에 시장가로 전량 팔린다. 어제 저녁에 팔렸으면 할 일 없음. <b>손으로 매도 주문을 따로 걸지 않는다</b> — 회차마다 취소하고 다시 건다.</div>
-      <div class="d"><b>추매</b> : <b>F존 자동을 켠 뒤</b> 'F존을 쓰는 종목' 은 도구가 — <b>−3% 1차 · 3라인 F존(두 배) 추매 · 4라인 아래 전량 손절</b>, 매도는 F존이 사지면 저점 +4% · 1차만이면 평단 +4%, 폰 알림이 온다. 이 종목엔 <b>손으로 추매하지 않는다</b>. 켜기 전이거나 '쓰지 않음 · 판단 못 함' 종목은 내가 <b>돼지 물량에</b> — 10:00 전 · 어제 매수의 3배 이하 · 피뢰침 · 경고는 안 함, 자동매도가 전량 본전에 건다.</div>
-      <div class="d"><b>아침확인</b> : 09:15 뒤(어제 샀으면 10:10 뒤) 채팅에 "아침확인" — 어젯밤 · 오늘 아침 자동 회차(자동매도 포함)가 돌았는지 Claude 가 본다.</div></div>
+      <div class="h"><span class="tag me">나</span>어제 산 · 계획 종목 — 자동</div>
+      <div class="d">목표는 <b>10:00 봉까지 +4%</b>, 못 가면 <b>시간 손절</b> — 08:00 · 08:55 매입가 +4% 지정가 · 10:00 시장가. <b>손으로 매도 주문을 따로 걸지 않는다</b> — 회차마다 취소하고 다시 건다.</div>
+      <div class="d"><b>추매</b> : 'F존을 쓰는 종목' 은 도구가 <b>−3% 1차 · 3라인 F존(두 배) · 4라인 아래 손절</b> — <b>손으로 추매하지 않는다</b>. '쓰지 않음 · 판단 못 함' 종목은 내가 <b>돼지 물량에</b> — 10:00 전 · 어제 매수의 3배 이하 · 피뢰침 · 경고는 안 함, 자동매도가 전량 본전에 건다.</div>
+      <div class="d"><b>계획 종목</b>(어제 지수 아래 날)도 도구가 어제 종가 −3% · 3라인에 두 배씩 산다 — <b>손으로 사지 않는다</b>.</div>
+      <div class="d"><b>아침확인</b> : 09:15 뒤(어제 샀거나 계획이 있으면 10:10 뒤) 채팅에 "아침확인" — 어젯밤 · 오늘 아침 자동 회차를 Claude 가 본다.</div></div>
 
     <div class="tr me"><div class="t">11:00<br>~14:30</div>
       <div class="h"><span class="tag me">나</span>매매 금지 — 보기만</div>
@@ -222,18 +223,18 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
 
     <div class="tr me key"><div class="t">15:00<br>~15:20</div>
       <div class="h"><span class="tag me">나</span>관문6 — 사람 판단, 그리고 비중</div>
-      <div class="d">"사기 전 확인" 순서대로(카드는 15:50 확정 화면에만). <b>당일 지수가 20일선 아래면 매매 안 함</b>(코스피 · 코스닥 — 15:00 알림 시장 줄 · 장중 탭 지수 일봉) → 일봉 위치 → <b>호가 한 칸 1억</b>이 안 되면 뺀다(세 표 카드 칩) → 돼지 물량 자리 → <b>3레벨 뉴스 · 악재 · 내일 이벤트 · 괴리 캡처 · 재료 D-day</b>. 차트(하트존) · 테마 등급 · 시계열 탭 겹침 격자 · 조회순위 세 표도 본다.</div>
+      <div class="d">"사기 전 확인" 순서대로(카드는 15:50 확정 화면에만). <b>대장 시장 지수가 15:00 에 20일선 아래면 종베 안 함</b>(마감 탭 잠정 시장 줄) → 일봉 위치 → <b>호가 한 칸 1억</b>이 안 되면 뺀다(세 표 카드 칩) → 돼지 물량 자리 → <b>3레벨 뉴스 · 악재 · 내일 이벤트 · 괴리 캡처 · 재료 D-day</b>. 차트(하트존) · 테마 등급 · 시계열 탭 겹침 격자 · 조회순위 세 표도 본다.</div>
       <div class="d"><b>비중</b> : 종베 합계 예수금 50% 안 · 하루 최대 2종목 · 추매 포함 100% · 신고가 칩이 없으면 축소 · 대장 1등만, 2·3등은 안 산다 · 자신 없으면 무포 · 미수 · 신용 없음.</div></div>
 
     <div class="tr me key"><div class="t">15:00<br>~15:30</div>
       <div class="h"><span class="tag me">나</span>매수 — 어종 한 가지</div>
       <div class="d">3시부터 장 마감까지, 이평선 갈고리 + 4% 반등 자리에 분할, 없으면 종가 부근. <b>돼지 물량 자리에 매수 1호가</b>, 위로 쫓아 사지 않는다. <b>채점 기준가는 오늘 종가</b>.</div>
-      <div class="d"><b>연습</b> : 종목마다 ① 3시, 돼지 물량 여러 자리에 1주씩 지정가 — <b>주수 제한 없이 금액 한도까지</b> ② 위로 쫓아 사지 않는다 ③ 15:20 까지 덜 사졌으면 <b>걸어 둔 지정가를 취소</b>하고 더 살 수량만 동시호가 <b>시장가</b> — 그냥 두면 둘 다 체결돼 더 산다 ④ <b>1종목이면 100만 · 2종목이면 종목당 50만</b>(예수금 약 500만), 넘는 비싼 대장은 안 산다(미수 · 신용 없음).</div></div>
+      <div class="d"><b>연습</b> : 종목마다 ① 3시, 돼지 물량 여러 자리에 1주씩 지정가 — <b>주수 제한 없이 금액 한도까지</b> ② 위로 쫓아 사지 않는다 ③ 15:20 까지 덜 사졌으면 <b>걸어 둔 지정가를 취소</b>하고 더 살 수량만 동시호가 <b>시장가</b> — 그냥 두면 둘 다 체결돼 더 산다 ④ <b>1종목이면 100만 · 2종목이면 종목당 50만</b>(예수금 약 500만 · 두 시장이 갈린 날 종베 50만), 넘는 비싼 대장은 안 산다.</div></div>
 
     <div class="tr auto"><div class="t">15:40<br>~20:00</div>
       <div class="h"><span class="tag auto">자동</span>저녁 매도 +4% · 15:50 확정 판정</div>
       <div class="d">15:40(NXT 되는 종목) · 16:00(전 종목)에 오늘 산 종목 매입가 +4% 지정가가 걸린다 — 더 사면 5분 안에 새 평단으로, 못 팔면 다음날 08:00 에 다시. 15:50 에 확정 판정과 <b>피뢰침 대상</b>(내일 아침 뉴스 볼 종목)이 나온다.</div>
-      <div class="d"><span class="tag me">나</span> <b>오후확인</b> : 15:57 뒤 채팅에 "오후확인" — 관문6 기록을 남긴다.</div></div>
+      <div class="d"><span class="tag me">나</span> <b>오후확인</b> : 15:57 뒤 채팅에 "오후확인" — 관문6 기록. 지수 아래 날은 Claude 가 준 <b>계획 명령</b>을 내가 실행(끄기 -Remove · 스위치), 그 뒤 저녁 새 종목 안 삼.</div></div>
 
     <div class="tr me"><div class="t">20:10<br>~</div>
       <div class="h"><span class="tag me">나</span>복기 — 기준이 틀렸나, 내가 안 지켰나</div>
@@ -269,7 +270,7 @@ section>.muted{color:var(--ink-3);line-height:1.7;max-width:70ch}
     <div class="rule"><span class="id">U2</span><div><b>추매는 D+1 10:00 전 주문 · 그 종목 종가 매수의 3배 이하</b><div class="muted">1차 1 · F존 2, 손 추매 포함.</div></div></div>
     <div class="rule"><span class="id">U3</span><div><b>피뢰침은 추매 없음</b><div class="muted">매도는 어종과 같다 — 목표 4%, 손절은 10시 안에.</div></div></div>
     <div class="rule"><span class="id">U4</span><div><b>추매 뒤 매도 : 물타기 추매가 한 번이라도 있으면 전량 새 평단 본전</b><div class="muted">물타기 = 추매 체결가가 어제 매수 평균(저녁 체결 포함)보다 낮은 것. 불타기만이면 +4%. 10:00 에 못 판 것은 시장가 그대로. 손으로 추매한 종목에 쓴다.</div></div></div>
-    <div class="rule"><span class="id">U5</span><div><b>F존 자동(켠 뒤) : −3% 1차 · 3라인 추매 · 4라인 아래 손절</b><div class="muted">산 값이 3라인보다 높은 종목만(3 · 4라인 = 고가라인 −8% · −10%, 따라 올라감). 1차는 남은 어제 수량, F존은 두 배. 매도는 F존이 사지면 저점 +4%, 1차만이면 평단 +4%.</div></div></div>
+    <div class="rule"><span class="id">U5</span><div><b>F존 · 계획 종목 자동 : −3% 1차 · 3라인 추매 · 4라인 아래 손절</b><div class="muted">산 값이 3라인보다 높은 종목만(3 · 4라인 = 고가라인 −8% · −10%, 따라 올라감). 1차는 남은 어제 수량, F존은 두 배. 매도는 F존이 사지면 저점 +4%, 1차만이면 평단 +4%.</div></div></div>
   </div>
 </section>
 
