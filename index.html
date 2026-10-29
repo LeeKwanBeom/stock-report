@@ -293,6 +293,8 @@ details.more .card strong{font-size:14.5px}
 .ix-sw.ix-m1{border-top-color:var(--ixM1)}
 .ix-sw.ix-m2{border-top-color:var(--ixM2)}
 .ix-sw.ix-m3{border-top-color:var(--ixM3)}
+.ix-sw.ix-mup{border-top-color:var(--up)}   /* 10/29 일봉 5일선 = 섹터 모멘텀 막대 빨강 · 20일선 = 파랑 (사용자 요청) */
+.ix-sw.ix-mdn{border-top-color:var(--down)}
 .ix-kv{color:var(--text);font-weight:600}
 .ix-when{color:var(--text);font-weight:800}
 .ix-plot{position:relative;height:118px;margin-right:56px;touch-action:pan-y;cursor:crosshair;-webkit-user-select:none;user-select:none}
@@ -305,6 +307,8 @@ details.more .card strong{font-size:14.5px}
 .ix-l1{stroke:var(--ixM1);stroke-width:1.2;stroke-linejoin:round}
 .ix-l2{stroke:var(--ixM2);stroke-width:1.2;stroke-linejoin:round}
 .ix-l3{stroke:var(--ixM3);stroke-width:1.2;stroke-linejoin:round}
+.ix-lup{stroke:var(--up);stroke-width:1.2;stroke-linejoin:round}
+.ix-ldn{stroke:var(--down);stroke-width:1.2;stroke-linejoin:round}
 .ix-cross{stroke:var(--sub);stroke-width:1;visibility:hidden}
 .ix-y,.ix-tag{position:absolute;left:100%;transform:translateY(-50%);font-size:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .ix-y{margin-left:6px;color:var(--muted)}
@@ -1129,7 +1133,7 @@ const IX_W = 1000, IX_H = 100, IX_PAD = 0.02;
    (1분 폴링 replaceWith · 5분 뒤 renderLive 가 구역을 새로 그려도 유지, 페이지를 새로 열면 다시 일봉. localStorage 안 씀).
    일봉 자료 = index-chart v1.1 의 series dlyD · dlyC · dlyMa5 · dlyMa20 (두 지수 다 있을 때만 단추). 없는 파일(9/23 까지)은 옛 5분봉 그대로.
    일봉 = 키움 지수 일봉 종가 3개월 + 오늘 점(5분봉 끝값) · 5일 · 20일선. 보기만 하는 그림 — 위/아래 색 · '조심' 글 없음(강의 M6 선을 그리기만) */
-const IX_DAY_MA = [['dlyMa5', '5일', 2], ['dlyMa20', '20일', 1]];   /* 이름 · 색 번호 : 5일 = 청록(ixM2) · 20일 = 주황(ixM1, 5분봉 '20' 과 같은 색) */
+const IX_DAY_MA = [['dlyMa5', '5일', 'up'], ['dlyMa20', '20일', 'dn']];   /* 이름 · 색 : 5일 = 빨강(--up) · 20일 = 파랑(--down) — 섹터 모멘텀 막대와 같은 색 (10/29 사용자 요청, 옛 청록 · 주황). 5분봉 20 · 60 · 120 은 그대로 ixM1~3 */
 let IX_MODE = 'day';
 function ixNums(s) { return String(s === undefined || s === null ? '' : s).split(',').map(v => (v === '' ? null : +v / 100)); }
 function ixMin(t) { return +t.slice(0, 2) * 60 + +t.slice(2); }
@@ -1296,7 +1300,7 @@ function ixCard(s) {
   plot.addEventListener('pointerleave', clear); plot.addEventListener('pointercancel', clear);
   return card;
 }
-/* 9/27 일봉전환 ② : 일봉 카드 — 거래일마다 같은 간격(주말 · 휴장 빈칸 없음), 달력 3개월. 검은 선 = 종가, 청록 = 5일선, 주황 = 20일선.
+/* 9/27 일봉전환 ② : 일봉 카드 — 거래일마다 같은 간격(주말 · 휴장 빈칸 없음), 달력 3개월. 검은 선 = 종가, 빨강 = 5일선, 파랑 = 20일선(10/29 — 옛 청록 · 주황).
    마지막 점 = 오늘(5분봉 끝값). 달이 바뀌는 첫 거래일에 옅은 세로선 + 아래 'n월', 가로축 오른쪽 끝(세로 눈금 숫자 아래)에 기간 '6/23 ~ 9/23'.
    값 줄은 평소 마지막 점 — 날짜 '9/23 (수)', 장중(15:30 봉 전) 오늘 점은 '9/28 15:00' (5분봉 마지막 봉 시각) */
 function ixCardDay(s) {
@@ -2510,7 +2514,7 @@ function renderReview(rv) {
 const HELP_SEC = {
   'live.index': [
     ['[5분봉 | 일봉]', '구역 제목 오른쪽 단추. 두 카드(코스피 · 코스닥)가 같이 바뀐다. 처음 열면 일봉. 고른 쪽은 화면을 다시 열 때까지 유지 — 그림이 새 봉으로 바뀌어도 그대로.'],
-    ['일봉 · 5일 · 20일', '키움 지수 일봉 종가를 이은 검은 선(최근 3개월 — 거래일마다 같은 간격, 주말 · 휴장은 건너뜀, 세로선은 달이 바뀌는 날)과 5일(청록) · 20일(주황) 이동평균. 오늘 점은 지금까지 마지막 5분봉 값이라 장중엔 움직이고, 오늘의 5 · 20일선도 (앞 4 · 19거래일 종가 + 지금 값) ÷ 5 · 20 — HTS 일봉 화면과 같은 방식. 15:30 종가 봉이 실린 뒤(15:36 회차부터)엔 마감 탭 관문1 아래 코스피 · 코스닥 5 · 20일선 줄(코스닥 줄은 9/28 부터)과 같은 값(반올림으로 0.01 다를 수 있음).'],
+    ['일봉 · 5일 · 20일', '키움 지수 일봉 종가를 이은 검은 선(최근 3개월 — 거래일마다 같은 간격, 주말 · 휴장은 건너뜀, 세로선은 달이 바뀌는 날)과 5일(빨강) · 20일(파랑) 이동평균. 오늘 점은 지금까지 마지막 5분봉 값이라 장중엔 움직이고, 오늘의 5 · 20일선도 (앞 4 · 19거래일 종가 + 지금 값) ÷ 5 · 20 — HTS 일봉 화면과 같은 방식. 15:30 종가 봉이 실린 뒤(15:36 회차부터)엔 마감 탭 관문1 아래 코스피 · 코스닥 5 · 20일선 줄(코스닥 줄은 9/28 부터)과 같은 값(반올림으로 0.01 다를 수 있음).'],
     ['5분봉 — 검은 선', 'KRX 지수(코스피 · 코스닥) 5분봉 종가를 이은 선. 가로는 하루를 같은 폭으로(09:00~15:30) — 오늘은 왼쪽부터 자란다. 날짜가 바뀌는 자리에서는 선을 잇지 않는다(밤사이 갭). 티마 시장종합 탭 지수 차트와 같은 지수(9/17 값 대조).'],
     ['20 · 60 · 120', '5분봉 이동평균선 — 봉 20개(100분) · 60개(5시간) · 120개(10시간, 약 하루 반). 날짜를 넘어 이어서 계산한다.'],
     ['날짜 아래 갭 · 종가', '5분봉 날짜마다. 갭 = 그날 첫 봉 시가 ÷ 전일 종가 − 1(밤사이 갭), 종가 = 그날 마지막 봉 ÷ 전일 종가 − 1(전일 대비 등락). 장중 마지막 칸은 아직 종가가 아니라 \'지금\'. 빨강 = +, 파랑 = −.'],
