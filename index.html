@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#3e0710" media="(prefers-color-scheme: dark)">
 <script>
 /* 9/27 다크전환 (사용자 결정) : 화면 모드 = 이 폰 브라우저에 기억한 값(localStorage 'stock-report.theme' — 제목 줄 오른쪽 버튼이 적는다), 고른 적 없으면 폰 설정.
-   첫 그림 전에 <html data-theme> 를 정해 흰 화면이 번쩍이지 않게. 다크 색은 아래 :root[data-theme="dark"] 한 곳. roadmap.html · manual.html 도 같은 키를 읽는다 */
+   첫 그림 전에 <html data-theme> 를 정해 흰 화면이 번쩍이지 않게. 다크 색은 아래 :root[data-theme="dark"] 한 곳. roadmap.html 도 같은 키를 읽는다 (설명서 manual.html 은 11/7 사용자 결정으로 지움) */
 var THEME_KEY = 'stock-report.theme';
 function savedTheme() { try { var t = localStorage.getItem(THEME_KEY); return t === 'dark' || t === 'light' ? t : null; } catch (e) { return null; } }
 function systemTheme() { try { return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e) { return 'light'; } }
@@ -539,7 +539,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
       <button data-tab="review">복기</button>
     </div>
     <div class="hrow"><h1 id="heroTitle">장중</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button><button class="thm-btn" id="themeBtn" type="button"><span class="thm-dk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/></svg>다크</span><span class="thm-lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>밝게</span></button></div>
-    <div class="hsrow"><div class="hsub" id="heroSub">매시 07분 갱신 · 저녁 20:12 까지</div><div class="rm-links"><a class="rm-link" href="roadmap.html">로드맵 ↗</a> · <a class="rm-link" href="manual.html">설명서 ↗</a></div></div>
+    <div class="hsrow"><div class="hsub" id="heroSub">매시 07분 갱신 · 저녁 20:12 까지</div><div class="rm-links"><a class="rm-link" href="roadmap.html">로드맵 ↗</a></div></div>
     <div class="hq" id="heroQ" hidden>손실이 났을 때 — <b>기준이 틀렸나, 내가 안 지켰나</b></div>
   </div>
 </header>
