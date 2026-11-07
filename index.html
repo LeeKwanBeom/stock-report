@@ -318,7 +318,8 @@ details.more .card strong{font-size:14.5px}
 .ix-x{display:grid;margin:4px 56px 0 0;font-size:10px;color:var(--muted);text-align:center}
 .ix-x b{color:var(--text);font-weight:700}
 /* 9/27 `일봉전환` (사용자 결정 9/26 ①~⑩) : [5분봉 | 일봉] 전환 단추(구역 제목 줄 ? 뒤) · 일봉 범례 셋 · 5분봉 날짜 칸 '갭 · 종가' 줄 · 마지막 칸 전일 종가 점선 · 일봉 가로축(달 · 기간) */
-.ix-mode{order:3;flex:none;display:inline-flex;align-self:center;margin-left:6px;border:1px solid var(--roseDash);border-radius:9px;overflow:hidden;letter-spacing:0}
+/* 11/7 `지수단추앞` (사용자 승인 배치 "[5분봉|일봉] 지수 일봉 · 3개월 · 15:30 봉까지 ──── (?)") : 단추를 줄 맨 앞으로(order −1, 제목 글자 앞) · ? 는 오른쪽 끝 그대로. 폴더블 두 화면에서 경계 옆이던 단추를 왼쪽으로 */
+.ix-mode{order:-1;flex:none;display:inline-flex;align-self:center;margin:0 2px 0 0;border:1px solid var(--roseDash);border-radius:9px;overflow:hidden;letter-spacing:0}
 .ix-mode button{font:inherit;font-size:11px;font-weight:700;line-height:1;margin:0;padding:3px 8px;border:0;background:var(--card);color:var(--wine);cursor:pointer}
 .ix-mode button[aria-pressed="true"]{background:var(--wineFill);color:var(--onFill)}   /* --wine 은 다크에서 연분홍이라 흰 글자가 안 보인다 — 채운 바탕 짝은 --wineFill (밝은 모드는 같은 #6e0b14) */
 .ix-leg.ix-leg3{grid-template-columns:auto repeat(3,minmax(0,1fr))}
@@ -2519,7 +2520,7 @@ function renderReview(rv) {
    두 층 : ① 구역 제목 옆 ? (HELP_SEC — 그 구역의 표시 → 뜻, 제목 바로 아래 펼침) ② 머리 ? (HELP — 이 탭이 무엇인가 · 보고 나서 · 공통 루틴·조작). */
 const HELP_SEC = {
   'live.index': [
-    ['[5분봉 | 일봉]', '구역 제목 오른쪽 단추. 두 카드(코스피 · 코스닥)가 같이 바뀐다. 처음 열면 일봉. 고른 쪽은 화면을 다시 열 때까지 유지 — 그림이 새 봉으로 바뀌어도 그대로.'],
+    ['[5분봉 | 일봉]', '구역 제목 줄 맨 앞(왼쪽) 단추. 두 카드(코스피 · 코스닥)가 같이 바뀐다. 처음 열면 일봉. 고른 쪽은 화면을 다시 열 때까지 유지 — 그림이 새 봉으로 바뀌어도 그대로.'],
     ['일봉 · 5일 · 20일', '키움 지수 일봉 종가를 이은 검은 선(최근 3개월 — 거래일마다 같은 간격, 주말 · 휴장은 건너뜀, 세로선은 달이 바뀌는 날)과 5일(빨강) · 20일(파랑) 이동평균. 오늘 점은 지금까지 마지막 5분봉 값이라 장중엔 움직이고, 오늘의 5 · 20일선도 (앞 4 · 19거래일 종가 + 지금 값) ÷ 5 · 20 — HTS 일봉 화면과 같은 방식. 15:30 종가 봉이 실린 뒤(15:36 회차부터)엔 마감 탭 관문1 아래 코스피 · 코스닥 5 · 20일선 줄(코스닥 줄은 9/28 부터)과 같은 값(반올림으로 0.01 다를 수 있음).'],
     ['5분봉 — 검은 선', 'KRX 지수(코스피 · 코스닥) 5분봉 종가를 이은 선. 가로는 하루를 같은 폭으로(09:00~15:30) — 오늘은 왼쪽부터 자란다. 날짜가 바뀌는 자리에서는 선을 잇지 않는다(밤사이 갭). 티마 시장종합 탭 지수 차트와 같은 지수(9/17 값 대조).'],
     ['20 · 60 · 120', '5분봉 이동평균선 — 봉 20개(100분) · 60개(5시간) · 120개(10시간, 약 하루 반). 날짜를 넘어 이어서 계산한다.'],
