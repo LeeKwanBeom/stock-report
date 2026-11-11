@@ -391,6 +391,12 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .q-luck{background:var(--wineFill);color:var(--onFill)}
 .q-exec{background:var(--cocoa);color:var(--onFill)}
 .q-luck .t,.q-exec .t{color:rgba(255,255,255,.86)}
+/* 11/11 `복기네칸거르기` (사용자 승인 예시) : 네 칸(0건 칸 밖)을 누르면 매매 목록이 그 칸의 카드만 — 누른 칸은 바깥 고리(--wine, 카드색 2px 틈), 매매 묶음 단추 아래 '● 정상만 12건 · 전체 보기 ✕' 한 줄(.rv-kf) */
+.rv-quad .cell[role="button"]{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.rv-quad .cell[aria-pressed="true"]{box-shadow:0 0 0 2px var(--card),0 0 0 4.5px var(--wine)}
+.rv-quad .cell[role="button"]:focus-visible{outline:2px solid var(--brand);outline-offset:6px}
+.rv-kf{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:-4px 2px 10px;font-size:12.5px;color:var(--ink2)}
+.rv-kf button{font:inherit;font-size:12px;font-weight:700;line-height:1;margin:0;padding:6px 9px;border:1px solid var(--roseDash);border-radius:8px;background:var(--card);color:var(--wine);cursor:pointer}
 .rv-bars{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin-top:8px;display:flex;flex-direction:column;gap:7px}
 .rv-bars .r{display:flex;align-items:center;gap:9px;font-size:12px}
 .rv-bars .lab{width:104px;flex:none;color:var(--sub)}
@@ -2292,6 +2298,11 @@ const RV_MARK = { y: '✓', n: '✕', na: '–', q: '?' };
 const RV_GRPS = [['kept', '지킨 매매', '지킨 매매 없음'], ['broke', '어긴 매매', '어긴 매매 없음'], ['out', '누적 밖', '누적 밖 매매 없음']];
 const RV_HOLD = '○ 보유 중';   /* 보유 중(미청산) 카드 배지 — 화면에서만. review-build 는 손익이 아직 없는 매매를 chk 로 두지만(누적 밖) 그 배지(◆ 기준 점검)는 맞지 않아 시험 배지와 같은 회색으로 */
 let RV_GRP = 'kept';
+/* 11/11 `복기네칸거르기` (사용자 승인 예시) : 누적 네 칸을 누르면 매매 목록이 그 칸의 카드만 — 칸이 든 묶음(정상 · 기준 점검 = 지킨, 운 · 실행 문제 = 어긴) 단추가 같이 눌리고 그 안에서 t.kind 로 한 번 더 거른다.
+   누적 밖 카드는 같은 배지여도 안 보인다(네 칸 숫자는 누적 안 매매만 — 보이는 카드 수 = 칸 숫자). 풀기 = 같은 칸 다시 · 묶음 단추 · '전체 보기 ✕'. 한 열(폰)이면 매매 제목까지 내려 준다.
+   고른 칸도 함수 밖(RV_GRP 처럼) — 자동 새로 읽기에도 그대로, 다시 그린 자료에 그 칸 카드가 없으면 푼다 */
+const RV_KGRP = { ok: 'kept', chk: 'kept', luck: 'broke', exec: 'broke' };
+let RV_KIND = '';
 function rvExc(t) { return arr(t.chips).map(c => String(arr(c)[0] ?? '')).filter(s => s.indexOf('예외 · ') === 0); }
 function rvGroup(t) {
   if (rvExc(t).length) return 'out';
@@ -2356,10 +2367,20 @@ function renderReview(rv) {
 
   const q = rv.quad || {};
   const quad = el('div', 'rv-quad');
-  const cell = (cls, n, t) => { const c = el('div', 'cell ' + cls); add(c, el('div', 'n', String(n ?? 0)), el('div', 't', t)); return c; };
+  const qCells = [];   /* 11/11 `복기네칸거르기` : 누를 수 있는 칸(0건 밖) — pickKind 는 아래 매매 구역에서 만든다(누름은 그린 뒤라 그때는 있다) */
+  const cell = (cls, k, n, t) => {
+    const c = el('div', 'cell ' + cls); add(c, el('div', 'n', String(n ?? 0)), el('div', 't', t));
+    if ((num(n) ?? 0) > 0) {
+      c.dataset.kind = k; c.setAttribute('role', 'button'); c.tabIndex = 0; c.setAttribute('aria-pressed', 'false');
+      c.onclick = () => pickKind(k);
+      c.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickKind(k); } };
+      qCells.push(c);
+    }
+    return c;
+  };
   add(quad, el('div'), el('div', 'ax', '수익'), el('div', 'ax', '손실'),
-    el('div', 'ax', '지킴'), cell('q-ok', q.ok, RV_BADGE.ok), cell('q-chk', q.chk, RV_BADGE.chk),
-    el('div', 'ax', '어김'), cell('q-luck', q.luck, RV_BADGE.luck), cell('q-exec', q.exec, RV_BADGE.exec));
+    el('div', 'ax', '지킴'), cell('q-ok', 'ok', q.ok, RV_BADGE.ok), cell('q-chk', 'chk', q.chk, RV_BADGE.chk),
+    el('div', 'ax', '어김'), cell('q-luck', 'luck', q.luck, RV_BADGE.luck), cell('q-exec', 'exec', q.exec, RV_BADGE.exec));
   add(s1, quad);
 
   const vio = arr(rv.violations);
@@ -2370,25 +2391,43 @@ function renderReview(rv) {
     add(s1, bars);
   }
 
-  add(s2, sec('매매', '최근 순', 'mt', 'review.trades'));
+  const mtHead = sec('매매', '최근 순', 'mt', 'review.trades');
+  add(s2, mtHead);
   /* 9/28 `복기매매묶음` : 묶음 단추 — 누르면 카드를 숨기고 보이기만(다시 그리지 않음 — 펴 둔 ? · 펼친 주문 기록 그대로). 숫자는 카드 수뿐 */
   const grpOf = trades.map(rvGroup);
+  if (!RV_KGRP[RV_KIND] || !trades.some((t, i) => grpOf[i] === RV_KGRP[RV_KIND] && t.kind === RV_KIND)) RV_KIND = '';
+  if (RV_KIND) RV_GRP = RV_KGRP[RV_KIND];
   if (!RV_GRPS.some(g => g[0] === RV_GRP)) RV_GRP = 'kept';
   const grpRow = el('div', 'rv-grp'); grpRow.setAttribute('role', 'group'); grpRow.setAttribute('aria-label', '매매 묶음 고르기');
   const cards = [];
   const none = el('div', 'empty');
+  /* 11/11 `복기네칸거르기` : 네 칸으로 거른 동안만 보이는 한 줄 — '● 정상만 12건 · ' + [전체 보기 ✕](누르면 그 묶음 전체) */
+  const kf = el('div', 'rv-kf'); const kfTxt = el('span'); const kfX = el('button', null, '전체 보기 ✕'); kfX.type = 'button';
+  kfX.onclick = () => { RV_KIND = ''; showGrp(); };
+  add(kf, kfTxt, kfX);
   const showGrp = () => {
     grpRow.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.grp === RV_GRP ? 'true' : 'false'));
     let n = 0;
-    cards.forEach(c => { const on = c.dataset.grp === RV_GRP; c.hidden = !on; if (on) n++; });
+    cards.forEach(c => { const on = c.dataset.grp === RV_GRP && (!RV_KIND || c.dataset.kind === RV_KIND); c.hidden = !on; if (on) n++; });
     none.textContent = (RV_GRPS.find(g => g[0] === RV_GRP) || RV_GRPS[0])[2]; none.hidden = n > 0;
+    qCells.forEach(c => c.setAttribute('aria-pressed', c.dataset.kind === RV_KIND ? 'true' : 'false'));
+    kf.hidden = !RV_KIND; kfTxt.textContent = RV_KIND ? `${RV_BADGE[RV_KIND]}만 ${n}건 · ` : '';
+  };
+  const pickKind = k => {
+    const off = RV_KIND === k;
+    RV_KIND = off ? '' : k; RV_GRP = RV_KGRP[k];
+    showGrp();
+    if (off || window.matchMedia('(min-width:860px)').matches) return;   /* 두 열(PC)은 매매가 옆에 보인다 — 한 열(폰)일 때만 매매 제목까지 내림(위 고정 머리 높이만큼 덜) */
+    const stick = document.getElementById('stick');   /* 바로 옮긴다(화면의 다른 scrollTo 와 같게) — behavior 'smooth' 는 앱 미리보기 창 · 헤드리스에서 한 칸도 안 움직였다(11/11 실측) */
+    window.scrollTo(0, Math.max(0, mtHead.getBoundingClientRect().top + window.scrollY - (stick ? stick.offsetHeight : 0) - 8));
   };
   RV_GRPS.forEach(([k, name]) => {
     const b = el('button', null, `${name} ${grpOf.filter(g => g === k).length}`); b.type = 'button'; b.dataset.grp = k;
-    b.onclick = () => { if (RV_GRP === k) return; RV_GRP = k; showGrp(); };
+    b.onclick = () => { if (RV_GRP === k && !RV_KIND) return; RV_GRP = k; RV_KIND = ''; showGrp(); };
     add(grpRow, b);
   });
   add(s2, grpRow);
+  add(s2, kf);
   const leg = el('div', 'rv-legend');
   [['y', 'm-y', '지킴'], ['n', 'm-n', '어김'], ['na', 'm-na', '해당 없음'], ['q', 'm-q', '사람 확인 필요']].forEach(([k, c, t]) => { const s = el('span'); add(s, el('i', 'mk ' + c, RV_MARK[k]), document.createTextNode(t)); leg.appendChild(s); });
   add(s2, leg);
@@ -2400,7 +2439,7 @@ function renderReview(rv) {
     /* 보유 중 = '예외 · ' 칩 글자에 '보유 중' — 배지 '○ 보유 중' · 띠 회색(시험 배지 .b-skip · .rv-trade.skip 과 같은 모양). 묶음은 t.kind 로 가리므로 class 는 모양만. ✕ 는 규칙 줄에 그대로 */
     const hold = rvExc(t).some(s => s.indexOf('보유 중') >= 0);
     const card = el('article', 'rv-trade ' + (hold ? 'skip' : kind));
-    card.dataset.grp = grpOf[ti]; cards.push(card);
+    card.dataset.grp = grpOf[ti]; card.dataset.kind = String(t.kind ?? ''); cards.push(card);
     const th = el('div', 'rv-th');
     /* 10/20 `복기손익색` : 수익 = 빨강 · 손실 = 파랑(t.rate = 수수료 · 세금 뺀 수익률) — 종목명과 배지 앞 숫자. 0 = 회색 '0.0%' · 보유 중 = 색 · 숫자 없음 · 시험 매매도 손익대로(돈이 오간 사실 — 회색 띠 · 배지가 '복기 제외' 를 말한다) */
     const nmSg = hold ? '' : rvSign(t.rate);
@@ -2613,10 +2652,10 @@ const HELP_SEC = {
     ['기준 준수율', '규칙을 다 지킨 매매 ÷ 전체.'],
     ['연속 손실', '손실 날이 이어진 날수 — 그날 산 종목들의 순손익 합이 마이너스인 날. 쉬는 날 판단은 계좌 규칙(대조표 8절).'],
     ['지킨 / 어긴 매매 평균 수익률', '수수료 · 세금을 뺀 수익률의 평균. 두 값이 벌어지면 기준은 맞고 실행이 문제였다는 뜻.'],
-    ['네 칸', '지킴 × 수익 = 정상 / 지킴 × 손실 = 기준 점검(기준이 틀렸나, 월 1회 점검 재료) / 어김 × 수익 = 운(가장 위험, 습관이 된다) / 어김 × 손실 = 실행 문제(내가 안 지켰나).'],
+    ['네 칸', '지킴 × 수익 = 정상 / 지킴 × 손실 = 기준 점검(기준이 틀렸나, 월 1회 점검 재료) / 어김 × 수익 = 운(가장 위험, 습관이 된다) / 어김 × 손실 = 실행 문제(내가 안 지켰나). 칸을 누르면 매매 목록에 그 칸의 매매만 보인다(폰은 매매 제목까지 내려 간다) — 같은 칸을 다시 누르거나 \'전체 보기 ✕\' · 묶음 단추를 누르면 풀린다. 0건 칸은 안 눌린다.'],
     ['어긴 유형 막대', '어긴 규칙별 건수. 누적 밖 카드(보유 중 · 당일 매도 · 이틀 이상 보유 · NXT·애프터 매수만)의 ✕ 도 센다 — 시험 매매만 뺀다.']],
   'review.trades': [
-    ['지킨 매매 · 어긴 매매 · 누적 밖', '제목 아래 단추 — 누른 묶음의 카드만 보인다(처음엔 지킨 매매). 지킨 매매 = 네 칸의 정상 · 기준 점검, 어긴 매매 = 운 · 실행 문제 — 둘 다 예외 칩이 없는 카드로 누적 구역에 드는 매매. 누적 밖 = 그 밖 전부 — 시험 매매 · 예외 칩 카드(보유 중 · 당일 매도 · 이틀 이상 보유 · NXT·애프터 매수만). 누적 밖 카드에 네 칸 배지가 붙어 있어도 준수율 · 네 칸 · 평균에는 안 든다(✕ 는 어긴 유형 막대에 센다). 단추 숫자는 카드 수. 아래 ✓ ✕ – ? 는 카드 안 규칙 줄마다의 표시라 이 묶음과 다르다.'],
+    ['지킨 매매 · 어긴 매매 · 누적 밖', '제목 아래 단추 — 누른 묶음의 카드만 보인다(처음엔 지킨 매매). 지킨 매매 = 네 칸의 정상 · 기준 점검, 어긴 매매 = 운 · 실행 문제 — 둘 다 예외 칩이 없는 카드로 누적 구역에 드는 매매. 누적 밖 = 그 밖 전부 — 시험 매매 · 예외 칩 카드(보유 중 · 당일 매도 · 이틀 이상 보유 · NXT·애프터 매수만). 누적 밖 카드에 네 칸 배지가 붙어 있어도 준수율 · 네 칸 · 평균에는 안 든다(✕ 는 어긴 유형 막대에 센다). 단추 숫자는 카드 수. 누적의 네 칸을 누르면 그 칸이 든 묶음 단추가 같이 눌리고 그 칸의 카드만 남는다(단추 아래 \'● 정상만 n건 · 전체 보기 ✕\' 줄) — 누적 밖 카드는 같은 배지여도 안 나온다. 아래 ✓ ✕ – ? 는 카드 안 규칙 줄마다의 표시라 이 묶음과 다르다.'],
     ['▸ 카드', '처음엔 머리 줄(종목 · 수익률 · 배지, 아래 줄 날짜)만 보인다 — 누르면 그 매매의 칩 · 표 · 규칙 체크가 펼쳐지고, 머리 줄을 다시 누르면 접힌다. 카드마다 따로.'],
     ['종목명 색 · 숫자', '수익 = 빨강 · 손실 = 파랑. 배지 앞 숫자가 그 수익률(수수료 · 세금 뺀 값 — 펼친 표의 수익률과 같다). 0% 는 회색 0.0%, 보유 중은 색 · 숫자 없음, 시험 매매도 손익대로 칠한다. 장중 탭의 빨간 종목명(섹터 1위 대장)과는 뜻이 다르다.'],
     ['왼쪽 띠 · 배지', '네 칸 분류. 점선 = 기준 점검 · 회색 = 시험 매매(복기 제외) · 보유 중.'],
