@@ -2,7 +2,7 @@
   "id": "./",
   "name": "종베 기록",
   "short_name": "종베",
-  "description": "종가베팅 검증 기록 — 장중 · 시계열 · 복기",
+  "description": "종가베팅 검증 기록 — 장중 · 복기",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",

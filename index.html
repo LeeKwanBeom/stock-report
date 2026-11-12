@@ -77,7 +77,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 /* 9/13 : 윗변은 폰 상태 표시줄 색(theme-color = --heroA) 한 색으로 시작해 아래로 대각선 그라데이션에 섞임 */
 .hero{color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 6px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 44px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow)}
 .hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 18px 18px}
-.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
+.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
 .tabs button{padding:6px 0;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.72);font:inherit;font-size:12.5px;cursor:pointer}
 .tabs button.on{background:#fff;color:#7a0c17;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .tabs button:focus-visible{outline:2px solid #fff;outline-offset:1px}
@@ -389,7 +389,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
   <div class="wrap">
     <div class="tabs">
       <button data-tab="live" class="on">장중</button>
-      <button data-tab="series">시계열</button>
+      <!-- 11/12 시계열숨김 (사용자 "시계열 탭 사용 안 함 · 추천대로 숨겨") : 탭 버튼만 뺌. 화면 코드 · JSON 칸(condFlow · condTimes · inqFlow)은 그대로 — 되살리려면 이 버튼 · .tabs 칸 수(repeat 2 → 3) · TAB_ORDER · loadDate 의 renderSeries 호출 네 곳 -->
       <button data-tab="review">복기</button>
     </div>
     <div class="hrow"><h1 id="heroTitle">장중</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button><a class="hd-tima" href="https://node.tail180b94.ts.net/" target="_blank" rel="noopener">티마 · 계획 ↗</a><button class="thm-btn" id="themeBtn" type="button"><span class="thm-dk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/></svg>다크</span><span class="thm-lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>밝게</span></button></div>
@@ -1722,7 +1722,7 @@ const HELP_COMMON = [
     ['지난 날짜', '날짜 줄 ◀ ▶ 또는 목록으로 — 9/17(통합 자) 부터. 복기 탭에는 날짜 줄이 없다(누적).']]],
   ['탭 고정 · 좌우 밀기 · 색', [
     ['탭 막대 고정', '조금이라도 스크롤하면 탭 막대가 맨 위에 붙는다. 거기서 탭을 누르면 새 탭의 처음이 막대 바로 아래에 온다.'],
-    ['좌우 밀기', '화면을 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭. 화면 가장자리는 폰의 뒤로 가기라 무시. 넓은 표(시계열 격자 · 종목 순위표) 위에서는 표가 옆으로 스크롤된다. 지수 그림 위에서도 탭이 안 넘어간다(짚고 옆으로 끌면 값을 본다).'],
+    ['좌우 밀기', '화면을 왼쪽으로 밀면 다음 탭, 오른쪽으로 밀면 이전 탭. 화면 가장자리는 폰의 뒤로 가기라 무시. 넓은 표(종목 순위표) 위에서는 표가 옆으로 스크롤된다. 지수 그림 위에서도 탭이 안 넘어간다(짚고 옆으로 끌면 값을 본다).'],
     ['새로고침', '홈 화면 앱은 5분 넘게 떠나 있다 돌아오면 자료를 다시 불러온다. 맨 위 "지금" 시계는 1분마다 갱신. 장중 탭 지수 그림만 장중에 5분마다 새 봉으로 바뀐다.'],
     ['색', '빨강 = 상승 · 가속 · 대장 · 1위, 파랑 = 하락 · 감속(HTS 원색). 주황 = 주의(괴리 · 비고 · push 실패 · 오래된 자료). 크림슨 · 연분홍 배지 = 정보.']]]
 ];
@@ -1800,7 +1800,8 @@ async function loadDate(ymd, dates) {
   catch (e) { ['live', 'series'].forEach(id => { const b = document.getElementById(id); b.innerHTML = ''; add(b, el('div', 'empty', '데이터를 못 불러왔습니다 : ' + e.message)); }); return; }
   try { renderLive(d); } catch (e) { add(document.getElementById('live'), el('div', 'empty', '장중 화면 오류 : ' + e.message)); }
   IX_D = d; pollIndexLive(true);   /* 9/17 지수5분 : 5분 회차 파일이 더 새 것이면 지수 그림만 바꾼다 (기다리지 않는다) */
-  try { renderSeries(d); } catch (e) { add(document.getElementById('series'), el('div', 'empty', '시계열 화면 오류 : ' + e.message)); }
+  /* 11/12 시계열숨김 : 탭을 숨겨 그리지 않는다 — 되살릴 때 아래 줄을 다시 켠다
+  try { renderSeries(d); } catch (e) { add(document.getElementById('series'), el('div', 'empty', '시계열 화면 오류 : ' + e.message)); } */
   renderDatebar(String(d.date || ''));
   setHero(CUR);   // 처음 탭은 CUR 기본값(장중) 하나로 — 자료를 다시 불러와도 탭은 안 바꾼다(탭 이동은 사용자 몫)
 }
@@ -1810,7 +1811,7 @@ const HERO_TABS = HERO_EL.querySelector('.tabs');
 const STICK = document.getElementById('stick');
 STICK.firstElementChild.appendChild(HERO_TABS.cloneNode(true));
 
-const TAB_ORDER = ['live', 'series', 'review'];
+const TAB_ORDER = ['live', 'review'];   // 11/12 시계열숨김 : 'series' 뺌 — 밀면 장중 ↔ 복기
 // how : 'stick' = 고정 막대에서 누름 / 'swipe' = 좌우로 밈 — 둘 다 새 탭의 처음이 막대 바로 아래에 오게
 function switchTab(tab, how) {
   CUR = tab;
