@@ -95,6 +95,10 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 .thm-btn span{display:inline-flex;align-items:center;gap:4px}
 .thm-btn svg{width:13px;height:13px;flex:none}
 .thm-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+/* 11/12 티마계획링크 : 머리 줄 '티마 · 계획 ↗' = 티마 앱(Tailscale · 내 기기끼리만) 첫 화면을 새 탭으로 — 계획 화면은 거기 머리 '계획'(같은 출처 길). /plan/ 바로 링크는 계획 서버가 다른 사이트에서 연 창을 403 으로 막아 안 씀(plan-view.ps1 연속 클릭 가로채기 막기 · 사용자 승인 배치) */
+.hd-tima{flex:none;margin-left:auto;display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:12px;border:1.5px solid rgba(255,255,255,.7);background:rgba(0,0,0,.15);color:#fff;font-size:12px;font-weight:700;line-height:1;text-decoration:none;white-space:nowrap}
+.hd-tima~.thm-btn{margin-left:0}
+.hd-tima:focus-visible{outline:2px solid #fff;outline-offset:2px}
 :root[data-theme="dark"] .thm-dk,:root:not([data-theme="dark"]) .thm-lt{display:none}
 .help{background:var(--card);border:1.5px solid var(--roseDash);border-radius:16px;padding:12px 14px 10px;margin:0 0 14px;box-shadow:var(--shadow);font-size:12.5px;line-height:1.6}
 .help-h{display:flex;align-items:center;gap:8px;margin-bottom:4px}
@@ -388,7 +392,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
       <button data-tab="series">시계열</button>
       <button data-tab="review">복기</button>
     </div>
-    <div class="hrow"><h1 id="heroTitle">장중</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button><button class="thm-btn" id="themeBtn" type="button"><span class="thm-dk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/></svg>다크</span><span class="thm-lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>밝게</span></button></div>
+    <div class="hrow"><h1 id="heroTitle">장중</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button><a class="hd-tima" href="https://node.tail180b94.ts.net/" target="_blank" rel="noopener">티마 · 계획 ↗</a><button class="thm-btn" id="themeBtn" type="button"><span class="thm-dk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/></svg>다크</span><span class="thm-lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>밝게</span></button></div>
     <div class="hsrow"><div class="hsub" id="heroSub">매시 07분 갱신 · 저녁 20:12 까지</div></div>
     <div class="hq" id="heroQ" hidden>손실이 났을 때 — <b>기준이 틀렸나, 내가 안 지켰나</b></div>
   </div>
