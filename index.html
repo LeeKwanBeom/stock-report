@@ -834,10 +834,7 @@ function renderLive(d) {
   add(box, nowLine(d));   // 8-3 ③ 지금 / 자료
   add(box, el('h1', null, `${+ymd.slice(4, 6)}/${+ymd.slice(6, 8)} (${wd}) 하루 흐름`));
   box.lastChild.style.fontSize = '18px'; box.lastChild.style.margin = '0';
-  // 8-3 ① (9/14) : 판정 전이면 몇 시 자료까지인지 + 매시 07분 갱신 안내. 판정 뒤는 15:20 까지
-  add(box, el('div', 'status', d.stage === 'live'
-    ? (has(d.at) ? `${tLabel(d.at)} 까지 · 판정 전 · 관찰 전용, 후보는 15:50 확정 알림 · 매시 07분쯤 갱신` : '오늘 장중 자료 수집 전 · 매시 07분쯤 갱신')
-    : (lastFlowT(d) > '1530' ? `${tLabel(lastFlowT(d))} 까지 · 16:00 부터 애프터마켓 (점선 오른쪽, 판정과 무관) · 관찰 전용, 후보는 15:50 확정 알림` : '15:20 까지 · 관찰 전용, 후보는 15:50 확정 알림')));   // 9/15 저녁 : 저녁 회차가 있으면
+  // 11/14 : 제목 아래 안내 줄(몇 시까지 · 관찰 전용 · 15:50 확정 알림) 삭제 — 사용자 "해당 문구 삭제"
   add(box, indexChartBlock(d));   // 9/17 지수차트 (1A 2A 3A) : 코스피·코스닥 5분봉 선 차트. indexChart 가 없는 날짜(9/16 이전)는 안 그린다
 
   const flow = arr(d.sectorFlow).filter(r => r['섹터명'] !== '개별이슈');
