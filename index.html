@@ -184,6 +184,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px soli
 .wc-st{font-size:12px;color:var(--sub);margin:2px 0 6px}.wc-line{display:flex;flex-wrap:wrap;gap:4px;padding:3px 0 0 1em}.wc-on,.wc-calc,.wc-na{font-size:10.5px;padding:1px 7px;border-radius:10px;white-space:nowrap}.wc-on{background:var(--warnBg);color:var(--warn)}.wc-calc{border:1px dashed var(--warn);color:var(--warn);padding:0 6px}.wc-na{border:1px solid var(--sub);color:var(--sub);padding:0 6px}   /* 10/13 `경고칩` (사용자 결정 ② 6 — 추천대로) : 세 표 겹침 카드 종목의 셋째 줄(칩이 있는 종목만, 윗줄 · 아랫줄 그대로). ① 지정 = 채움(우선주 · 신규주 .flag.warn 과 같은 톤) · ② 요건 = 점선 테두리 · 모름(지정? · 요건?) = 실선 --sub.
    테두리 칩은 padding 을 1px 줄여 채운 칩과 높이가 같다. 머리 상태 줄 .wc-st 는 읽을 글이라 --sub(.status 의 --muted 는 흰 카드 명암 2.99:1). 다크는 변수만(새 다크 규칙 0). 전역 .chip · .flag · .status 와 이름 안 겹치게 wc- 접두사 */
 .iq3-tg{font:inherit;color:var(--sub);background:none;border:0;padding:0;margin:0;cursor:pointer;font-variant-numeric:tabular-nums;white-space:nowrap}.iq3-tl{padding:6px 0 2px 1em}.iq3-tl-g{display:grid;grid-template-columns:2.6em repeat(39,minmax(0,1fr));column-gap:1px;row-gap:2px;align-items:center}.iq3-tl-h{font-size:10.5px;line-height:13px;color:var(--sub);font-variant-numeric:tabular-nums}.iq3-tl-lb{font-size:11px;line-height:10px;color:var(--sub);white-space:nowrap}.iq3-c{height:9px;border-radius:1px}.iq3-tl-g .iq3-cr{margin-top:3px}.iq3-c1{background:var(--brand)}.iq3-c2{background:var(--roseDash)}.iq3-c0{background:var(--line)}.iq3-cv{background:var(--wine)}.iq3-tl-s{font-size:12px;color:var(--sub);padding-top:5px;font-variant-numeric:tabular-nums}   /* 11/11 `세표10분` : 세 표 겹침 카드 10분 칸 펼침 그래프(승인 시안 그대로 — docs\세표10분_시안) */
+.iq3-tl-ge{grid-template-columns:2.6em repeat(28,minmax(0,1fr))}.iq3-tl-ed{margin-top:8px;padding-top:6px;border-top:1px dashed var(--line)}.iq3-tl-es{padding:0 0 4px}   /* 11/16 `세표저녁` : 펼침 그래프 밑 저녁 줄(승인 시안 v4 그대로 — docs\세표저녁_시안) */
 .iq3-fvw{display:inline-flex;align-items:center;white-space:nowrap}.iq3-fvb{font:inherit;font-size:17px;line-height:1;color:var(--muted);background:none;border:0;padding:6px 0 6px 10px;margin:-6px 0;cursor:pointer}.iq3-fvb.on{color:var(--brand)}.iq3-fv{background:var(--card);border:1px solid var(--roseLine);border-radius:16px;padding:4px 14px 6px;margin:0 0 10px;box-shadow:var(--shadow)}.iq3-fvh{font-size:12px;font-weight:800;color:var(--wine);padding:4px 0 2px}.iq3-fvl{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--line2)}.iq3-fvh+.iq3-fvl{border-top:0}.iq3-fvl .iq3-fvb{padding:6px 6px 6px 0;font-size:15px}.iq3-fvn{display:flex;align-items:center;min-width:0;white-space:nowrap;overflow:hidden}.iq3-fvs{display:flex;align-items:center;gap:8px;white-space:nowrap;font-variant-numeric:tabular-nums}.iq3-fvr{font-size:12px;color:var(--sub)}.iq3-fvr b{color:var(--text);font-weight:700}.iq3-fvx{color:var(--muted);font-weight:400}   /* 시안 `세표관심` */
 .iq3-fvl{flex-wrap:wrap}.iq3-fvs{margin-left:auto}   /* 11/12 `세표관심` 사용자 결정 : 띠 줄은 넘칠 때만 순위 · 등락률을 아랫줄로(좁은 폭 · 긴 이름에서 이름이 잘리지 않게) — 다 들어가면 승인 시안 모양 그대로 */
 .hg-on,.hg-no,.hg-na{font-size:10.5px;padding:0 6px;border-radius:10px;white-space:nowrap}.hg-on{background:var(--rose);color:var(--wine);border:1px solid var(--roseLine)}.hg-no{border:1px dashed var(--sub);color:var(--sub)}.hg-na{border:1px solid var(--sub);color:var(--sub)}   /* 10/16 `호가1억칩` (사용자 결정 ③ — 추천대로) : 세 표 겹침 카드 셋째 줄 맨 앞. 통과 = 채움(복기 '지킴' .b-ok 와 같은 톤 — 경고칩 .wc-on 의 경고 색과 가른다) · 1억 없음 = 점선 회색 · 못 받음(호가?) = 실선 회색. 높이는 .wc-* 와 같게(테두리 1px + padding 0). 다크는 변수만 */
@@ -1085,6 +1086,15 @@ function renderLive(d) {
           const srBad = (t, gp) => Array.isArray(srFail[t]) && srFail[t].includes(gp);
           const SR_ALL = []; for (let h = 9; h <= 15; h++) for (let mi = 0; mi < 60; mi += 10) { const t = String(h).padStart(2, '0') + String(mi).padStart(2, '0'); if (t <= '1520') SR_ALL.push(t); }
           const hmS = t => `${+t.slice(0, 2)}:${t.slice(2)}`;
+          /* 11/16 `세표저녁` (사용자 결정 — 정의 docs\세표저녁_기록.md, 승인 시안 v4) : 날짜 JSON inq3SeriesEve(pages-export v3.12 — 저녁 10분 자료가 있는 날만)가 있고
+             제목 회차가 15:20 이면 펼친 그래프 밑에 저녁 줄(15:30 ~ 20:00 의 10분 칸 28개). 저녁 m = 자료가 있는 저녁 칸 수 · n = 세 표 모두 15위 안인 칸 — 낮 n/m · ★ · ☆ 와 섞지 않는다.
+             종목 = 15:20 카드 종목 그대로. 칸 색 · 빈 자리 · 실패 뜻은 낮 그래프와 같다. 키가 없으면 그 전 화면 그대로. 표시만 — 판정 · 채점 · 정렬에 안 쓴다 */
+          const srE = srOn && iq3At === '1520' && d.inq3SeriesEve && Array.isArray(d.inq3SeriesEve['시각']) && d.inq3SeriesEve['순위'] ? d.inq3SeriesEve : null;
+          const SR_EVE = []; for (let h = 15; h <= 20; h++) for (let mi = 0; mi < 60; mi += 10) { const t = String(h).padStart(2, '0') + String(mi).padStart(2, '0'); if (t >= '1530' && t <= '2000') SR_EVE.push(t); }
+          const srEIdx = {}; if (srE) srE['시각'].forEach((t, i) => { srEIdx[String(t)] = i; });
+          const srET = srE ? srE['시각'].map(String).filter(t => SR_EVE.includes(t)) : [];
+          const srEFail = srE && srE['실패'] && typeof srE['실패'] === 'object' ? srE['실패'] : {};
+          const srEBad = (t, gp) => Array.isArray(srEFail[t]) && srEFail[t].includes(gp);
           const iq3Amt = {};   // 코드 → { 등락률(10분 표) · 거래대금순위 · 거래대금억 } — pages-export inq3Card, 카드 회차가 같을 때만
           if (d.inq3Card && String(d.inq3Card['시각']) === iq3At) arr(d.inq3Card['종목']).forEach(r => { iq3Amt[String(r['코드'])] = r; });
           /* 시안 `세표관심` : 사람이 고른 종목 표시 — 이 폰 브라우저에만(localStorage, 날짜별). 판정 · 채점 · 정렬에 안 쓴다 */
@@ -1149,7 +1159,32 @@ function renderLive(d) {
                   add(grid, el('span', 'iq3-c' + k + (gp ? '' : ' iq3-cr')));
                 });
               });
-              srPanel = add(el('div', 'iq3-tl'), grid, el('div', 'iq3-tl-s', sumTxt));
+              const eveEls = [];
+              if (srET.length) {   // 11/16 `세표저녁` : 저녁 줄 — 점선 · 머리 '저녁 15위 안 n/m회차' · 28칸 그래프(16 ~ 20 눈금) · 밑 글(낮과 같은 꼴)
+                const oE = srE['순위'][c] || {};
+                const rkE = (gp, t) => { const i = srEIdx[t]; const a = oE[gp]; const v = a && i !== undefined ? a[i] : null; return v === null || v === undefined || v === '' ? null : +v; };
+                const ovE = t => IQ3_GAPS.every(gp => { const v = rkE(gp, t); return v !== null && v <= IQ3_N; });
+                const ovTE = srET.filter(ovE), mE = srET.length;
+                let runE = 0; for (let i = srET.length - 1; i >= 0 && ovE(srET[i]); i--) runE++;
+                const hdE = `저녁 ${IQ3_N}위 안 ${ovTE.length}/${mE}회차`;
+                const sumE = (!ovTE.length ? `${IQ3_N}위 안 겹침 없음` : `첫 겹침 ${hmS(ovTE[0])} · ` + (runE ? `지금 연속 ${runE}회차 (${hmS(srET[srET.length - runE])}~)` : `지금은 안 겹침 (마지막 ${hmS(ovTE[ovTE.length - 1])})`));
+                const gE = el('div', 'iq3-tl-g iq3-tl-ge');
+                add(gE, el('span'));
+                for (let h = 16; h <= 20; h++) { const i0 = SR_EVE.indexOf(String(h) + '00'); const s = el('span', 'iq3-tl-h', String(h)); s.style.gridColumn = `${i0 + 2} / span ${Math.min(6, SR_EVE.length - i0)}`; add(gE, s); }
+                [['누적', '당일누적'], ['1시간', '1시간'], ['10분', '10분'], ['겹침', null]].forEach(([lb, gp]) => {
+                  const lbE = el('span', 'iq3-tl-lb' + (gp ? '' : ' iq3-cr'), lb); lbE.style.gridColumn = '1'; add(gE, lbE);
+                  SR_EVE.forEach(t => {
+                    let k = '';   // 아직 안 온 칸 · 자료 없는 칸 = 빈 자리
+                    if (srEIdx[t] !== undefined) {
+                      if (gp) { if (!srEBad(t, gp)) { const v = rkE(gp, t); k = v === null ? ' iq3-c0' : (v <= IQ3_N ? ' iq3-c1' : ' iq3-c2'); } }   // 못 받은 간격 = 빈 자리
+                      else k = ovE(t) ? ' iq3-cv' : ' iq3-c0';
+                    }
+                    add(gE, el('span', 'iq3-c' + k + (gp ? '' : ' iq3-cr')));
+                  });
+                });
+                eveEls.push(add(el('div', 'iq3-tl-ed'), el('div', 'iq3-tl-s iq3-tl-es', hdE), gE, el('div', 'iq3-tl-s', sumE)));
+              }
+              srPanel = add(el('div', 'iq3-tl'), grid, el('div', 'iq3-tl-s', sumTxt), ...eveEls);
               srPanel.hidden = true;
               const lbT = () => `${IQ3_N}위 안 ${ovT.length}/${mS}회차 ${srPanel.hidden ? '▸' : '▾'}`;
               srBtn = el('button', 'iq3-tg', lbT());
@@ -1687,6 +1722,7 @@ const HELP_SEC = {
     ['☆ (이름 앞)', '15위 안 n/m회차 에서 빠진 칸(m − n)이 m 의 10% 미만인 종목 — 딱 10% 는 안 붙는다. 15:02 화면(37칸)은 3칸 빠짐까지 ☆, 4칸이면 없음 · 오전은 10:40 칸(11칸)이 오기 전엔 한 칸만 빠져도 없음. 어느 칸이 빠졌는지는 ▸ 그래프로 본다. 10% 는 사용자가 정한 숫자로 강의 기준이 아니다. 못 받은 칸이 있는 날은 원래 ★ 종목이 ☆ 로 나올 수 있다(n/m 과 같은 뜻). 10분 자료가 없는 날은 옛 뜻 — n = m − 1(딱 한 수집 회차만 빠짐, 09:05 화면 0/1 엔 안 붙음).'],   // 11/11 `세표10분` (사용자 결정 10%)
     ['수집 실패 · 수집 전', '그 회차에 한 간격이라도 못 받았으면 겹침을 세지 않고 못 받은 간격만 한 줄. 그래프에서는 한 간격을 못 받은 10분 칸이면 그 줄 칸이 빈 자리 · 겹침 줄은 안 겹침 색(m 에 세고 n 에 안 셈), 그 칸 자료가 아예 없는 지난 칸이면 네 줄 모두 빈 자리(m 에 안 셈). 세 간격 수집은 10/7 부터라 그 전 날짜는 "수집 전" 한 줄뿐 — 키움 조회에 날짜 칸이 없어 지난 날짜로는 만들 수 없다(10분 칸도 같은 이유로 11/12 부터).'],   // 11/11 `세표10분`
     ['그래프 (▸ 를 눌러 펼친 칸)', '셋째 줄 오른쪽 "15위 안 n/m회차 ▸" 를 누르면 그 종목 줄 끝에 펼쳐지고(▾) 다시 누르면 접힌다 — 처음엔 모두 접힘. 가로 = 09:00 ~ 15:20 의 10분 칸 39개(위 숫자 9 ~ 15 = 시), 네 줄 = 누적 · 1시간 · 10분 표의 그 칸 순위와 겹침. 칸 색 : 빨강 = 15위 안 · 연분홍 = 16 ~ 20위 · 옅은 칸 = 20위 밖, 겹침 줄은 세 표 모두 15위 안인 칸만 진한 색(나머지는 옅은 칸). 아직 안 온 칸 · 자료 없는 칸 · 못 받은 간격은 빈 자리. 밑 글 = 처음 겹친 칸과 지금 겹침이 몇 칸째 이어지는지("지금 연속 n회차" 의 회차 = 10분 칸, 끊겼으면 마지막 겹친 칸) · 겹친 칸이 없으면 "15위 안 겹침 없음". 10분 자료가 없는 날은 ▸ · 그래프가 없다. 보기만 — 정렬 · 판정 · 채점에 안 쓴다.'],   // 11/11 `세표10분` (승인 시안)
+    ['저녁 15위 안 n/m회차 (펼친 그래프 밑 점선 아래)', '15:20 카드 종목의 저녁 그래프 — 가로 = 15:30 ~ 20:00 의 10분 칸 28개(위 숫자 16 ~ 20 = 시), 네 줄 · 칸 색 · 빈 자리 · 밑 글 뜻은 낮 그래프와 같다("지금 연속" 의 지금 = 마지막으로 온 저녁 칸). m = 15:30 칸부터 자료가 있는 저녁 칸 수, n = 그중 세 표 모두 15위 안인 칸. 낮 n/m · ★ · ☆ 와 합치지 않는다 — 저녁 당일누적 표는 낮 조회까지 합친 하루 누적이라 뜻이 다르다. 칸 = 수집 회차의 칸(15:40 · 16:00 · 17:00 · 18:00 · 19:00 · 19:50 · 20:02 회차 = 20:00 칸)은 수집 회차 자료, 나머지 21칸은 따로 10분마다 받는 자료다. 15:20 카드 종목만 — 저녁에만 새로 겹친 종목은 안 나온다. 저녁 10분 자료가 없는 날(11/16 까지)과 저녁 칸이 오기 전 화면(15:27 까지)엔 이 줄이 없다. 보기만 — 정렬 · 판정 · 채점에 안 쓴다.'],   // 11/16 `세표저녁` (승인 시안 v4)
     ['▸ 대금 35위 밖 n종목', '세 표 모두 20위 안인 종목 중 거래대금 35위 밖(100위 밖 포함 — 취소선 ①)을 위 목록에서 빼 카드 밑에 접어 둔 것 — 누르면 펼쳐진다. 대장 후보(35위 안)를 빨리 훑게 하려는 것(10/19 사용자 결정). 안의 줄 모양 · 순서(당일누적 순)는 위와 같다. 35위 밖이 없으면 이 줄이 없고, 모두 35위 밖이면 위에 "대금 35위 안 종목 없음". 대금 순위 값이 없는 종목과 ② ~ ④ 로만 그어진 종목은 위에 그대로 둔다. 판정에 안 쓴다.'],   // 10/19 세표35숨김 (사용자 결정)
     ['[1억 | 8,600원 | 1.75억] 연분홍 칩 (셋째 줄 왼쪽)', '호가 한 칸 1억 통과 — 대조표 C10(강의 "1억을 세팅하라"). 그 회차 수집 끝에 받은 KRX+NXT 통합 호가의 매수 1~10호가 중 한 칸이라도 가격 × 잔량이 1억 이상이면 붙는다. 칩 안 세 칸(얇은 세로 선으로 가름) = 1억 통과 | 가장 두꺼운 매수 칸의 가격 | 그 칸 금액(억, 소수 둘째 자리). 이 카드에서 강의 숫자로 색을 가르는 것은 이 칩뿐이다.'],
     ['[1억 없음 | 최대 0.37억] 점선 칩', '매수 10칸 모두 1억 미만 — 숫자는 가장 두꺼운 칸의 금액(칸막이 선도 점선). C10 은 미달이면 그 종목은 사지 않는다는 기준이지만, 빼는 것은 사람(관문6)이 한다 — 화면이 종목을 지우지 않는다.'],
