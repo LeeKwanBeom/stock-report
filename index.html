@@ -77,7 +77,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 /* 9/13 : 윗변은 폰 상태 표시줄 색(theme-color = --heroA) 한 색으로 시작해 아래로 대각선 그라데이션에 섞임 */
 .hero{color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 6px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 44px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow)}
 .hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 18px 18px}
-.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
 .tabs button{padding:6px 0;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.72);font:inherit;font-size:12.5px;cursor:pointer}
 .tabs button.on{background:#fff;color:#7a0c17;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .tabs button:focus-visible{outline:2px solid #fff;outline-offset:1px}
@@ -385,6 +385,29 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
 .rv-say{margin-top:11px;font-size:12.5px;line-height:1.6;color:var(--ink2);background:var(--rose);border-radius:10px;padding:9px 11px}
 .rv-foot{margin:24px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.9;border-top:1px solid var(--rule);padding-top:14px}
 .rv-foot b{color:var(--sub);font-weight:700}
+/* 11/16 `선별탭` (사용자 결정 — 승인 시안 A) : 선별 탭 달력 · 리스트. 접두사 pk- (전역 이름과 겹치지 않게). 섹터 이름표 = 12px · 보통 · --sub(세 표 카드 .iq-sec 와 같은 값) */
+.pk-mh{display:flex;align-items:center;justify-content:space-between;margin:0 0 6px}
+.pk-mt{font-size:15px;font-weight:700;color:var(--text)}
+.pk-nav{border:0;background:transparent;color:var(--wine);font:inherit;font-size:22px;line-height:1;padding:2px 14px;cursor:pointer}
+.pk-nav:disabled{color:var(--line);cursor:default}
+.pk-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;text-align:center}
+.pk-wd{font-size:11.5px;color:var(--sub);padding:2px 0 4px}
+.pk-cell{min-height:44px;border-radius:10px;padding:5px 0 4px;border:0;background:transparent;font:inherit;color:var(--text)}
+.pk-cell .pk-dn{display:block;font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
+.pk-cell .pk-cn{display:block;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;min-height:1.4em}
+.pk-cell .pk-dot{color:var(--wine)}
+button.pk-cell{cursor:pointer;background:var(--soft)}
+button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--wine)}
+.pk-lg{margin-top:8px;font-size:11.5px;line-height:1.6;color:var(--sub)}
+.pk-lh{font-size:13px;font-weight:700;color:var(--text);margin:0 0 6px}
+.pk-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line2)}
+.pk-row:first-child{border-top:0}
+.pk-nm{flex:1;min-width:0}
+.pk-sec{font-size:12px;color:var(--sub)}
+.pk-amt{white-space:nowrap;font-variant-numeric:tabular-nums}
+.pk-pl{width:34px;text-align:right}
+.pk-plan{font-size:11px;color:var(--wine);background:var(--rose);border-radius:10px;padding:2px 6px;white-space:nowrap}
+.pk-none{padding:6px 0;color:var(--sub);font-size:13px}
 </style>
 </head>
 <body>
@@ -393,6 +416,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
     <div class="tabs">
       <button data-tab="live" class="on">장중</button>
       <!-- 11/12 시계열숨김 (사용자 "시계열 탭 사용 안 함 · 추천대로 숨겨") : 탭 버튼만 뺌. 화면 코드 · JSON 칸(condFlow · condTimes · inqFlow)은 그대로 — 되살리려면 이 버튼 · .tabs 칸 수(repeat 2 → 3) · TAB_ORDER · loadDate 의 renderSeries 호출 네 곳 -->
+      <button data-tab="pick">선별</button><!-- 11/16 `선별탭` : 장중과 복기 사이 (.tabs 칸 수 repeat 3 · TAB_ORDER) — 시계열을 되살리면 4 -->
       <button data-tab="review">복기</button>
     </div>
     <div class="hrow"><h1 id="heroTitle">장중</h1><button class="hbtn" id="helpBtn" aria-label="이 탭 읽는 법" aria-expanded="false" aria-controls="help">?</button><a class="hd-tima" href="https://node.tail180b94.ts.net/" target="_blank" rel="noopener">티마 · 계획 ↗</a><button class="thm-btn" id="themeBtn" type="button"><span class="thm-dk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/></svg>다크</span><span class="thm-lt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>밝게</span></button></div>
@@ -406,6 +430,7 @@ details summary{cursor:pointer;color:var(--sub);font-size:12px;padding:8px 0}
   <div class="datebar" id="datebar" hidden></div>
   <section id="live"><div class="empty">불러오는 중</div></section>
   <section id="series" hidden><div class="empty">불러오는 중</div></section>
+  <section id="pick" hidden><div class="empty">불러오는 중</div></section>
   <section id="review" hidden><div class="empty">불러오는 중</div></section>
 </div>
 <script>
@@ -1681,6 +1706,83 @@ function renderReview(rv) {
   if (CUR === 'review') setHero('review');
 }
 
+/* ── 11/16 `선별탭` (사용자 결정 — 승인 시안 A, 기록 D:\stock docs\선별탭_기록.md) ─────────────────
+   장중과 복기 사이 '선별' 탭 — 오후확인 0-1 에서 사용자가 말한 계획매매 리스트를 달력으로. 자료 data/planlist.json(pages-export v3.13 —
+   날짜 · 종목명 · 섹터명 · 거래대금억 · 계획 여부뿐, 오후확인 리스트는 다음 거래일 09:00 뒤 회차부터 실림). 달력 = 월 ~ 금 다섯 칸, 칸 = 날짜 + 종목 수
+   (계획 건 종목이 있으면 숫자 뒤 ●), 기록 없는 날은 빈칸. 처음 열면 기록이 있는 가장 최근 날 · 그 달, 칸을 누르면 아래 리스트가 그날로.
+   리스트 줄 = 섹터 이름표(세 표 카드와 같은 글자 · 없으면 '—') + 종목명 + 오른쪽 거래대금(세 표 카드와 같은 toLocaleString() + '억' · 없으면 '—') + 계획 칩.
+   표시만 — 판정 · 채점 · 표본 무관. 자료가 없거나 모양이 틀려도 이 구역만 비고 다른 탭은 그대로 */
+const PK = { days: {}, keys: [], sel: null, ym: '' };
+const pkYmd = t => `${t.getFullYear()}${pad2(t.getMonth() + 1)}${pad2(t.getDate())}`;
+const pkShiftYm = (ym, k) => { const t = new Date(+ym.slice(0, 4), +ym.slice(4, 6) - 1 + k, 1); return pkYmd(t).slice(0, 6); };
+function renderPick(pl) {
+  const days = {};
+  arr(pl && pl.days).forEach(x => { const dd = String((x && x.date) || ''); if (/^\d{8}$/.test(dd)) days[dd] = arr(x.items).filter(i => i && has(i.name)); });
+  PK.days = days; PK.keys = Object.keys(days).sort();
+  const keep = PK.sel && days[PK.sel] ? PK.sel : null;   // 다시 불러와도 보던 날 그대로
+  PK.sel = keep || (PK.keys.length ? PK.keys[PK.keys.length - 1] : null);
+  if (!keep || !PK.ym) PK.ym = (PK.sel || pkYmd(new Date())).slice(0, 6);
+  drawPick();
+}
+function drawPick() {
+  const box = document.getElementById('pick'); box.innerHTML = '';
+  const nowYm = pkYmd(new Date()).slice(0, 6);
+  const lo = PK.keys.length ? PK.keys[0].slice(0, 6) : nowYm;
+  const hiK = PK.keys.length ? PK.keys[PK.keys.length - 1].slice(0, 6) : nowYm;
+  const hi = hiK > nowYm ? hiK : nowYm;
+  if (PK.ym < lo) PK.ym = lo; if (PK.ym > hi) PK.ym = hi;
+  const y = +PK.ym.slice(0, 4), m = +PK.ym.slice(4, 6);
+  const cal = el('div', 'card');
+  const prev = el('button', 'pk-nav', '‹'); prev.type = 'button'; prev.setAttribute('aria-label', '이전 달'); prev.disabled = PK.ym <= lo;
+  const next = el('button', 'pk-nav', '›'); next.type = 'button'; next.setAttribute('aria-label', '다음 달'); next.disabled = PK.ym >= hi;
+  prev.onclick = () => { PK.ym = pkShiftYm(PK.ym, -1); drawPick(); };
+  next.onclick = () => { PK.ym = pkShiftYm(PK.ym, 1); drawPick(); };
+  add(cal, add(el('div', 'pk-mh'), prev, el('div', 'pk-mt', `${y}년 ${m}월`), next));
+  const g = el('div', 'pk-grid');
+  ['월', '화', '수', '목', '금'].forEach(w => add(g, el('div', 'pk-wd', w)));
+  const wk = new Date(y, m - 1, 1);
+  while (wk.getDay() === 0 || wk.getDay() === 6) wk.setDate(wk.getDate() + 1);   // 그 달 첫 평일
+  wk.setDate(wk.getDate() - (wk.getDay() - 1));                                 // 그 주 월요일 (앞 달일 수 있음)
+  while (wk.getFullYear() * 12 + wk.getMonth() <= y * 12 + m - 1) {
+    for (let k = 0; k < 5; k++) {
+      const c = new Date(wk.getFullYear(), wk.getMonth(), wk.getDate() + k);
+      if (c.getMonth() !== m - 1) { add(g, el('div', 'pk-cell')); continue; }
+      const key = pkYmd(c), it = PK.days[key];
+      if (!it) { add(g, add(el('div', 'pk-cell'), el('span', 'pk-dn', String(c.getDate())), el('span', 'pk-cn', ''))); continue; }
+      const b = el('button', 'pk-cell' + (key === PK.sel ? ' pk-on' : '')); b.type = 'button';
+      b.setAttribute('aria-pressed', key === PK.sel ? 'true' : 'false');
+      const cn = el('span', 'pk-cn', String(it.length));
+      if (it.some(i => i.plan === true)) add(cn, el('span', 'pk-dot', '●'));
+      add(b, el('span', 'pk-dn', String(c.getDate())), cn);
+      b.onclick = () => { PK.sel = key; drawPick(); };
+      add(g, b);
+    }
+    wk.setDate(wk.getDate() + 7);
+  }
+  add(cal, g);
+  add(cal, add(el('div', 'pk-lg'), el('div', null, '숫자 = 종목 수 · ● = 계획 건 종목 있음'), el('div', null, '빈칸 = 기록 없음')));
+  add(box, cal);
+  const lc = el('div', 'card');
+  if (!PK.sel) add(lc, el('div', 'pk-none', '아직 기록 없음'));
+  else {
+    const it = PK.days[PK.sel] || [];
+    const t = new Date(+PK.sel.slice(0, 4), +PK.sel.slice(4, 6) - 1, +PK.sel.slice(6, 8));
+    add(lc, el('div', 'pk-lh', `${t.getMonth() + 1}/${t.getDate()}(${WD[t.getDay()]}) · ${it.length}종목`));
+    if (!it.length) add(lc, el('div', 'pk-none', "적은 종목 없음 ('없다')"));
+    else {
+      const list = el('div', 'pk-list');
+      it.forEach(i => {
+        const eok = num(i.amt);
+        const nm = add(el('div', 'pk-nm'), el('span', 'pk-sec', (has(i.sector) ? String(i.sector) : '—') + ' '), document.createTextNode(String(i.name)));
+        const pl = el('div', 'pk-pl'); if (i.plan === true) add(pl, el('span', 'pk-plan', '계획'));
+        add(list, add(el('div', 'pk-row'), nm, el('div', 'pk-amt', eok !== null ? `${eok.toLocaleString()}억` : '—'), pl));
+      });
+      add(lc, list);
+    }
+  }
+  add(box, lc);
+}
+
 /* ── 도움말 (9/15, 8-3 ⑩ · 같은 날 저녁 사용자 결정으로 구역별 ? 로 재배치) ─────────────────
    "폰 화면의 이 표시가 무슨 뜻이고 보고 나서 뭘 하나" 만 답한다. 규칙이 강의 어디서 왔나는 강의기준_대조표(M·T·D·C·P·E·S·U 번호),
    종목을 어떻게 고르나는 종목선정_종베기준.pdf 가 답한다. 기준 숫자(임계값)는 대조표·판정 CSV 가 원본이라 여기에는 새로 적지 않는다.
@@ -1784,6 +1886,12 @@ const HELP = {
     ['격자 읽기', [
       ['칸', '그 회차에 그 기준에 걸려 있었나. 빈칸 = 안 걸림. 행 순서 = 마지막 회차에 있는 것 → 걸린 회차 많은 순 → 처음 걸린 시각.'],
       ['넓은 표', '옆으로 스크롤. 표 위에서 좌우로 밀면 탭 이동이 아니라 표 스크롤이다.']]]] },
+  pick: { title: '선별 탭', lead: '오후확인 때 말한 계획매매 리스트를 달력으로 남긴 기록. 판정 · 채점 · 표본과 무관하다.', groups: [
+    ['읽기', [
+      ['언제 적나', '오후확인(20:15 뒤) 첫 질문 "오늘 계획매매 종목 리스트" 에 답한 종목 전부. 화면에는 다음 거래일 아침 09:12 회차부터 실린다.'],
+      ['달력', '숫자 = 그날 리스트 종목 수, ● = 그 가운데 내일 아침 계획을 건 종목이 있음, 빈칸 = 기록 없음(휴장 · 안 물은 날 · 기록 시작 전). 칸을 누르면 아래 리스트가 그날로.'],
+      ['섹터 · 거래대금', '섹터 = 그날 15:20 티마 카드 이름표(장중 탭 세 표 카드와 같은 글자 — 15:20 에 없던 종목은 그 전 회차). 거래대금 = 그날 끝(20:00) KRX+NXT 통합. 못 구하면 —.'],
+      ['계획', '그날 계획 파일에 든 종목.']]]] },
   review: { title: '복기 탭', lead: '실매매 뒤, 손실이 났을 때 "기준이 틀렸나, 내가 안 지켰나" 를 가르는 탭. 검증 기간에는 체결이 없어 "실매매 전" 만 보인다. 시안 보기 = 전부 가짜 매매. 누적 · 매매 구역의 표시는 각 제목 옆 ? 로.', groups: [] }
 };
 const HELP_COMMON = [
@@ -1838,7 +1946,7 @@ applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dar
 const AL_FROM = '20260917';
 let DATES = [];
 let CUR = 'live';   // 10/8 사용자 요청 : 처음 열면 언제나 장중 탭 (옛 8-3 ① '판정 전이면 장중, 판정 뒤엔 마감' 을 대신함)
-const HERO = { live: ['장중', '매시 07분 갱신 · 저녁 20:12 까지'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], review: ['복기', ''] };
+const HERO = { live: ['장중', '매시 07분 갱신 · 저녁 20:12 까지'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], pick: ['선별', '오후확인 때 적은 계획매매 리스트'], review: ['복기', ''] };
 function setHero(tab) {
   document.getElementById('heroTitle').textContent = HERO[tab][0];
   document.getElementById('heroSub').textContent = tab === 'review' ? REVIEW_SUB : HERO[tab][1];
@@ -1847,7 +1955,7 @@ function setHero(tab) {
 function renderDatebar(cur) {
   const bar = document.getElementById('datebar'); bar.innerHTML = '';
   if (!DATES.length) { bar.hidden = true; return; }
-  bar.hidden = CUR === 'review';   // 누적 탭에는 날짜 줄 없음
+  bar.hidden = CUR !== 'live';   // 누적 탭(복기) · 선별 탭에는 날짜 줄 없음 (11/16 `선별탭`)
   const idx = DATES.indexOf(cur);
   const older = el('button', null, '◀'); older.setAttribute('aria-label', '이전 거래일');
   const newer = el('button', null, '▶'); newer.setAttribute('aria-label', '다음 거래일');
@@ -1881,7 +1989,7 @@ const HERO_TABS = HERO_EL.querySelector('.tabs');
 const STICK = document.getElementById('stick');
 STICK.firstElementChild.appendChild(HERO_TABS.cloneNode(true));
 
-const TAB_ORDER = ['live', 'review'];   // 11/12 시계열숨김 : 'series' 뺌 — 밀면 장중 ↔ 복기
+const TAB_ORDER = ['live', 'pick', 'review'];   // 11/12 시계열숨김 : 'series' 뺌 · 11/16 `선별탭` : 밀면 장중 ↔ 선별 ↔ 복기
 // how : 'stick' = 고정 막대에서 누름 / 'swipe' = 좌우로 밈 — 둘 다 새 탭의 처음이 막대 바로 아래에 오게
 function switchTab(tab, how) {
   CUR = tab;
@@ -1890,7 +1998,7 @@ function switchTab(tab, how) {
   setHero(CUR);
   if (HELP_OPEN) renderHelp(CUR);   // 8-3 ⑩ 도움말이 열려 있으면 새 탭 내용으로
   const bar = document.getElementById('datebar');
-  if (bar.childElementCount) bar.hidden = CUR === 'review';
+  if (bar.childElementCount) bar.hidden = CUR !== 'live';
   const top = HERO_EL.offsetHeight - STICK.offsetHeight;
   if (how === 'stick' || (how === 'swipe' && window.scrollY > top)) window.scrollTo(0, top);
   syncStick();
@@ -1945,6 +2053,8 @@ async function loadAll() {
   loadDate(viewing && DATES.includes(viewing) ? viewing : null, DATES);
   try { renderReview(await getJson('data/review.json')); }   // 9/15 : 실자료 (pages-export v1.8). 시안은 화면의 버튼으로
   catch (e) { const b = document.getElementById('review'); b.innerHTML = ''; add(b, el('div', 'empty', '복기 자료를 못 불러왔습니다 : ' + e.message)); }
+  try { renderPick(await getJson('data/planlist.json')); }   // 11/16 `선별탭` : pages-export v3.13. 없거나 틀린 파일이면 이 구역만 글 한 줄
+  catch (e) { const b = document.getElementById('pick'); b.innerHTML = ''; add(b, el('div', 'empty', '선별 자료를 못 불러왔습니다 : ' + e.message)); }
 }
 loadAll();
 // 9/13 : 홈 화면 앱(특히 아이폰)은 새로고침 버튼이 없어서, 5분 넘게 떠나 있다 돌아오면 자료를 다시 불러온다
