@@ -408,6 +408,13 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
 .pk-pl{width:34px;text-align:right}
 .pk-plan{font-size:11px;color:var(--wine);background:var(--rose);border-radius:10px;padding:2px 6px;white-space:nowrap}
 .pk-none{padding:6px 0;color:var(--sub);font-size:13px}
+/* 11/17 `선별카드` (사용자 결정 — 승인 시안 B) : 리스트 안 세 표 카드 행은 장중 .row.iq3-row 모양 그대로. ♥ 자리 = 계획 칩 자리(.pk-cpl — 지금 리스트 .pk-pl 34px + 줄 간격 8px
+   이라 카드 등락률 · 리스트 금액 오른쪽 끝이 맞는다) · 하루 줄 · 세 표 밖 줄 · 안내 줄 = 12px --sub(읽을 글 — --muted 는 명암 부족). 다크는 변수만 */
+.pk-list>.row:first-child{border-top:0}
+.pk-cpl{flex:none;width:42px;text-align:right}
+.pk-day{font-size:12px;color:var(--sub);padding:3px 0 0 1em;font-variant-numeric:tabular-nums}
+.pk-out{font-size:12px;color:var(--sub);margin-top:-4px;padding:0 0 7px 1em;font-variant-numeric:tabular-nums}
+.pk-note{font-size:12px;color:var(--sub);margin-top:6px}
 </style>
 </head>
 <body>
@@ -996,6 +1003,14 @@ function renderLive(d) {
     }
   }
 
+  iq3Section(d, c2);   // 11/17 `선별카드` : 세 표 겹침 카드 구역을 아래 함수로 뺐다 — 선별 탭 카드가 같은 셈을 쓴다(장중 화면은 그대로)
+  add(box, el('div', 'foot', `관찰 전용 · 생성 ${d.generated || '—'}`));
+}
+
+/* 11/17 `선별카드` (사용자 결정 — 기록 D:\stock docs\선별카드_기록.md) : 장중 탭 '조회순위 세 표 겹침' 구역. renderLive 안에 있던 줄 그대로 옮겼다 —
+   장중은 c2(둘째 열)에 그리고 돌려준 값은 버린다. 선별 탭은 떼어 낸 div 에 그려 { at = 카드 회차, rows = 종목명 → 행 | null } 만 쓴다(같은 날짜 JSON → 같은 행) */
+function iq3Section(d, c2) {
+  const ymd = String(d.date || '');
   /* 11/7 `해답지지움` (사용자 결정 — 안 씀) : 세 표 겹침 카드 밑 접힘 '▸ 1분 조회 20위 (해답지)'(10/6 밤 `조회순위세표` 합치기 때 옮긴 것)와 도움말 'live.inq' 를 지웠다.
      d.inq · d.inqTime 은 JSON 에 그대로 남는다(pages-export 변경 0). 아래 IQ_OUT · secRows 는 세 표 카드가 쓴다 */
   const IQ_OUT = 35;   /* 9/17 사용자 결정 ① : 대금 35위 밖은 종목명만 취소선. 35 = 강의 당일주도주 검색식 "거래대금 순위 상위 35"(대조표 C4). 화면 표시일 뿐 판정에 안 쓴다.
@@ -1056,6 +1071,7 @@ function renderLive(d) {
   const iq3 = arr(d.inq3Flow).filter(r => String(r['시각']) <= '1520');
   const iq3T = [...new Set(iq3.map(r => String(r['시각'])))].sort();
   const iq3At = iq3T.length ? iq3T[iq3T.length - 1] : '';
+  let pkRows = null;   // 11/17 `선별카드` : 선별 탭이 쓰는 돌려줄 값 — 카드 행을 셈하지 못한 회차(수집 전 · 수집 실패)는 null
   if (iq3At || ymd < IQ3_FROM) {
     add(c2, labelWith('조회순위 세 표 겹침' + (iq3At ? ` (${+iq3At.slice(0, 2)}:${iq3At.slice(2)} 키움 · 당일누적 · 1시간 · 10분 각 20위)` : ''), 'live.inq3'));
     if (!iq3At) add(c2, el('div', 'empty', '이날은 세 간격 수집 전 (지난 기록은 1분 간격뿐)'));
@@ -1083,6 +1099,7 @@ function renderLive(d) {
         const in3N = (t, c) => in3(t, c) && IQ3_GAPS.every(g => { const v = num(iq3By[t][g][c]['조회순위']); return v !== null && v <= IQ3_N; });   // 10/7 : 회차 수만 IQ3_N 위 안
         const rk3 = (c, g) => cur[g][c]['조회순위'];
         const codes = Object.keys(cur['당일누적'] || {}).filter(c => in3(iq3At, c)).sort((a, b) => (num(rk3(a, '당일누적')) ?? 99) - (num(rk3(b, '당일누적')) ?? 99));
+        pkRows = {};   // 11/17 `선별카드` : 카드를 셈한 회차 — 아래 행마다 종목명 → 행 (세 표에 모두 든 종목이 없으면 빈 객체)
         if (!codes.length) add(c2, el('div', 'empty', '세 표에 모두 든 종목 없음'));
         else {
           const iq3Sec = {};   // 해답지 iqSec 와 같은 규칙, 회차만 이 카드의 회차
@@ -1260,6 +1277,7 @@ function renderLive(d) {
             const fvB = el('button', 'iq3-fvb'); fvB.type = 'button'; fvB.onclick = () => fvToggle(c, nmTxt);
             const row = add(el('div', 'row iq3-row'), add(el('div', 'iq3-l1'), nm, add(el('span', 'iq3-fvw'), rt, fvB)), l2, add(el('div', 'iq3-l3'), hgC, n15S), wcL, srPanel);
             fvRows[c] = { row, btn: fvB, out35 }; fvCodes.push(c);
+            pkRows[nmTxt] = row;   // 11/17 `선별카드` : 선별 탭은 이 행을 종목명으로 찾아 그대로 쓴다(♥ 자리만 바꾼다)
             fvInfo[c] = { star, out: out35 || outT, pct: a ? a['등락률'] : null, rk: ['당일누적', '1시간', '10분'].map(g => rk3(c, g)) };
             (out35 ? iq3Hide : iq3List).appendChild(row);   // 10/19 세표35숨김 : 35위 밖은 접힘 쪽 · 10/20 `세표네줄` : 네 줄
           });
@@ -1273,7 +1291,7 @@ function renderLive(d) {
       }
     }
   }
-  add(box, el('div', 'foot', `관찰 전용 · 생성 ${d.generated || '—'}`));
+  return { at: iq3At, rows: pkRows };
 }
 
 /* ── 시계열 탭 (9/14 밤, 8-3 ④ · 인계문서 8-0★ D) ─────────────────────────
@@ -1712,10 +1730,35 @@ function renderReview(rv) {
    (계획 건 종목이 있으면 숫자 뒤 ●), 기록 없는 날은 빈칸. 처음 열면 기록이 있는 가장 최근 날 · 그 달, 칸을 누르면 아래 리스트가 그날로.
    리스트 줄 = 섹터 이름표(세 표 카드와 같은 글자 · 없으면 '—') + 종목명 + 오른쪽 거래대금(세 표 카드와 같은 toLocaleString() + '억' · 없으면 '—') + 계획 칩.
    표시만 — 판정 · 채점 · 표본 무관. 자료가 없거나 모양이 틀려도 이 구역만 비고 다른 탭은 그대로 */
-const PK = { days: {}, keys: [], sel: null, ym: '' };
+const PK = { days: {}, keys: [], sel: null, ym: '', dj: {} };   // dj : 11/17 `선별카드` — 날짜 → 그 날짜 JSON | 'wait'(받는 중) | Error(못 받음)
 const pkYmd = t => `${t.getFullYear()}${pad2(t.getMonth() + 1)}${pad2(t.getDate())}`;
 const pkShiftYm = (ym, k) => { const t = new Date(+ym.slice(0, 4), +ym.slice(4, 6) - 1 + k, 1); return pkYmd(t).slice(0, 6); };
+/* 11/17 `선별카드` (사용자 결정 — 승인 시안 B, 기록 D:\stock docs\선별카드_기록.md) : 리스트 종목이 그날 세 표 카드(장중 탭에서 그 날짜를 고른 화면의 카드 —
+   15:20 이하 마지막 회차)에 있으면 리스트 줄 자리에 그 카드 행을 그대로(iq3Section 이 그린 행 — 같은 글자 · 칩 · ★ · 취소선 · 링크 · 접힌 그래프).
+   다른 것 셋 : ♥ 자리에 '계획' 칩(계획 건 종목만, 아니면 빈자리) · 경고칩 줄 뒤 · 그래프 앞에 '하루 n억'(planlist amt — 지금 리스트 값) · ♥ 없음.
+   카드에 없는 종목(세 표 밖에서 고른 종목 · 이름이 안 맞는 종목)은 지금 줄 그대로 + 밑에 'HH:MM 세 표 밖'(HH:MM = 카드 회차).
+   그 날짜 JSON 은 선별 탭이 보일 때 고른 날만 받는다(앱 첫 열기 · 장중 탭엔 요청 0) — 한 번 받은 날은 다시 받지 않는다(못 받은 날만 다시 불러올 때 다시).
+   못 받음 · 다른 날 자료 · 카드 회차 없음 · 수집 실패면 지금 리스트 그대로 + 안내 한 줄. 종목 맞추기는 이름(planlist 에 코드 없음 — 11/16 결정). 표시만 */
+function pkWant() {   // 선별 탭이 보일 때(switchTab · 칸 누름) — 고른 날 JSON 이 아직이면 받는다
+  const ymd = PK.sel;
+  if (!ymd || PK.dj[ymd] !== undefined || !arr(PK.days[ymd]).length) return;
+  PK.dj[ymd] = 'wait';
+  getJson(`data/${ymd}.json`).then(v => { PK.dj[ymd] = v; }, e => { PK.dj[ymd] = e instanceof Error ? e : new Error(String(e)); })
+    .then(() => { if (PK.sel === ymd) drawPick(); });
+}
+function pkCards(ymd) {   // → null(아직) | { rows: 종목명 → 행, at } | { rows: null, note: 안내 한 줄 }
+  const d = PK.dj[ymd];
+  if (d === undefined || d === 'wait') return null;
+  if (d instanceof Error) return { rows: null, note: '세 표 카드를 못 불러왔습니다 : ' + d.message };
+  try {
+    if (!d || String(d.date || '') !== ymd) return { rows: null, note: `세 표 카드 없음 — 날짜 자료가 다른 날(${d ? String(d.date || '—') : '—'})` };
+    const r = iq3Section(d, el('div'));   // 떼어 낸 div 에 장중과 같은 셈으로 그린다 — 행만 가져다 쓴다
+    if (!r.rows) return { rows: null, note: r.at ? `세 표 카드 없음 — ${+r.at.slice(0, 2)}:${r.at.slice(2)} 회차 수집 실패` : '세 표 카드 없음 — 이날 세 표 수집 기록 없음' };
+    return { rows: r.rows, at: r.at };
+  } catch (e) { return { rows: null, note: '세 표 카드 오류 : ' + e.message }; }
+}
 function renderPick(pl) {
+  Object.keys(PK.dj).forEach(k => { if (PK.dj[k] instanceof Error) delete PK.dj[k]; });   // 11/17 `선별카드` : 못 받은 날은 다시 불러올 때 다시 받는다
   const days = {};
   arr(pl && pl.days).forEach(x => { const dd = String((x && x.date) || ''); if (/^\d{8}$/.test(dd)) days[dd] = arr(x.items).filter(i => i && has(i.name)); });
   PK.days = days; PK.keys = Object.keys(days).sort();
@@ -1770,14 +1813,26 @@ function drawPick() {
     add(lc, el('div', 'pk-lh', `${t.getMonth() + 1}/${t.getDate()}(${WD[t.getDay()]}) · ${it.length}종목`));
     if (!it.length) add(lc, el('div', 'pk-none', "적은 종목 없음 ('없다')"));
     else {
+      if (CUR === 'pick') pkWant();   // 11/17 `선별카드` : 보이는 선별 탭에서만 그날 JSON 을 받는다
+      const cd = pkCards(PK.sel);
       const list = el('div', 'pk-list');
       it.forEach(i => {
         const eok = num(i.amt);
+        const card = cd && cd.rows && Object.prototype.hasOwnProperty.call(cd.rows, String(i.name)) ? cd.rows[String(i.name)] : null;
+        if (card) {   // 11/17 `선별카드` : 그 카드 행 그대로 — ♥ 자리에 계획 칩 자리 · 경고칩 줄 뒤(그래프 앞)에 하루 줄
+          const slot = el('span', 'pk-cpl'); if (i.plan === true) add(slot, el('span', 'pk-plan', '계획'));
+          const fv = card.querySelector('.iq3-fvb'); if (fv) fv.replaceWith(slot);
+          card.insertBefore(el('div', 'pk-day', `하루 ${eok !== null ? `${eok.toLocaleString()}억` : '—'}`), [...card.children].find(x => x.classList.contains('iq3-tl')) || null);
+          add(list, card);
+          return;
+        }
         const nm = add(el('div', 'pk-nm'), el('span', 'pk-sec', (has(i.sector) ? String(i.sector) : '—') + ' '), document.createTextNode(String(i.name)));
         const pl = el('div', 'pk-pl'); if (i.plan === true) add(pl, el('span', 'pk-plan', '계획'));
         add(list, add(el('div', 'pk-row'), nm, el('div', 'pk-amt', eok !== null ? `${eok.toLocaleString()}억` : '—'), pl));
+        if (cd && cd.rows) add(list, el('div', 'pk-out', `${+cd.at.slice(0, 2)}:${cd.at.slice(2)} 세 표 밖`));   // 11/17 `선별카드` : 그날 카드에 없던 종목
       });
       add(lc, list);
+      if (cd && cd.note) add(lc, el('div', 'pk-note', cd.note));   // 11/17 `선별카드` : 카드를 못 붙인 날 — 리스트는 지금 그대로
     }
   }
   add(box, lc);
@@ -1997,6 +2052,7 @@ function switchTab(tab, how) {
   TAB_ORDER.forEach(id => { document.getElementById(id).hidden = id !== CUR; });
   setHero(CUR);
   if (HELP_OPEN) renderHelp(CUR);   // 8-3 ⑩ 도움말이 열려 있으면 새 탭 내용으로
+  if (CUR === 'pick') pkWant();   // 11/17 `선별카드` : 선별 탭이 보일 때 고른 날 JSON 을 받는다(받으면 그 리스트만 다시 그림)
   const bar = document.getElementById('datebar');
   if (bar.childElementCount) bar.hidden = CUR !== 'live';
   const top = HERO_EL.offsetHeight - STICK.offsetHeight;
