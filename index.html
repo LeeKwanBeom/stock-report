@@ -77,7 +77,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 /* 9/13 : 윗변은 폰 상태 표시줄 색(theme-color = --heroA) 한 색으로 시작해 아래로 대각선 그라데이션에 섞임 */
 .hero{color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 6px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 44px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow)}
 .hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 18px 18px}
-.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
 .tabs button{padding:6px 0;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.72);font:inherit;font-size:12.5px;cursor:pointer}
 .tabs button.on{background:#fff;color:#7a0c17;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .tabs button:focus-visible{outline:2px solid #fff;outline-offset:1px}
@@ -415,6 +415,39 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
 .pk-day{font-size:12px;color:var(--sub);padding:3px 0 0 1em;font-variant-numeric:tabular-nums}
 .pk-out{font-size:12px;color:var(--sub);margin-top:-4px;padding:0 0 7px 1em;font-variant-numeric:tabular-nums}
 .pk-note{font-size:12px;color:var(--sub);margin-top:6px}
+/* 11/17 `호가창탭` (사용자 결정 — 승인 시안 C, 원본 D:\stock docs\호가창탭_시안\mock.js ?v=D 의 CSS 그대로 · 그 판의 .hc-D th 10.5px · 자간 −0.2px 는 .hc-m th 에 합침) :
+   호가창 탭 열지도. --hcR = --up 의 RGB(밝게 #ff0000 · 다크 #ff4d4d) — 1억 미만 칸 바탕 · 합계 막대. 다크는 변수만 */
+:root{--hcR:255,0,0}
+:root[data-theme="dark"]{--hcR:255,77,77}
+.hc-lg{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--sub);margin:0 2px 10px}
+.hc-lg i{display:inline-block;width:16px;height:10px;border-radius:2px}
+.hc-row{display:flex;align-items:baseline;gap:6px;padding:9px 0;border-top:1px solid var(--line2);cursor:pointer}
+.hc-row.hc-first{border-top:0;padding-top:2px}
+.hc-nm{font-weight:700}
+.hc-cd{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums}
+.hc-cnt{margin-left:auto;font-size:12px;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
+.hc-cnt b{color:var(--up);font-weight:700;font-size:13px}
+.hc-ar{color:var(--muted);font-size:11px;width:10px;text-align:right}
+.hc-sep{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);padding:10px 0 2px;border-top:1px dashed var(--line);cursor:pointer}
+.hc-box{padding:2px 0 10px}
+.hc-m{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:2px;font-size:12px;font-variant-numeric:tabular-nums}
+.hc-m th{font-weight:400;color:var(--sub);padding:0 1px 2px;text-align:center;font-size:10.5px;letter-spacing:-.2px}
+.hc-m tr.g th{padding:0 0 2px;border-bottom:1.5px solid var(--muted2)}
+.hc-m tr.g th.gz{color:var(--up);border-bottom-color:var(--up)}
+.hc-m tr.g th.e{border:0}
+.hc-m td{padding:2px 2px;text-align:right;border-radius:3px;white-space:nowrap;line-height:1.35;color:var(--text)}
+.hc-m td.l{text-align:center;color:var(--sub);background:none;font-size:11px}
+.hc-m td.gp{padding:0;background:none}
+.hc-m td.b{background:var(--up);color:#fff;font-weight:700}
+.hc-m td.x{color:var(--muted);text-align:center}
+.hc-m td.mx{outline:2px solid var(--text);outline-offset:-2px}
+.hc-m tr.sp td{padding:0;height:6px}
+.hc-m td.d{text-align:center;padding:2px 0}
+.hc-dn{display:inline-block;min-width:10px;margin-left:3px;font-size:11px;color:var(--muted);vertical-align:middle}
+.hc-dn.f{color:var(--up);font-weight:700}
+.hc-m td.s{vertical-align:bottom;text-align:center;padding:0 1px}
+.hc-sb{height:var(--h);background:rgba(var(--hcR),.55);border-radius:3px 3px 0 0;margin:0 3px}
+.hc-sv{font-size:11px;color:var(--sub);margin-top:2px}
 </style>
 </head>
 <body>
@@ -422,6 +455,7 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
   <div class="wrap">
     <div class="tabs">
       <button data-tab="live" class="on">장중</button>
+      <button data-tab="hoga">호가창</button><!-- 11/17 `호가창탭` : 장중 바로 오른쪽 (.tabs 칸 수 repeat 4 · TAB_ORDER) -->
       <!-- 11/12 시계열숨김 (사용자 "시계열 탭 사용 안 함 · 추천대로 숨겨") : 탭 버튼만 뺌. 화면 코드 · JSON 칸(condFlow · condTimes · inqFlow)은 그대로 — 되살리려면 이 버튼 · .tabs 칸 수(repeat 2 → 3) · TAB_ORDER · loadDate 의 renderSeries 호출 네 곳 -->
       <button data-tab="pick">선별</button><!-- 11/16 `선별탭` : 장중과 복기 사이 (.tabs 칸 수 repeat 3 · TAB_ORDER) — 시계열을 되살리면 4 -->
       <button data-tab="review">복기</button>
@@ -436,6 +470,7 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
   <div id="help" class="help" hidden></div>
   <div class="datebar" id="datebar" hidden></div>
   <section id="live"><div class="empty">불러오는 중</div></section>
+  <section id="hoga" hidden><div class="empty">불러오는 중</div></section>
   <section id="series" hidden><div class="empty">불러오는 중</div></section>
   <section id="pick" hidden><div class="empty">불러오는 중</div></section>
   <section id="review" hidden><div class="empty">불러오는 중</div></section>
@@ -1838,6 +1873,126 @@ function drawPick() {
   add(box, lc);
 }
 
+/* ── 11/17 `호가창탭` (사용자 결정 — 승인 시안 C, 기록 D:\stock docs\호가창탭_기록.md) ─────────────────
+   장중 바로 오른쪽 '호가창' 탭 — 그날 조회순위 세 표 카드 종목(회차마다 호가를 받은 종목 = data\hoga 회차 파일)의 매수 1~10호가 칸 금액(호가 × 잔량)
+   열지도, 9회차(09:05 · 10 ~ 14시 매시 · 14:50 · 15:00 · 15:10 — 15:20 동시호가는 뺌). 자료 data/hoga/<날짜>.json(pages-export v3.14 → hoga-export v1.0 —
+   종목 · 회차 · 칸 금액 원 정수뿐, r[j] null = 그 회차 파일에 없음 '·' · 칸 null = 못 받음 · 빈 호가 '-'). 목록 = 마지막 회차 종목(파일 차례),
+   지난 회차에만 든 종목은 맨 아래 접힌 줄. 종목을 누르면 그 아래 열지도(여러 개 · 처음엔 모두 접힘 · 날짜를 바꿔도 연 종목은 열린 채).
+   칸 = 억 단위 소수 한 자리 버림(9,892만 = 0.9 — 1억 미만이 1.0 으로 안 보이게) · 1억 이상 꽉 찬 --up · 그 밖은 1억에 가까울수록 진하게 ·
+   회차 1위 칸(그 회차 10칸 중 가장 큰 칸, 같으면 둘 다, 0 이면 없음) 테두리. 1억 줄 = 그 회차 1억 이상 칸 수, 합계 = 10칸 합(빈 칸 0 · 같은 버림 ·
+   막대 높이 = 그날 전 종목 중 최대 합계 기준). 1억 = 대조표 C10 강의 숫자(호가1억칩과 같은 표시 숫자) — 새 기준 숫자 없음. 셈의 원본 hoga-map 스킬.
+   날짜 = 장중 탭 날짜 줄 그대로(두 탭이 같은 날). 파일은 호가창 탭이 보일 때만 받는다(앱 첫 열기 · 다른 탭 요청 0) · 앱이 자료를 다시 불러오면
+   다음에 보일 때 다시 받는다. 없거나 틀린 파일이면 이 구역만 글 한 줄. 표시만 — 판정 · 채점 · 표본 무관 */
+const HC_EOK = 1e8, HC_FROM = '20261019';
+const HC_TL = ['9:05', '10시', '11시', '12시', '13시', '14시', '14:50', '15:00', '15:10'];
+const HC_GRP = [{ name: '장중', cols: [0, 1, 2, 3, 4, 5] }, { name: '종베 직전', z: 1, cols: [6, 7, 8] }];
+const HC = { date: null, err: null, gen: 0, dj: {}, open: {}, past: false };   // dj : 날짜 → { v: 자료 | Error | undefined, gen, busy }
+const hcFmt = m => (Math.floor(m / 1e7) / 10).toFixed(1);
+function hcSet(ymd, err) {   // 장중 탭이 날짜 자료를 받을 때(loadDate) — 두 탭이 같은 날
+  HC.date = ymd || null; HC.err = err || null;
+  if (CUR === 'hoga') hcWant();
+}
+function hcWant() {   // 호가창 탭이 보일 때 — 고른 날 파일이 아직이거나 앱이 다시 불러온 뒤면 받는다(받는 동안은 앞 판 그대로)
+  const ymd = HC.date;
+  if (ymd) {
+    const e = HC.dj[ymd] || (HC.dj[ymd] = { v: undefined, gen: -1, busy: false });
+    if (e.gen !== HC.gen && !e.busy) {
+      e.busy = true; const g = HC.gen;
+      getJson(`data/hoga/${ymd}.json`).then(v => { e.v = v; }, x => { e.v = x instanceof Error ? x : new Error(String(x)); })
+        .then(() => { e.busy = false; e.gen = g; if (HC.date === ymd && CUR === 'hoga') drawHoga(); });
+    }
+  }
+  drawHoga();
+}
+function hcPrep(v, ymd) {   // 모양 검사 + 회차별 합계 · 1억 칸 수 — 틀리면 던진다(그 탭만 글 한 줄)
+  if (!v || String(v.date || '') !== ymd) throw new Error(`날짜가 다름 (${v ? String(v.date || '—') : '—'})`);
+  if (!Array.isArray(v.stocks) || !Array.isArray(v.ats) || v.ats.length !== 9) throw new Error('모양이 다름');
+  const cell = x => { if (x === null) return null; if (typeof x !== 'number' || !isFinite(x)) throw new Error('칸 값이 숫자가 아님'); return x; };
+  let maxS = 1;
+  const st = v.stocks.map(s => {
+    if (!s || !has(s.code) || !Array.isArray(s.r) || s.r.length !== 9) throw new Error('종목 모양이 다름');
+    const t = s.r.map(x => x !== null);
+    const g = Array.from({ length: 10 }, (_, i) => s.r.map((x, j) => { if (!t[j]) return null; if (!Array.isArray(x) || x.length !== 10) throw new Error('회차 칸 수가 10 이 아님'); return cell(x[i]); }));
+    const sum = [], cnt = [];
+    for (let j = 0; j < 9; j++) {
+      if (!t[j]) { sum.push(null); cnt.push(null); continue; }
+      let a = 0, c = 0;
+      for (let i = 0; i < 10; i++) { const m = g[i][j] || 0; a += m; if (m >= HC_EOK) c++; }
+      sum.push(a); cnt.push(c); if (a > maxS) maxS = a;
+    }
+    return { c: String(s.code), n: has(s.name) ? String(s.name) : String(s.code), in: s.last === true, t, g, sum, cnt };
+  });
+  return { st, maxS, nt: arr(v.have).length };
+}
+function hcHeat(s, maxS) {   // 승인 시안 C(mock.js heat · ?v=D) 그대로 — 숫자 · 고정 글자만 넣는다
+  const t = el('table', 'hc-m');
+  const cg = el('colgroup'); cg.appendChild(Object.assign(document.createElement('col'), { style: 'width:24px' }));
+  HC_GRP.forEach((gq, k) => { if (k) cg.appendChild(Object.assign(document.createElement('col'), { style: 'width:3px' })); gq.cols.forEach(() => cg.appendChild(document.createElement('col'))); });
+  t.appendChild(cg);
+  let hr = '<tr class="g"><th class="e l"></th>' + HC_GRP.map((gq, k) => (k ? '<th class="e"></th>' : '') + `<th colspan="${gq.cols.length}"${gq.z ? ' class="gz"' : ''}>${gq.name}</th>`).join('') + '</tr>';
+  hr += '<tr><th class="l">호가</th>' + HC_GRP.map((gq, k) => (k ? '<th></th>' : '') + gq.cols.map(j => `<th>${HC_TL[j]}</th>`).join('')).join('') + '</tr>';
+  const cmax = []; for (let j = 0; j < 9; j++) { let x = 0; for (let i = 0; i < 10; i++) x = Math.max(x, s.g[i][j] || 0); cmax.push(x); }
+  const row = (l, f) => `<tr><td class="l">${l}</td>` + HC_GRP.map((gq, k) => (k ? '<td class="gp"></td>' : '') + gq.cols.map(f).join('')).join('') + '</tr>';
+  let body = '';
+  for (let i = 0; i < 10; i++) body += row(i + 1, j => {
+    const m = s.g[i][j];
+    if (!s.t[j]) return '<td class="x">·</td>';
+    if (m === null) return '<td class="x">-</td>';
+    const b = m >= HC_EOK, cl = 'v' + (b ? ' b' : '') + (m > 0 && m === cmax[j] ? ' mx' : '');
+    const st = b ? '' : ` style="background:rgba(var(--hcR),${(0.04 + 0.26 * m / HC_EOK).toFixed(3)})"`;
+    return `<td class="${cl}"${st}>${hcFmt(m)}</td>`;
+  });
+  body += '<tr class="sp"><td></td></tr>';
+  body += row('1억', j => { if (!s.t[j]) return '<td class="d">·</td>'; const c = s.cnt[j]; return `<td class="d"><span class="hc-dn${c ? ' f' : ''}">${c}</span></td>`; });
+  body += row('합계', j => { if (!s.t[j]) return '<td class="s">·</td>'; const a = s.sum[j]; return `<td class="s"><div class="hc-sb" style="--h:${Math.max(2, Math.round(30 * a / maxS))}px"></div><div class="hc-sv">${hcFmt(a)}</div></td>`; });
+  t.insertAdjacentHTML('beforeend', hr + body);
+  return t;
+}
+function drawHoga() {
+  const box = document.getElementById('hoga'); box.innerHTML = '';
+  const ymd = HC.date;
+  if (!ymd) { add(box, el('div', 'empty', HC.err ? '데이터를 못 불러왔습니다 : ' + HC.err.message : '불러오는 중')); return; }
+  const e = HC.dj[ymd];
+  if (!e || e.v === undefined) { add(box, el('div', 'empty', '불러오는 중')); return; }
+  if (e.v instanceof Error) {
+    const nf = / 404$/.test(e.v.message);
+    add(box, el('div', 'empty', !nf ? '호가 자료를 못 불러왔습니다 : ' + e.v.message
+      : ymd < HC_FROM ? '이날은 호가 기록 전 — 호가 기록은 10/19 부터' : '이날 호가 기록 없음'));
+    return;
+  }
+  let D;
+  try { D = hcPrep(e.v, ymd); } catch (x) { add(box, el('div', 'empty', '호가 자료를 못 불러왔습니다 : ' + x.message)); return; }
+  if (!D.st.length) { add(box, el('div', 'empty', '이날 호가 기록 없음')); return; }
+  add(box, add(el('div', 'label'), el('span', null, `세 표 겹침 종목 매수 1~10호가 · 회차 ${D.nt}/9`)));
+  const lg = el('div', 'hc-lg');
+  lg.innerHTML = '<i style="background:rgba(var(--hcR),0.05)"></i><i style="background:rgba(var(--hcR),0.17)"></i><i style="background:rgba(var(--hcR),0.30)"></i><span>1억에 가까울수록 진하게</span><i style="background:var(--up);margin-left:8px"></i><span>1억 이상</span><i style="background:rgba(var(--hcR),0.17);outline:2px solid var(--text);outline-offset:-2px;margin-left:8px"></i><span>회차 1위 칸</span><span style="margin-left:8px">숫자 단위 억</span>';
+  add(box, lg);
+  const card = el('div', 'card');
+  let first = true;
+  const line = s => {
+    const open = HC.open[s.c] === true;
+    const nr = s.t.filter(x => x).length, tot = s.cnt.reduce((a, c) => a + (c || 0), 0);
+    const r = el('div', 'hc-row' + (first ? ' hc-first' : '')); first = false;
+    r.setAttribute('role', 'button'); r.setAttribute('aria-expanded', open ? 'true' : 'false');
+    const cnt = el('span', 'hc-cnt', '1억 이상 '); add(cnt, el('b', null, String(tot)), document.createTextNode(` / ${nr * 10}칸`));
+    add(r, el('span', 'hc-nm', s.n), el('span', 'hc-cd', `(${s.c})`), cnt, el('span', 'hc-ar', open ? '▾' : '▸'));
+    r.onclick = () => { if (HC.open[s.c]) delete HC.open[s.c]; else HC.open[s.c] = true; drawHoga(); };
+    add(card, r);
+    if (open) add(card, add(el('div', 'hc-box'), hcHeat(s, D.maxS)));
+  };
+  D.st.filter(s => s.in).forEach(line);
+  const past = D.st.filter(s => !s.in);
+  if (past.length) {
+    const sp = el('div', 'hc-sep'); sp.setAttribute('role', 'button'); sp.setAttribute('aria-expanded', HC.past ? 'true' : 'false');
+    add(sp, document.createTextNode(`지난 회차에만 든 종목 ${past.length} `), el('span', 'hc-ar', HC.past ? '▾' : '▸'));
+    sp.onclick = () => { HC.past = !HC.past; drawHoga(); };
+    add(card, sp);
+    first = true;
+    if (HC.past) past.forEach(line);
+  }
+  add(box, card);
+}
+
 /* ── 도움말 (9/15, 8-3 ⑩ · 같은 날 저녁 사용자 결정으로 구역별 ? 로 재배치) ─────────────────
    "폰 화면의 이 표시가 무슨 뜻이고 보고 나서 뭘 하나" 만 답한다. 규칙이 강의 어디서 왔나는 강의기준_대조표(M·T·D·C·P·E·S·U 번호),
    종목을 어떻게 고르나는 종목선정_종베기준.pdf 가 답한다. 기준 숫자(임계값)는 대조표·판정 CSV 가 원본이라 여기에는 새로 적지 않는다.
@@ -1947,7 +2102,16 @@ const HELP = {
       ['달력', '숫자 = 그날 리스트 종목 수, ● = 그 가운데 내일 아침 계획을 건 종목이 있음, 빈칸 = 기록 없음(휴장 · 안 물은 날 · 기록 시작 전). 칸을 누르면 아래 리스트가 그날로.'],
       ['섹터 · 거래대금', '섹터 = 그날 15:20 티마 카드 이름표(장중 탭 세 표 카드와 같은 글자 — 15:20 에 없던 종목은 그 전 회차). 거래대금 = 그날 끝(20:00) KRX+NXT 통합. 못 구하면 —.'],
       ['계획', '그날 계획 파일에 든 종목.']]]] },
-  review: { title: '복기 탭', lead: '실매매 뒤, 손실이 났을 때 "기준이 틀렸나, 내가 안 지켰나" 를 가르는 탭. 검증 기간에는 체결이 없어 "실매매 전" 만 보인다. 시안 보기 = 전부 가짜 매매. 누적 · 매매 구역의 표시는 각 제목 옆 ? 로.', groups: [] }
+  review: { title: '복기 탭', lead: '실매매 뒤, 손실이 났을 때 "기준이 틀렸나, 내가 안 지켰나" 를 가르는 탭. 검증 기간에는 체결이 없어 "실매매 전" 만 보인다. 시안 보기 = 전부 가짜 매매. 누적 · 매매 구역의 표시는 각 제목 옆 ? 로.', groups: [] },
+  // 11/17 `호가창탭` : 도움말 글은 초안 — 사용자 승인 대기(기록 D:\stock docs\호가창탭_기록.md '도움말 초안')
+  hoga: { title: '호가창 탭', lead: '그날 조회순위 세 표 카드에 든 종목의 매수 1~10호가에 걸린 돈(호가 × 잔량)을 회차별로 보는 표. 보기만 — 판정 · 채점 · 표본과 무관하다.', groups: [
+    ['읽기', [
+      ['종목', '장중 회차(9:05 · 10시 ~ 14시 매시 · 14:50 · 15:00 · 15:10)마다 그 회차 세 표 카드 종목의 호가를 받는다. 목록 = 마지막 회차의 종목, 그 전 회차에만 들었던 종목은 맨 아래 "지난 회차에만 든 종목" 줄을 누르면 펼쳐진다. 종목을 누르면 그 아래 표가 열린다(여러 개 같이).'],
+      ['칸', '숫자 = 그 호가 칸에 걸린 매수 금액, 억 단위 소수 한 자리(0.1억 아래는 버림 — 9,800만 = 0.9). 1억 이상 = 꽉 찬 빨강, 그 밖은 1억에 가까울수록 진하게. 테두리 = 그 회차에서 가장 큰 칸.'],
+      ['· 와 -', '· = 그 회차엔 그 종목이 카드에 없었음. - = 호가를 못 받았거나 그 칸에 호가가 없음.'],
+      ['1억 · 합계', '1억 = 그 회차 10칸 중 1억 이상 칸 수. 합계 = 10칸 합(막대 높이는 그날 모든 종목 가운데 가장 큰 합계 기준). 종목 줄 오른쪽 "1억 이상 n / m칸" = 그날 그 종목이 든 회차를 모두 합친 수.'],
+      ['15:20 · 1억', '15:20 회차는 종가 동시호가 중이라 매수 칸이 3칸뿐이어서 뺀다. 1억은 강의 숫자(C10 — 장중 탭 호가 1억 칩과 같은 표시).'],
+      ['날짜 · 갱신', '날짜 줄은 장중 탭과 같다(고른 날을 두 탭이 같이 쓴다). 호가 기록은 10/19 부터. 장중엔 회차 갱신(09:12 ~ 15:12)마다 그날 회차가 늘어난다.']]]] }
 };
 const HELP_COMMON = [
   ['하루 루틴 — 언제 무엇을 보나', [
@@ -2001,7 +2165,7 @@ applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dar
 const AL_FROM = '20260917';
 let DATES = [];
 let CUR = 'live';   // 10/8 사용자 요청 : 처음 열면 언제나 장중 탭 (옛 8-3 ① '판정 전이면 장중, 판정 뒤엔 마감' 을 대신함)
-const HERO = { live: ['장중', '매시 07분 갱신 · 저녁 20:12 까지'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], pick: ['선별', '오후확인 때 적은 계획매매 리스트'], review: ['복기', ''] };
+const HERO = { live: ['장중', '매시 07분 갱신 · 저녁 20:12 까지'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], pick: ['선별', '오후확인 때 적은 계획매매 리스트'], review: ['복기', ''], hoga: ['호가창', '장중 회차마다 갱신 · 15:12 까지'] };
 function setHero(tab) {
   document.getElementById('heroTitle').textContent = HERO[tab][0];
   document.getElementById('heroSub').textContent = tab === 'review' ? REVIEW_SUB : HERO[tab][1];
@@ -2010,7 +2174,7 @@ function setHero(tab) {
 function renderDatebar(cur) {
   const bar = document.getElementById('datebar'); bar.innerHTML = '';
   if (!DATES.length) { bar.hidden = true; return; }
-  bar.hidden = CUR !== 'live';   // 누적 탭(복기) · 선별 탭에는 날짜 줄 없음 (11/16 `선별탭`)
+  bar.hidden = CUR !== 'live' && CUR !== 'hoga';   // 누적 탭(복기) · 선별 탭에는 날짜 줄 없음 (11/16 `선별탭`) · 호가창 탭은 장중과 같은 날짜 줄 (11/17 `호가창탭`)
   const idx = DATES.indexOf(cur);
   const older = el('button', null, '◀'); older.setAttribute('aria-label', '이전 거래일');
   const newer = el('button', null, '▶'); newer.setAttribute('aria-label', '다음 거래일');
@@ -2030,13 +2194,14 @@ function renderDatebar(cur) {
 async function loadDate(ymd, dates) {
   let d;
   try { d = await getJson(ymd ? `data/${ymd}.json` : 'data/latest.json'); }
-  catch (e) { ['live', 'series'].forEach(id => { const b = document.getElementById(id); b.innerHTML = ''; add(b, el('div', 'empty', '데이터를 못 불러왔습니다 : ' + e.message)); }); return; }
+  catch (e) { ['live', 'series'].forEach(id => { const b = document.getElementById(id); b.innerHTML = ''; add(b, el('div', 'empty', '데이터를 못 불러왔습니다 : ' + e.message)); }); hcSet(ymd, ymd ? null : e); return; }   // 11/17 `호가창탭` : 고른 날은 호가창도 그날(최근 자료를 못 받으면 날짜를 모름 — 글 한 줄)
   try { renderLive(d); } catch (e) { add(document.getElementById('live'), el('div', 'empty', '장중 화면 오류 : ' + e.message)); }
   IX_D = d; pollIndexLive(true);   /* 9/17 지수5분 : 5분 회차 파일이 더 새 것이면 지수 그림만 바꾼다 (기다리지 않는다) */
   /* 11/12 시계열숨김 : 탭을 숨겨 그리지 않는다 — 되살릴 때 아래 줄을 다시 켠다
   try { renderSeries(d); } catch (e) { add(document.getElementById('series'), el('div', 'empty', '시계열 화면 오류 : ' + e.message)); } */
   renderDatebar(String(d.date || ''));
   setHero(CUR);   // 처음 탭은 CUR 기본값(장중) 하나로 — 자료를 다시 불러와도 탭은 안 바꾼다(탭 이동은 사용자 몫)
+  hcSet(String(d.date || ''), null);   // 11/17 `호가창탭` : 호가창 탭도 이 날짜(보이고 있으면 그날 파일을 받는다)
 }
 
 const HERO_EL = document.querySelector('.hero');
@@ -2044,7 +2209,7 @@ const HERO_TABS = HERO_EL.querySelector('.tabs');
 const STICK = document.getElementById('stick');
 STICK.firstElementChild.appendChild(HERO_TABS.cloneNode(true));
 
-const TAB_ORDER = ['live', 'pick', 'review'];   // 11/12 시계열숨김 : 'series' 뺌 · 11/16 `선별탭` : 밀면 장중 ↔ 선별 ↔ 복기
+const TAB_ORDER = ['live', 'hoga', 'pick', 'review'];   // 11/12 시계열숨김 : 'series' 뺌 · 11/16 `선별탭` : 밀면 장중 ↔ 선별 ↔ 복기 · 11/17 `호가창탭` : 장중 ↔ 호가창 ↔ 선별
 // how : 'stick' = 고정 막대에서 누름 / 'swipe' = 좌우로 밈 — 둘 다 새 탭의 처음이 막대 바로 아래에 오게
 function switchTab(tab, how) {
   CUR = tab;
@@ -2053,8 +2218,9 @@ function switchTab(tab, how) {
   setHero(CUR);
   if (HELP_OPEN) renderHelp(CUR);   // 8-3 ⑩ 도움말이 열려 있으면 새 탭 내용으로
   if (CUR === 'pick') pkWant();   // 11/17 `선별카드` : 선별 탭이 보일 때 고른 날 JSON 을 받는다(받으면 그 리스트만 다시 그림)
+  if (CUR === 'hoga') hcWant();   // 11/17 `호가창탭` : 호가창 탭이 보일 때 고른 날 호가 파일을 받는다
   const bar = document.getElementById('datebar');
-  if (bar.childElementCount) bar.hidden = CUR !== 'live';
+  if (bar.childElementCount) bar.hidden = CUR !== 'live' && CUR !== 'hoga';
   const top = HERO_EL.offsetHeight - STICK.offsetHeight;
   if (how === 'stick' || (how === 'swipe' && window.scrollY > top)) window.scrollTo(0, top);
   syncStick();
@@ -2099,6 +2265,7 @@ syncStick();
 let LAST_LOAD = 0;
 async function loadAll() {
   LAST_LOAD = Date.now();
+  HC.gen++;   // 11/17 `호가창탭` : 받아 둔 호가 파일은 다음에 보일 때 다시 받는다(장중엔 회차마다 늘어남)
   const bar = document.getElementById('datebar');
   const sel = bar.querySelector('select');
   // 지난 날짜를 보고 있었으면 그 날짜를 다시, 최근을 보고 있었으면 새 최근을 불러온다
