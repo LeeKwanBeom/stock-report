@@ -1038,7 +1038,8 @@ function renderLive(d) {
     }
   }
 
-  iq3Section(d, c2);   // 11/17 `선별카드` : 세 표 겹침 카드 구역을 아래 함수로 뺐다 — 선별 탭 카드가 같은 셈을 쓴다(장중 화면은 그대로)
+  const iq3R = iq3Section(d, c2);   // 11/17 `선별카드` : 세 표 겹침 카드 구역을 아래 함수로 뺐다 — 선별 탭 카드가 같은 셈을 쓴다(장중 화면은 그대로)
+  HC.ord = { date: String(d.date || ''), codes: iq3R.order };   // 11/17 `호가창정렬` : 호가창 탭 목록 차례 = 이 카드에 보이는 차례(카드를 못 셈한 회차는 null — 호가 파일 차례)
   add(box, el('div', 'foot', `관찰 전용 · 생성 ${d.generated || '—'}`));
 }
 
@@ -1107,6 +1108,7 @@ function iq3Section(d, c2) {
   const iq3T = [...new Set(iq3.map(r => String(r['시각'])))].sort();
   const iq3At = iq3T.length ? iq3T[iq3T.length - 1] : '';
   let pkRows = null;   // 11/17 `선별카드` : 선별 탭이 쓰는 돌려줄 값 — 카드 행을 셈하지 못한 회차(수집 전 · 수집 실패)는 null
+  let pkOrd = null;   // 11/17 `호가창정렬` : 호가창 탭이 쓰는 돌려줄 값 — 카드에 보이는 차례(위 목록 → 대금 35위 밖 접힘)의 종목코드 · 셈하지 못한 회차는 null
   if (iq3At || ymd < IQ3_FROM) {
     add(c2, labelWith('조회순위 세 표 겹침' + (iq3At ? ` (${+iq3At.slice(0, 2)}:${iq3At.slice(2)} 키움 · 당일누적 · 1시간 · 10분 각 20위)` : ''), 'live.inq3'));
     if (!iq3At) add(c2, el('div', 'empty', '이날은 세 간격 수집 전 (지난 기록은 1분 간격뿐)'));
@@ -1135,6 +1137,7 @@ function iq3Section(d, c2) {
         const rk3 = (c, g) => cur[g][c]['조회순위'];
         const codes = Object.keys(cur['당일누적'] || {}).filter(c => in3(iq3At, c)).sort((a, b) => (num(rk3(a, '당일누적')) ?? 99) - (num(rk3(b, '당일누적')) ?? 99));
         pkRows = {};   // 11/17 `선별카드` : 카드를 셈한 회차 — 아래 행마다 종목명 → 행 (세 표에 모두 든 종목이 없으면 빈 객체)
+        pkOrd = []; const pkOrdOut = [];   // 11/17 `호가창정렬` : 위 목록 차례 · 대금 35위 밖 접힘 차례 — 끝에 이어 붙인다 (세 표에 모두 든 종목이 없으면 빈 배열)
         if (!codes.length) add(c2, el('div', 'empty', '세 표에 모두 든 종목 없음'));
         else {
           const iq3Sec = {};   // 해답지 iqSec 와 같은 규칙, 회차만 이 카드의 회차
@@ -1315,7 +1318,9 @@ function iq3Section(d, c2) {
             pkRows[nmTxt] = row;   // 11/17 `선별카드` : 선별 탭은 이 행을 종목명으로 찾아 그대로 쓴다(♥ 자리만 바꾼다)
             fvInfo[c] = { star, out: out35 || outT, pct: a ? a['등락률'] : null, rk: ['당일누적', '1시간', '10분'].map(g => rk3(c, g)) };
             (out35 ? iq3Hide : iq3List).appendChild(row);   // 10/19 세표35숨김 : 35위 밖은 접힘 쪽 · 10/20 `세표네줄` : 네 줄
+            (out35 ? pkOrdOut : pkOrd).push(c);   // 11/17 `호가창정렬` : 바로 위 줄과 같은 갈래
           });
+          pkOrd.push(...pkOrdOut);   // 11/17 `호가창정렬` : 위 목록 → 대금 35위 밖 접힘 = 화면에 보이는 차례
           add(c2, fvBox);
           add(c2, iq3List.childNodes.length ? iq3List : el('div', 'empty', `대금 ${IQ_OUT}위 안 종목 없음`));   // 10/19 세표35숨김
           if (iq3Hide.childNodes.length) add(c2, add(el('details', 'iq3-det'), el('summary', null, `대금 ${IQ_OUT}위 밖 ${iq3Hide.childNodes.length}종목`), iq3Hide));   // 10/19 세표35숨김 (사용자 결정) : 0 이면 줄 없음
@@ -1326,7 +1331,7 @@ function iq3Section(d, c2) {
       }
     }
   }
-  return { at: iq3At, rows: pkRows };
+  return { at: iq3At, rows: pkRows, order: pkOrd };
 }
 
 /* ── 시계열 탭 (9/14 밤, 8-3 ④ · 인계문서 8-0★ D) ─────────────────────────
@@ -1882,11 +1887,15 @@ function drawPick() {
    회차 1위 칸(그 회차 10칸 중 가장 큰 칸, 같으면 둘 다, 0 이면 없음) 테두리. 1억 줄 = 그 회차 1억 이상 칸 수, 합계 = 10칸 합(빈 칸 0 · 같은 버림 ·
    막대 높이 = 그날 전 종목 중 최대 합계 기준). 1억 = 대조표 C10 강의 숫자(호가1억칩과 같은 표시 숫자) — 새 기준 숫자 없음. 셈의 원본 hoga-map 스킬.
    날짜 = 장중 탭 날짜 줄 그대로(두 탭이 같은 날). 파일은 호가창 탭이 보일 때만 받는다(앱 첫 열기 · 다른 탭 요청 0) · 앱이 자료를 다시 불러오면
-   다음에 보일 때 다시 받는다. 없거나 틀린 파일이면 이 구역만 글 한 줄. 표시만 — 판정 · 채점 · 표본 무관 */
+   다음에 보일 때 다시 받는다. 없거나 틀린 파일이면 이 구역만 글 한 줄. 표시만 — 판정 · 채점 · 표본 무관
+   11/17 `호가창정렬` (사용자 결정 A — 375 예시 그대로) : 목록 차례 = 같은 날 장중 탭 세 표 겹침 카드에 보이는 차례(위 목록 → 대금 35위 밖 접힘 — iq3Section 이
+   돌려준 HC.ord, 날짜가 같을 때만), 카드에 없는 종목(호가는 10분 표 종목이라 카드보다 넓다)은 그 뒤 파일 차례. 그날 1억 이상 칸이 한 번도 없던 종목(종목 줄의
+   '1억 이상 0 / m칸')은 맨 아래 접힌 줄 '1억 이상 한 번도 없는 종목 n' 안으로(같은 차례 · 처음엔 접힘). '지난 회차에만 든 종목' 줄은 그 밑에 그대로(파일 차례).
+   카드를 못 셈한 날(수집 전 · 수집 실패)은 모두 파일 차례. 1억 = 위와 같은 C10 강의 숫자 — 새 숫자 없음 */
 const HC_EOK = 1e8, HC_FROM = '20261019';
 const HC_TL = ['9:05', '10시', '11시', '12시', '13시', '14시', '14:50', '15:00', '15:10'];
 const HC_GRP = [{ name: '장중', cols: [0, 1, 2, 3, 4, 5] }, { name: '종베 직전', z: 1, cols: [6, 7, 8] }];
-const HC = { date: null, err: null, gen: 0, dj: {}, open: {}, past: false };   // dj : 날짜 → { v: 자료 | Error | undefined, gen, busy }
+const HC = { date: null, err: null, gen: 0, dj: {}, open: {}, past: false, none: false, ord: null };   // dj : 날짜 → { v: 자료 | Error | undefined, gen, busy } · none : 11/17 `호가창정렬` 1억 없는 종목 줄 펼침 · ord : { date, codes } 장중 탭 세 표 카드 차례
 const hcFmt = m => (Math.floor(m / 1e7) / 10).toFixed(1);
 function hcSet(ymd, err) {   // 장중 탭이 날짜 자료를 받을 때(loadDate) — 두 탭이 같은 날
   HC.date = ymd || null; HC.err = err || null;
@@ -1920,7 +1929,7 @@ function hcPrep(v, ymd) {   // 모양 검사 + 회차별 합계 · 1억 칸 수 
       for (let i = 0; i < 10; i++) { const m = g[i][j] || 0; a += m; if (m >= HC_EOK) c++; }
       sum.push(a); cnt.push(c); if (a > maxS) maxS = a;
     }
-    return { c: String(s.code), n: has(s.name) ? String(s.name) : String(s.code), in: s.last === true, t, g, sum, cnt };
+    return { c: String(s.code), n: has(s.name) ? String(s.name) : String(s.code), in: s.last === true, t, g, sum, cnt, tot: cnt.reduce((a, c) => a + (c || 0), 0) };   // tot : 11/17 `호가창정렬` — 종목 줄 '1억 이상 n' 의 n
   });
   return { st, maxS, nt: arr(v.have).length };
 }
@@ -1971,7 +1980,7 @@ function drawHoga() {
   let first = true;
   const line = s => {
     const open = HC.open[s.c] === true;
-    const nr = s.t.filter(x => x).length, tot = s.cnt.reduce((a, c) => a + (c || 0), 0);
+    const nr = s.t.filter(x => x).length, tot = s.tot;
     const r = el('div', 'hc-row' + (first ? ' hc-first' : '')); first = false;
     r.setAttribute('role', 'button'); r.setAttribute('aria-expanded', open ? 'true' : 'false');
     const cnt = el('span', 'hc-cnt', '1억 이상 '); add(cnt, el('b', null, String(tot)), document.createTextNode(` / ${nr * 10}칸`));
@@ -1980,16 +1989,23 @@ function drawHoga() {
     add(card, r);
     if (open) add(card, add(el('div', 'hc-box'), hcHeat(s, D.maxS)));
   };
-  D.st.filter(s => s.in).forEach(line);
-  const past = D.st.filter(s => !s.in);
-  if (past.length) {
-    const sp = el('div', 'hc-sep'); sp.setAttribute('role', 'button'); sp.setAttribute('aria-expanded', HC.past ? 'true' : 'false');
-    add(sp, document.createTextNode(`지난 회차에만 든 종목 ${past.length} `), el('span', 'hc-ar', HC.past ? '▾' : '▸'));
-    sp.onclick = () => { HC.past = !HC.past; drawHoga(); };
+  /* 11/17 `호가창정렬` : 카드 차례(HC.ord — 같은 날짜일 때만) → 그 밖은 파일 차례(안정 정렬). 1억 이상 칸이 한 번도 없던 종목은 아래 접힌 줄 */
+  const ord = HC.ord && HC.ord.date === ymd && Array.isArray(HC.ord.codes) ? HC.ord.codes : [];
+  const oi = {}; ord.forEach((c, i) => { if (oi[c] === undefined) oi[c] = i; });
+  const byOrd = a => a.map((s, i) => [s, i]).sort((x, y) => ((oi[x[0].c] ?? 1e9) - (oi[y[0].c] ?? 1e9)) || (x[1] - y[1])).map(x => x[0]);
+  const inSt = byOrd(D.st.filter(s => s.in));
+  inSt.filter(s => s.tot > 0).forEach(line);
+  const fold = (list, txt, k) => {   // 접힌 줄(누르면 펼침 · 다시 누르면 접힘) — k = HC 의 펼침 칸 이름
+    if (!list.length) return;
+    const sp = el('div', 'hc-sep'); sp.setAttribute('role', 'button'); sp.setAttribute('aria-expanded', HC[k] ? 'true' : 'false');
+    add(sp, document.createTextNode(`${txt} ${list.length} `), el('span', 'hc-ar', HC[k] ? '▾' : '▸'));
+    sp.onclick = () => { HC[k] = !HC[k]; drawHoga(); };
     add(card, sp);
     first = true;
-    if (HC.past) past.forEach(line);
-  }
+    if (HC[k]) list.forEach(line);
+  };
+  fold(inSt.filter(s => !s.tot), '1억 이상 한 번도 없는 종목', 'none');
+  fold(D.st.filter(s => !s.in), '지난 회차에만 든 종목', 'past');
   add(box, card);
 }
 
@@ -2106,7 +2122,7 @@ const HELP = {
   // 11/17 `호가창탭` : 도움말 글은 초안 — 사용자 승인 대기(기록 D:\stock docs\호가창탭_기록.md '도움말 초안')
   hoga: { title: '호가창 탭', lead: '그날 조회순위 세 표 카드에 든 종목의 매수 1~10호가에 걸린 돈(호가 × 잔량)을 회차별로 보는 표. 보기만 — 판정 · 채점 · 표본과 무관하다.', groups: [
     ['읽기', [
-      ['종목', '장중 회차(9:05 · 10시 ~ 14시 매시 · 14:50 · 15:00 · 15:10)마다 그 회차 세 표 카드 종목의 호가를 받는다. 목록 = 마지막 회차의 종목, 그 전 회차에만 들었던 종목은 맨 아래 "지난 회차에만 든 종목" 줄을 누르면 펼쳐진다. 종목을 누르면 그 아래 표가 열린다(여러 개 같이).'],
+      ['종목', '장중 회차(9:05 · 10시 ~ 14시 매시 · 14:50 · 15:00 · 15:10)마다 그 회차 조회순위 10분 표 종목(세 표 카드 종목은 모두 든다)의 호가를 받는다. 목록 = 마지막 회차의 종목, 차례는 장중 탭 세 표 겹침 카드에 보이는 차례(위 목록 → 대금 35위 밖) 그대로, 카드에 없는 종목은 그 뒤. 그날 1억 이상 칸이 한 번도 없던 종목은 맨 아래 "1억 이상 한 번도 없는 종목" 줄, 그 전 회차에만 들었던 종목은 그 밑 "지난 회차에만 든 종목" 줄 — 누르면 펼쳐진다. 종목을 누르면 그 아래 표가 열린다(여러 개 같이).'],
       ['칸', '숫자 = 그 호가 칸에 걸린 매수 금액, 억 단위 소수 한 자리(0.1억 아래는 버림 — 9,800만 = 0.9). 1억 이상 = 꽉 찬 빨강, 그 밖은 1억에 가까울수록 진하게. 테두리 = 그 회차에서 가장 큰 칸.'],
       ['· 와 -', '· = 그 회차엔 그 종목이 카드에 없었음. - = 호가를 못 받았거나 그 칸에 호가가 없음.'],
       ['1억 · 합계', '1억 = 그 회차 10칸 중 1억 이상 칸 수. 합계 = 10칸 합(막대 높이는 그날 모든 종목 가운데 가장 큰 합계 기준). 종목 줄 오른쪽 "1억 이상 n / m칸" = 그날 그 종목이 든 회차를 모두 합친 수.'],
