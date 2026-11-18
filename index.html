@@ -448,6 +448,9 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
 .hc-m td.s{vertical-align:bottom;text-align:center;padding:0 1px}
 .hc-sb{height:var(--h);background:rgba(var(--hcR),.55);border-radius:3px 3px 0 0;margin:0 3px}
 .hc-sv{font-size:11px;color:var(--sub);margin-top:2px}
+/* 11/18 `저녁호가` : 장중 표 바로 아래 '저녁' 표(같은 칸 너비 · 같은 꼴) · 저녁 세 표에 한 번도 안 든 종목은 글 한 줄 */
+.hc-m.hc-ev{margin-top:8px}
+.hc-en{font-size:12px;color:var(--sub);margin:6px 2px 0}
 /* 11/18 `관심연동` : 호가창 탭 맨 위 '관심 n' 묶음 = 장중 관심 띠(.iq3-fv · .iq3-fvh)와 같은 상자 · 머리, 안 줄은 호가창 종목 줄(.hc-row) 그대로(누르기 없음 · 열지도 펼침) · 종목 줄 ♡/♥ = .iq3-fvb 와 같은 색 */
 .hc-fv{background:var(--card);border:1px solid var(--roseLine);border-radius:16px;padding:4px 14px 6px;margin:0 0 10px;box-shadow:var(--shadow)}
 .hc-fvh{font-size:12px;font-weight:800;color:var(--wine);padding:4px 0 2px}
@@ -2023,6 +2026,8 @@ function hcPrep(v, ymd) {   // 모양 검사 + 회차별 합계 · 1억 칸 수 
   if (!v || String(v.date || '') !== ymd) throw new Error(`날짜가 다름 (${v ? String(v.date || '—') : '—'})`);
   if (!Array.isArray(v.stocks) || !Array.isArray(v.ats) || v.ats.length !== 9) throw new Error('모양이 다름');
   const cell = x => { if (x === null) return null; if (typeof x !== 'number' || !isFinite(x)) throw new Error('칸 값이 숫자가 아님'); return x; };
+  const ev = v.eats !== undefined;   // 11/18 `저녁호가` : hoga-export v1.1 — 저녁 회차 파일이 있는 날만 eats · ehave · 종목마다 e
+  if (ev && (!Array.isArray(v.eats) || v.eats.length !== 5)) throw new Error('모양이 다름');
   let maxS = 1;
   const st = v.stocks.map(s => {
     if (!s || !has(s.code) || !Array.isArray(s.r) || s.r.length !== 9) throw new Error('종목 모양이 다름');
@@ -2035,9 +2040,22 @@ function hcPrep(v, ymd) {   // 모양 검사 + 회차별 합계 · 1억 칸 수 
       for (let i = 0; i < 10; i++) { const m = g[i][j] || 0; a += m; if (m >= HC_EOK) c++; }
       sum.push(a); cnt.push(c); if (a > maxS) maxS = a;
     }
-    return { c: String(s.code), n: has(s.name) ? String(s.name) : String(s.code), in: s.last === true, t, g, sum, cnt, tot: cnt.reduce((a, c) => a + (c || 0), 0) };   // tot : 11/17 `호가창정렬` — 종목 줄 '1억 이상 n' 의 n
+    let et = null, eg = null, esum = null, ecnt = null;   // 11/18 `저녁호가` : 저녁 파일이 있는 날만 — e 는 r 과 같은 꼴 5칸, 합계도 같은 자(maxS)
+    if (ev) {
+      if (!Array.isArray(s.e) || s.e.length !== 5) throw new Error('종목 모양이 다름');
+      et = s.e.map(x => x !== null);
+      eg = Array.from({ length: 10 }, (_, i) => s.e.map((x, k) => { if (!et[k]) return null; if (!Array.isArray(x) || x.length !== 10) throw new Error('회차 칸 수가 10 이 아님'); return cell(x[i]); }));
+      esum = []; ecnt = [];
+      for (let k = 0; k < 5; k++) {
+        if (!et[k]) { esum.push(null); ecnt.push(null); continue; }
+        let a = 0, c = 0;
+        for (let i = 0; i < 10; i++) { const m = eg[i][k] || 0; a += m; if (m >= HC_EOK) c++; }
+        esum.push(a); ecnt.push(c); if (a > maxS) maxS = a;
+      }
+    }
+    return { c: String(s.code), n: has(s.name) ? String(s.name) : String(s.code), in: s.last === true, t, g, sum, cnt, tot: cnt.reduce((a, c) => a + (c || 0), 0), et, eg, esum, ecnt };   // tot : 11/17 `호가창정렬` — 종목 줄 '1억 이상 n' 의 n(장중만)
   });
-  return { st, maxS, nt: arr(v.have).length };
+  return { st, maxS, nt: arr(v.have).length, ne: ev ? arr(v.ehave).length : null };
 }
 function hcHeat(s, maxS) {   // 승인 시안 C(mock.js heat · ?v=D) 그대로 — 숫자 · 고정 글자만 넣는다
   const t = el('table', 'hc-m');
@@ -2063,6 +2081,34 @@ function hcHeat(s, maxS) {   // 승인 시안 C(mock.js heat · ?v=D) 그대로 
   t.insertAdjacentHTML('beforeend', hr + body);
   return t;
 }
+const HC_ETL = ['16시', '17시', '18시', '19시', '20시'];   // 11/18 `저녁호가` : 1600 · 1700 · 1800 · 1900 · 2002(= 20:00 장 끝 잔량)
+function hcEve(s, maxS) {   // 11/18 `저녁호가` : 장중 표 아래 '저녁' 표 — 장중 표와 같은 칸 너비(앞 다섯 칸) · 같은 칸 · 1억 · 합계 꼴(hoga-map v1.2 와 같음)
+  if (!s.et) return null;   // 저녁 파일이 없는 날 — 장중 표만(지금 그대로)
+  if (!s.et.some(x => x)) return el('div', 'hc-en', '저녁 · 기록 없음 (저녁 세 표 밖)');
+  const t = el('table', 'hc-m hc-ev');
+  const cg = el('colgroup'); cg.appendChild(Object.assign(document.createElement('col'), { style: 'width:24px' }));
+  HC_GRP.forEach((gq, k) => { if (k) cg.appendChild(Object.assign(document.createElement('col'), { style: 'width:3px' })); gq.cols.forEach(() => cg.appendChild(document.createElement('col'))); });
+  t.appendChild(cg);
+  const rest = 5;   // 저녁 다섯 칸 뒤 남는 칸 = 장중 여섯째 1 + 사이 1 + 종베 직전 3
+  let hr = `<tr class="g"><th class="e l"></th><th colspan="5">저녁</th><th class="e" colspan="${rest}"></th></tr>`;
+  hr += '<tr><th class="l">호가</th>' + HC_ETL.map(x => `<th>${x}</th>`).join('') + `<th colspan="${rest}"></th></tr>`;
+  const cmax = []; for (let k = 0; k < 5; k++) { let x = 0; for (let i = 0; i < 10; i++) x = Math.max(x, s.eg[i][k] || 0); cmax.push(x); }
+  const row = (l, f) => `<tr><td class="l">${l}</td>` + [0, 1, 2, 3, 4].map(f).join('') + `<td class="gp" colspan="${rest}"></td></tr>`;
+  let body = '';
+  for (let i = 0; i < 10; i++) body += row(i + 1, k => {
+    const m = s.eg[i][k];
+    if (!s.et[k]) return '<td class="x">·</td>';
+    if (m === null) return '<td class="x">-</td>';
+    const b = m >= HC_EOK, cl = 'v' + (b ? ' b' : '') + (m > 0 && m === cmax[k] ? ' mx' : '');
+    const st = b ? '' : ` style="background:rgba(var(--hcR),${(0.04 + 0.26 * m / HC_EOK).toFixed(3)})"`;
+    return `<td class="${cl}"${st}>${hcFmt(m)}</td>`;
+  });
+  body += '<tr class="sp"><td></td></tr>';
+  body += row('1억', k => { if (!s.et[k]) return '<td class="d">·</td>'; const c = s.ecnt[k]; return `<td class="d"><span class="hc-dn${c ? ' f' : ''}">${c}</span></td>`; });
+  body += row('합계', k => { if (!s.et[k]) return '<td class="s">·</td>'; const a = s.esum[k]; return `<td class="s"><div class="hc-sb" style="--h:${Math.max(2, Math.round(30 * a / maxS))}px"></div><div class="hc-sv">${hcFmt(a)}</div></td>`; });
+  t.insertAdjacentHTML('beforeend', hr + body);
+  return t;
+}
 function hcFvBtn(ymd, c, n, on) {   // 11/18 `관심연동` : 종목 줄 ♡/♥ — 누르면 그 반대로(줄 펼침과 따로)
   const b = el('button', 'hc-fvb' + (on ? ' on' : ''), on ? '♥︎' : '♡︎'); b.type = 'button'; b.setAttribute('aria-pressed', String(on));
   b.onclick = ev => { ev.stopPropagation(); fsToggle(ymd, c, n, !on); };
@@ -2076,7 +2122,7 @@ function hcFav(box, ymd, D) {   // 11/18 `관심연동` : 맨 위 '관심 n' —
     const s = by[c], r = el('div', 'hc-row');
     if (!s) { add(fb, add(r, hcFvBtn(ymd, c, n, true), el('span', 'hc-nm', n), el('span', 'hc-cd', `(${c})`), el('span', 'hc-cnt', '호가 기록 없음'))); return; }
     const cnt = el('span', 'hc-cnt', '1억 이상 '); add(cnt, el('b', null, String(s.tot)), document.createTextNode(` / ${s.t.filter(x => x).length * 10}칸`));
-    add(fb, add(r, hcFvBtn(ymd, c, s.n, true), el('span', 'hc-nm', s.n), el('span', 'hc-cd', `(${c})`), cnt), add(el('div', 'hc-box'), hcHeat(s, D.maxS)));
+    add(fb, add(r, hcFvBtn(ymd, c, s.n, true), el('span', 'hc-nm', s.n), el('span', 'hc-cd', `(${c})`), cnt), add(el('div', 'hc-box'), hcHeat(s, D.maxS), hcEve(s, D.maxS)));   // 11/18 `저녁호가` : 저녁 표(저녁 파일이 있는 날만)
   });
   add(box, fb);
 }
@@ -2098,7 +2144,7 @@ function drawHoga() {
   hcFav(box, ymd, D);   // 11/18 `관심연동` : 맨 위 '관심 n' 묶음 — 아래는 지금 목록 그대로(종목 줄 ♡/♥ 만 더함)
   const fvOn = new Set(fsList(fsGet(ymd)).map(x => x[0]));
   if (!D.st.length) { add(box, el('div', 'empty', '이날 호가 기록 없음')); return; }
-  add(box, add(el('div', 'label'), el('span', null, `세 표 겹침 종목 매수 1~10호가 · 회차 ${D.nt}/9`)));
+  add(box, add(el('div', 'label'), el('span', null, `세 표 겹침 종목 매수 1~10호가 · 회차 ${D.nt}/9` + (D.ne === null ? '' : ` · 저녁 ${D.ne}/5`))));   // 11/18 `저녁호가` : 저녁 파일이 있는 날만 꼬리
   const lg = el('div', 'hc-lg');
   lg.innerHTML = '<i style="background:rgba(var(--hcR),0.05)"></i><i style="background:rgba(var(--hcR),0.17)"></i><i style="background:rgba(var(--hcR),0.30)"></i><span>1억에 가까울수록 진하게</span><i style="background:var(--up);margin-left:8px"></i><span>1억 이상</span><i style="background:rgba(var(--hcR),0.17);outline:2px solid var(--text);outline-offset:-2px;margin-left:8px"></i><span>회차 1위 칸</span><span style="margin-left:8px">숫자 단위 억</span>';
   add(box, lg);
@@ -2113,7 +2159,7 @@ function drawHoga() {
     add(r, hcFvBtn(ymd, s.c, s.n, fvOn.has(s.c)), el('span', 'hc-nm', s.n), el('span', 'hc-cd', `(${s.c})`), cnt, el('span', 'hc-ar', open ? '▾' : '▸'));   // 11/18 `관심연동` : 이름 앞 ♡/♥
     r.onclick = () => { if (HC.open[s.c]) delete HC.open[s.c]; else HC.open[s.c] = true; drawHoga(); };
     add(card, r);
-    if (open) add(card, add(el('div', 'hc-box'), hcHeat(s, D.maxS)));
+    if (open) add(card, add(el('div', 'hc-box'), hcHeat(s, D.maxS), hcEve(s, D.maxS)));   // 11/18 `저녁호가` : 저녁 표(저녁 파일이 있는 날만)
   };
   /* 11/17 `호가창정렬` : 카드 차례(HC.ord — 같은 날짜일 때만) → 그 밖은 파일 차례(안정 정렬). 1억 이상 칸이 한 번도 없던 종목은 아래 접힌 줄.
      같은 날 `카드밖접기` : 카드를 셈한 날은 카드에 없는 종목(10분 표에만)을 1억과 상관없이 '세 표 카드 밖 종목' 접힌 줄로 — 카드를 못 셈한 날은 그 줄 없이 모두 위 */
@@ -2258,7 +2304,8 @@ const HELP = {
       ['· 와 -', '· = 그 회차엔 그 종목이 카드에 없었음. - = 호가를 못 받았거나 그 칸에 호가가 없음.'],
       ['1억 · 합계', '1억 = 그 회차 10칸 중 1억 이상 칸 수. 합계 = 10칸 합(막대 높이는 그날 모든 종목 가운데 가장 큰 합계 기준). 종목 줄 오른쪽 "1억 이상 n / m칸" = 그날 그 종목이 든 회차를 모두 합친 수.'],
       ['15:20 · 1억', '15:20 회차는 종가 동시호가 중이라 매수 칸이 3칸뿐이어서 뺀다. 1억은 강의 숫자(C10 — 장중 탭 호가 1억 칩과 같은 표시).'],
-      ['날짜 · 갱신', '날짜 줄은 장중 탭과 같다(고른 날을 두 탭이 같이 쓴다). 호가 기록은 10/19 부터. 장중엔 회차 갱신(09:12 ~ 15:12)마다 그날 회차가 늘어난다.']]]] }
+      ['저녁', '11/20 부터 저녁 회차(16시 · 17시 · 18시 · 19시 · 20시 — 20시는 20:00 장 끝 잔량)마다 그 회차 저녁 조회순위 10분 표 종목의 호가(KRX · NXT 저녁장 통합)를 받아, 종목을 펼치면 장중 표 아래 "저녁" 표로 보인다 — 칸 · 색 · 1억 · 합계는 장중과 같은 꼴 · 같은 자. 저녁 표의 · = 그 회차엔 저녁 세 표에 없었음. 저녁에 한 번도 안 든 종목은 "저녁 · 기록 없음" 한 줄. 목록 · 차례 · 종목 줄 "1억 이상 n / m칸" 은 장중만 — 저녁에만 든 종목은 여기 안 나온다.'],
+      ['날짜 · 갱신', '날짜 줄은 장중 탭과 같다(고른 날을 두 탭이 같이 쓴다). 호가 기록은 10/19 부터. 장중엔 회차 갱신(09:12 ~ 15:12)마다 그날 회차가 늘어나고, 저녁엔 갱신(16:07 ~ 19:07 · 20:12)마다 저녁 칸이 늘어난다.']]]] }
 };
 const HELP_COMMON = [
   ['하루 루틴 — 언제 무엇을 보나', [
@@ -2312,7 +2359,7 @@ applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dar
 const AL_FROM = '20260917';
 let DATES = [];
 let CUR = 'live';   // 10/8 사용자 요청 : 처음 열면 언제나 장중 탭 (옛 8-3 ① '판정 전이면 장중, 판정 뒤엔 마감' 을 대신함)
-const HERO = { live: ['장중', '매시 07분 갱신 · 저녁 20:12 까지'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], pick: ['선별', '오후확인 때 적은 계획매매 리스트'], review: ['복기', ''], hoga: ['호가창', '장중 회차마다 갱신 · 15:12 까지'] };
+const HERO = { live: ['장중', '매시 07분 갱신 · 저녁 20:12 까지'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], pick: ['선별', '오후확인 때 적은 계획매매 리스트'], review: ['복기', ''], hoga: ['호가창', '장중 회차마다 갱신 · 저녁 20:12 까지'] };   // 11/18 `저녁호가` : 15:12 까지 → 저녁 20:12 까지
 function setHero(tab) {
   document.getElementById('heroTitle').textContent = HERO[tab][0];
   document.getElementById('heroSub').textContent = tab === 'review' ? REVIEW_SUB : HERO[tab][1];
