@@ -448,6 +448,13 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
 .hc-m td.s{vertical-align:bottom;text-align:center;padding:0 1px}
 .hc-sb{height:var(--h);background:rgba(var(--hcR),.55);border-radius:3px 3px 0 0;margin:0 3px}
 .hc-sv{font-size:11px;color:var(--sub);margin-top:2px}
+/* 11/18 `관심연동` : 호가창 탭 맨 위 '관심 n' 묶음 = 장중 관심 띠(.iq3-fv · .iq3-fvh)와 같은 상자 · 머리, 안 줄은 호가창 종목 줄(.hc-row) 그대로(누르기 없음 · 열지도 펼침) · 종목 줄 ♡/♥ = .iq3-fvb 와 같은 색 */
+.hc-fv{background:var(--card);border:1px solid var(--roseLine);border-radius:16px;padding:4px 14px 6px;margin:0 0 10px;box-shadow:var(--shadow)}
+.hc-fvh{font-size:12px;font-weight:800;color:var(--wine);padding:4px 0 2px}
+.hc-fv .hc-row{cursor:default}
+.hc-fvh+.hc-row{border-top:0;padding-top:2px}
+.hc-fvb{font:inherit;font-size:15px;line-height:1;color:var(--muted);background:none;border:0;padding:6px 0;margin:-6px 0;cursor:pointer}
+.hc-fvb.on{color:var(--brand)}
 </style>
 </head>
 <body>
@@ -1047,6 +1054,7 @@ function renderLive(d) {
    장중은 c2(둘째 열)에 그리고 돌려준 값은 버린다. 선별 탭은 떼어 낸 div 에 그려 { at = 카드 회차, rows = 종목명 → 행 | null } 만 쓴다(같은 날짜 JSON → 같은 행) */
 function iq3Section(d, c2) {
   const ymd = String(d.date || '');
+  if (c2.isConnected) FS.draw = null;   // 11/18 `관심연동` : 장중 탭을 다시 그리면 앞 띠는 버림(이번에 띠를 그리면 아래에서 다시 건다)
   /* 11/7 `해답지지움` (사용자 결정 — 안 씀) : 세 표 겹침 카드 밑 접힘 '▸ 1분 조회 20위 (해답지)'(10/6 밤 `조회순위세표` 합치기 때 옮긴 것)와 도움말 'live.inq' 를 지웠다.
      d.inq · d.inqTime 은 JSON 에 그대로 남는다(pages-export 변경 0). 아래 IQ_OUT · secRows 는 세 표 카드가 쓴다 */
   const IQ_OUT = 35;   /* 9/17 사용자 결정 ① : 대금 35위 밖은 종목명만 취소선. 35 = 강의 당일주도주 검색식 "거래대금 순위 상위 35"(대조표 C4). 화면 표시일 뿐 판정에 안 쓴다.
@@ -1177,12 +1185,11 @@ function iq3Section(d, c2) {
           const srEBad = (t, gp) => Array.isArray(srEFail[t]) && srEFail[t].includes(gp);
           const iq3Amt = {};   // 코드 → { 등락률(10분 표) · 거래대금순위 · 거래대금억 } — pages-export inq3Card, 카드 회차가 같을 때만
           if (d.inq3Card && String(d.inq3Card['시각']) === iq3At) arr(d.inq3Card['종목']).forEach(r => { iq3Amt[String(r['코드'])] = r; });
-          /* 시안 `세표관심` : 사람이 고른 종목 표시 — 이 폰 브라우저에만(localStorage, 날짜별). 판정 · 채점 · 정렬에 안 쓴다 */
-          const FV_KEY = 'stock-report.iq3fav.' + ymd;
-          const fvGet = () => { try { const v = JSON.parse(localStorage.getItem(FV_KEY) || '[]'); return Array.isArray(v) ? v.filter(x => Array.isArray(x) && x.length === 2).map(x => [String(x[0]), String(x[1])]) : []; } catch (e) { return []; } };
-          const fvSet = v => { try { localStorage.setItem(FV_KEY, JSON.stringify(v)); } catch (e) { } };
+          /* 시안 `세표관심` : 사람이 고른 종목 표시 — 날짜별. 판정 · 채점 · 정렬에 안 쓴다.
+             11/18 `관심연동` : 저장 · PC 맞추기는 fs*(호가창탭 구역 바로 앞) — 원본 PC(plan-view /fav) · 이 폰 localStorage 는 캐시 + 못 보낸 것(옛 키 그대로 읽음) */
+          const fvGet = () => fsList(fsGet(ymd));
           const fvRows = {}, fvInfo = {}, fvCodes = [];
-          const fvToggle = (c, n) => { let v = fvGet(); v = v.some(x => x[0] === c) ? v.filter(x => x[0] !== c) : v.concat([[c, n]]); fvSet(v); fvDraw(); };
+          const fvToggle = (c, n) => { fsToggle(ymd, c, n); fvDraw(); };
           const fvMark = v => Object.keys(fvRows).forEach(c => { const on = v.some(x => x[0] === c); const b = fvRows[c].btn; b.textContent = on ? '♥︎' : '♡︎'; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
           const iq3List = el('div', 'list');
           /* 10/19 세표35숨김 (사용자 결정) : 대금 35위 밖(out35 — 취소선 조건 그대로, 100위 밖 포함 · 대금 값이 없으면 안 숨김)은 위 목록에서 빼 카드 밑 접힘
@@ -1193,7 +1200,8 @@ function iq3Section(d, c2) {
           const fvDraw = () => {
             const v = fvGet(); fvMark(v); fvBox.innerHTML = ''; fvBox.hidden = !v.length;
             if (!v.length) return;
-            add(fvBox, el('div', 'iq3-fvh', `관심 ${v.length}`));
+            const np = fsPend(fsGet(ymd));   // 11/18 `관심연동` : PC 에 아직 못 보낸 것(넣기 · 빼기) 수 — 있을 때만
+            add(fvBox, el('div', 'iq3-fvh', `관심 ${v.length}` + (np ? ` · PC 미반영 ${np}` : '')));
             v.forEach(([c, n]) => {
               const f = fvInfo[c];
               const b = el('button', 'iq3-fvb on', '♥︎'); b.type = 'button'; b.onclick = () => fvToggle(c, n);
@@ -1325,6 +1333,7 @@ function iq3Section(d, c2) {
           add(c2, iq3List.childNodes.length ? iq3List : el('div', 'empty', `대금 ${IQ_OUT}위 안 종목 없음`));   // 10/19 세표35숨김
           if (iq3Hide.childNodes.length) add(c2, add(el('details', 'iq3-det'), el('summary', null, `대금 ${IQ_OUT}위 밖 ${iq3Hide.childNodes.length}종목`), iq3Hide));   // 10/19 세표35숨김 (사용자 결정) : 0 이면 줄 없음
           fvDraw();
+          if (c2.isConnected) FS.draw = { ymd, fn: fvDraw };   // 11/18 `관심연동` : 장중 탭이 그린 띠만(선별 탭이 떼어 낸 div 에 그린 것은 아님) — PC 맞춤 · 호가창에서 누름 뒤 다시 그림
           if (wcSt && wcHas) wcSt.textContent += [['불명', wcN.na], ['실패', wcN.fail], ['시간초과', wcN.late]].filter(([, v]) => v > 0).map(([k, v]) => ` · ${k} ${v}`).join('');
           if (wcSt && hgObj && hgObj['상태'] === '있음' && hgObj['회차'] && String(hgObj['회차']) !== iq3At) wcSt.textContent += ` · 호가 ${hgObj['조회시각'] || '—'}`;   // 10/21 `호가1510` (사용자 결정 — 예시 그대로) : 15:20 카드는 15:10 호가(pages-export v3.8 '회차' 키) — 받은 시각을 줄 끝에. 옛 JSON · 다른 회차는 키 없음 = 그대로
         }
@@ -1878,6 +1887,101 @@ function drawPick() {
   add(box, lc);
 }
 
+/* ── 11/18 `관심연동` (사용자 결정 — 기록 D:\stock docs\관심연동_기록.md) ─────────────────
+   장중 탭 세 표 겹침 ♥(시안 `세표관심`)를 호가창 탭 맨 위 '관심 n' 묶음 · 티마 앱 '계획' 화면 위쪽과 잇는다 — 세 곳 어디서 넣고 빼도 같다.
+   원본 = PC(plan-view /fav — Tailscale 안 내 기기만 · 공개 저장소 · pages-export 로 안 감). 이 폰 localStorage = 캐시 + 아직 못 보낸 변경 :
+   키 stock-report.iq3favs.<날짜> = [[코드, 이름, 켬 1|0, 누른 시각 ms, 못 보냄 1|0], …](끈 것도 남김). 이 키가 없거나 깨졌으면 옛 키 stock-report.iq3fav.<날짜>
+   ([[코드, 이름], …] 고른 순서)를 그대로 읽어 '못 보냄' 으로(첫 연결 때 PC 로 올라감) · 옛 키에도 켠 것을 같은 꼴로 계속 써 둔다(옛 판 화면으로 돌아가도 그대로).
+   맞추기 = 종목마다 누른 시각이 늦은 것이 이김(같은 폰 시계) · 날짜별(응답 날짜가 다르면 버림 — 다른 날짜로 안 붙음). 보내는 때 = ♥ 누를 때 · 날짜 자료를 받을 때 ·
+   화면이 다시 보일 때 · 보이는 동안 1분마다 — 하나씩 · 요청마다 4초 제한. 못 닿으면(꺼짐 · 시간 초과 · 거부 · 잘못된 응답) 폰에만 두고 화면은 그대로 —
+   장중 관심 띠 머리 '· PC 미반영 n'. PC 응답에 없는 종목은 다시 보낸다(PC 파일을 잃어도 폰에서 조용히 사라지지 않게). 저장이 막힌 브라우저는 이 창 메모리로.
+   코드 6자 · 이름 1 ~ 40자만(서버 검사와 같은 값 — 표시 도구 한도). 표시만 — 판정 · 채점 · 정렬 · 기록에 안 쓴다 */
+const FS_URL = 'https://node.tail180b94.ts.net/plan/fav';   // 머리 '티마' 링크와 같은 이름
+const FS = { date: null, mem: {}, busy: false, again: null, last: {}, draw: null };   // mem : 날짜 → { 코드: { n, on, t, p } } · draw : 장중 탭 띠 { ymd, fn }
+const fsCodeOk = c => typeof c === 'string' && /^[0-9][0-9A-Z]{5}$/.test(c);
+const fsNameOk = n => typeof n === 'string' && n.length >= 1 && n.length <= 40 && !/[\x00-\x1f\x7f]/.test(n) && n.trim() !== '';
+function fsRead(ymd) {   // localStorage → { 코드: { n, on, t, p } } · 못 읽으면 null
+  let raw;
+  try { raw = localStorage.getItem('stock-report.iq3favs.' + ymd); } catch (e) { return null; }
+  const m = {};
+  if (raw !== null) {
+    try {
+      const v = JSON.parse(raw);
+      if (Array.isArray(v)) {
+        v.forEach(e => { if (Array.isArray(e) && e.length === 5 && fsCodeOk(e[0]) && fsNameOk(e[1]) && (e[2] === 0 || e[2] === 1) && Number.isFinite(e[3]) && e[3] >= 1 && (e[4] === 0 || e[4] === 1)) m[e[0]] = { n: e[1], on: e[2] === 1, t: e[3], p: e[4] === 1 }; });
+        return m;
+      }
+    } catch (e) { }
+  }
+  let old = [];   // 옛 꼴(11/12 `세표관심`) — 고른 순서 그대로 · 못 보낸 것으로
+  try { old = JSON.parse(localStorage.getItem('stock-report.iq3fav.' + ymd) || '[]'); } catch (e) { old = []; }
+  if (Array.isArray(old)) old.forEach((x, i) => { if (Array.isArray(x) && x.length === 2) { const c = String(x[0]), n = String(x[1]); if (fsCodeOk(c) && fsNameOk(n) && !m[c]) m[c] = { n, on: true, t: i + 1, p: true }; } });
+  return m;
+}
+function fsGet(ymd) {   // 이 창 메모리 + 저장(다른 창이 쓴 것) — 종목마다 늦게 누른 것, 같은 시각이면 보낸 쪽(못 보냄 = 둘 다 못 보냈을 때만)
+  const a = FS.mem[ymd] || {}, b = fsRead(ymd) || {}, m = {};
+  [a, b].forEach(s => Object.keys(s).forEach(c => {
+    const x = m[c], y = s[c];
+    if (!x || y.t > x.t) m[c] = { n: y.n, on: y.on, t: y.t, p: y.p };
+    else if (y.t === x.t) x.p = x.p && y.p;
+  }));
+  FS.mem[ymd] = m;
+  return m;
+}
+function fsList(m) { return Object.keys(m).filter(c => m[c].on).sort((a, b) => (m[a].t - m[b].t) || (a < b ? -1 : a > b ? 1 : 0)).map(c => [c, m[c].n]); }   // 켠 것 · 고른 순서
+function fsPend(m) { return Object.keys(m).filter(c => m[c].p).length; }
+function fsPut(ymd, m) {   // 메모리 · 저장(새 키 + 옛 키 같은 꼴) — 못 쓰면 조용히 넘어감(이 창은 메모리로 그대로)
+  FS.mem[ymd] = m;
+  try { localStorage.setItem('stock-report.iq3favs.' + ymd, JSON.stringify(Object.keys(m).map(c => [c, m[c].n, m[c].on ? 1 : 0, m[c].t, m[c].p ? 1 : 0]))); } catch (e) { }
+  try { localStorage.setItem('stock-report.iq3fav.' + ymd, JSON.stringify(fsList(m))); } catch (e) { }
+}
+function fsNotify(ymd) {   // 장중 탭 띠(지금 장중 탭이 그린 것) · 보이는 호가창 탭을 다시 그림
+  if (FS.draw && FS.draw.ymd === ymd) { try { FS.draw.fn(); } catch (e) { } }
+  if (CUR === 'hoga' && HC.date === ymd) { try { drawHoga(); } catch (e) { } }
+}
+function fsToggle(ymd, c, n, want) {   // ♡ ↔ ♥ (want 를 주면 그 상태로) — 누른 시각 = 지금과 그 종목 시각 + 1 중 큰 것
+  if (!/^[0-9]{8}$/.test(String(ymd)) || !fsCodeOk(c)) return;
+  const m = fsGet(ymd), o = m[c];
+  let nm = String(n).replace(/[\x00-\x1f\x7f]/g, '').slice(0, 40); if (!fsNameOk(nm)) nm = c;
+  const on = want === undefined ? !(o && o.on) : !!want;
+  if (want !== undefined && !!(o && o.on) === on) return;   // 이미 그 상태(다시 그리기 전 단추를 또 누름)
+  m[c] = { n: nm, on, t: Math.max(Date.now(), o ? o.t + 1 : 1), p: true };
+  fsPut(ymd, m); fsNotify(ymd); fsSync(ymd);
+}
+function fsMerge(ymd, items) {   // PC 응답 합치기 — 못 보낸 것 중 PC 보다 늦게 누른 것만 남기고 나머지는 PC 값
+  const m = fsGet(ymd), was = JSON.stringify(m), s = {};
+  items.forEach(x => { if (x && fsCodeOk(x.c) && fsNameOk(x.n) && typeof x.on === 'boolean' && Number.isFinite(x.t)) s[x.c] = x; });
+  Object.keys(s).forEach(c => { const l = m[c], x = s[c]; if (!(l && l.p && l.t > x.t)) m[c] = { n: x.n, on: x.on, t: x.t, p: false }; });
+  Object.keys(m).forEach(c => { if (!s[c]) m[c].p = true; });   // PC 에 없는 것은 다시 보냄(PC 파일을 잃었을 때)
+  if (JSON.stringify(m) === was) return;
+  fsPut(ymd, m); fsNotify(ymd);
+}
+function fsSync(ymd) {   // PC 와 맞춤 — 못 보낸 것이 있으면 POST(100개씩), 없으면 GET. 실패는 조용히(못 보냄 그대로)
+  if (!/^[0-9]{8}$/.test(String(ymd || ''))) return;
+  if (FS.busy) { FS.again = ymd; return; }
+  const m = fsGet(ymd);
+  const ops = Object.keys(m).filter(c => m[c].p).map(c => ({ c, n: m[c].n, on: m[c].on, t: m[c].t }));
+  if (!ops.length && Date.now() - (FS.last[ymd] || 0) < 3000) return;   // 방금 맞춘 날짜(보이기 · 날짜 자료 받기가 겹칠 때)
+  FS.busy = true;
+  let done = false, tm = null;
+  const ac = typeof AbortController === 'function' ? new AbortController() : null;
+  const fin = j => {
+    if (done) return; done = true; clearTimeout(tm); FS.busy = false;
+    if (j && j.ok === true && j.d === ymd && Array.isArray(j.items)) { FS.last[ymd] = Date.now(); try { fsMerge(ymd, j.items); } catch (e) { } if (ops.length > 100 && !FS.again) FS.again = ymd; }
+    const a = FS.again; FS.again = null; if (a) fsSync(a);
+  };
+  tm = setTimeout(() => { if (ac) { try { ac.abort(); } catch (e) { } } fin(null); }, 4000);
+  const o = { mode: 'cors', credentials: 'omit', cache: 'no-store', referrerPolicy: 'no-referrer' };
+  if (ac) o.signal = ac.signal;
+  if (ops.length) Object.assign(o, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Plan-Fav': '1' }, body: JSON.stringify({ d: ymd, ops: ops.slice(0, 100) }) });
+  let p;
+  try { p = fetch(ops.length ? FS_URL : `${FS_URL}?d=${ymd}`, o); } catch (e) { p = Promise.reject(e); }
+  Promise.resolve(p).then(r => (r && r.ok ? r.json() : null)).then(fin, () => fin(null));
+}
+function fsWant(ymd) { FS.date = /^[0-9]{8}$/.test(String(ymd || '')) ? String(ymd) : null; if (FS.date) fsSync(FS.date); }   // 장중 탭이 날짜 자료를 받을 때(loadDate)
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && FS.date) fsSync(FS.date); });
+setInterval(() => { if (document.visibilityState === 'visible' && FS.date) fsSync(FS.date); }, 60000);
+
 /* ── 11/17 `호가창탭` (사용자 결정 — 승인 시안 C, 기록 D:\stock docs\호가창탭_기록.md) ─────────────────
    장중 바로 오른쪽 '호가창' 탭 — 그날 조회순위 세 표 카드 종목(회차마다 호가를 받은 종목 = data\hoga 회차 파일)의 매수 1~10호가 칸 금액(호가 × 잔량)
    열지도, 9회차(09:05 · 10 ~ 14시 매시 · 14:50 · 15:00 · 15:10 — 15:20 동시호가는 뺌). 자료 data/hoga/<날짜>.json(pages-export v3.14 → hoga-export v1.0 —
@@ -1959,6 +2063,23 @@ function hcHeat(s, maxS) {   // 승인 시안 C(mock.js heat · ?v=D) 그대로 
   t.insertAdjacentHTML('beforeend', hr + body);
   return t;
 }
+function hcFvBtn(ymd, c, n, on) {   // 11/18 `관심연동` : 종목 줄 ♡/♥ — 누르면 그 반대로(줄 펼침과 따로)
+  const b = el('button', 'hc-fvb' + (on ? ' on' : ''), on ? '♥︎' : '♡︎'); b.type = 'button'; b.setAttribute('aria-pressed', String(on));
+  b.onclick = ev => { ev.stopPropagation(); fsToggle(ymd, c, n, !on); };
+  return b;
+}
+function hcFav(box, ymd, D) {   // 11/18 `관심연동` : 맨 위 '관심 n' — ♥ 종목 열지도를 펼친 채로(고른 순서) · 그날 호가 기록이 없는 종목은 이름 줄 + '호가 기록 없음' · ♥ 누르면 빠짐
+  const v = fsList(fsGet(ymd)); if (!v.length) return;
+  const by = {}; if (D) D.st.forEach(s => { if (!by[s.c]) by[s.c] = s; });
+  const fb = add(el('div', 'hc-fv'), el('div', 'hc-fvh', `관심 ${v.length}`));
+  v.forEach(([c, n]) => {
+    const s = by[c], r = el('div', 'hc-row');
+    if (!s) { add(fb, add(r, hcFvBtn(ymd, c, n, true), el('span', 'hc-nm', n), el('span', 'hc-cd', `(${c})`), el('span', 'hc-cnt', '호가 기록 없음'))); return; }
+    const cnt = el('span', 'hc-cnt', '1억 이상 '); add(cnt, el('b', null, String(s.tot)), document.createTextNode(` / ${s.t.filter(x => x).length * 10}칸`));
+    add(fb, add(r, hcFvBtn(ymd, c, s.n, true), el('span', 'hc-nm', s.n), el('span', 'hc-cd', `(${c})`), cnt), add(el('div', 'hc-box'), hcHeat(s, D.maxS)));
+  });
+  add(box, fb);
+}
 function drawHoga() {
   const box = document.getElementById('hoga'); box.innerHTML = '';
   const ymd = HC.date;
@@ -1967,12 +2088,15 @@ function drawHoga() {
   if (!e || e.v === undefined) { add(box, el('div', 'empty', '불러오는 중')); return; }
   if (e.v instanceof Error) {
     const nf = / 404$/.test(e.v.message);
+    if (nf) hcFav(box, ymd, null);   // 11/18 `관심연동` : 그날 호가 파일이 없으면 ♥ 종목은 이름 줄 + '호가 기록 없음'
     add(box, el('div', 'empty', !nf ? '호가 자료를 못 불러왔습니다 : ' + e.v.message
       : ymd < HC_FROM ? '이날은 호가 기록 전 — 호가 기록은 10/19 부터' : '이날 호가 기록 없음'));
     return;
   }
   let D;
   try { D = hcPrep(e.v, ymd); } catch (x) { add(box, el('div', 'empty', '호가 자료를 못 불러왔습니다 : ' + x.message)); return; }
+  hcFav(box, ymd, D);   // 11/18 `관심연동` : 맨 위 '관심 n' 묶음 — 아래는 지금 목록 그대로(종목 줄 ♡/♥ 만 더함)
+  const fvOn = new Set(fsList(fsGet(ymd)).map(x => x[0]));
   if (!D.st.length) { add(box, el('div', 'empty', '이날 호가 기록 없음')); return; }
   add(box, add(el('div', 'label'), el('span', null, `세 표 겹침 종목 매수 1~10호가 · 회차 ${D.nt}/9`)));
   const lg = el('div', 'hc-lg');
@@ -1986,7 +2110,7 @@ function drawHoga() {
     const r = el('div', 'hc-row' + (first ? ' hc-first' : '')); first = false;
     r.setAttribute('role', 'button'); r.setAttribute('aria-expanded', open ? 'true' : 'false');
     const cnt = el('span', 'hc-cnt', '1억 이상 '); add(cnt, el('b', null, String(tot)), document.createTextNode(` / ${nr * 10}칸`));
-    add(r, el('span', 'hc-nm', s.n), el('span', 'hc-cd', `(${s.c})`), cnt, el('span', 'hc-ar', open ? '▾' : '▸'));
+    add(r, hcFvBtn(ymd, s.c, s.n, fvOn.has(s.c)), el('span', 'hc-nm', s.n), el('span', 'hc-cd', `(${s.c})`), cnt, el('span', 'hc-ar', open ? '▾' : '▸'));   // 11/18 `관심연동` : 이름 앞 ♡/♥
     r.onclick = () => { if (HC.open[s.c]) delete HC.open[s.c]; else HC.open[s.c] = true; drawHoga(); };
     add(card, r);
     if (open) add(card, add(el('div', 'hc-box'), hcHeat(s, D.maxS)));
@@ -2050,7 +2174,7 @@ const HELP_SEC = {
     ['-13% 칩 (코드 뒤)', '위 거리가 25% 안(화면 숫자로 -24% 까지)인 종목은 숫자를 칩으로 표시한다. 종목명이 그어진 종목은 칩 없이 숫자만 — 훑을 때 건너뛰라는 표시와 겹치지 않게. 25 는 사용자가 정한 숫자로 강의 기준이 아니다. 판정 · 채점에 안 쓴다.'],   // 11/2 `세표25칩`
     ['종목명 · (005930) 누르기', '안드로이드에서 종목명을 누르면 영웅문S# 호가주문, (005930) 을 누르면 종목차트가 그 종목으로 바로 바뀐다(확인 창 없음). 화면만 바꾸고 주문은 안 낸다 — 주문 전에 영웅문 쪽 종목명을 본다. 반응이 없거나 오류 화면이면 키움이 주소를 바꾼 것 — 뒤로 가기 뒤 돋보기로. PC 에서는 누를 수 없다.'],   // 10/22 `세표영웅문링크` · `세표차트링크` (사용자 결정 A안 — 예시 글자 그대로)
     ['♡ · ♥ (등락률 옆)', '눌러서 그 종목을 고른다(♥) — 고른 종목은 제목 밑 \'관심\' 띠에 모인다. 다시 누르면 빠진다(♡). 대금 35위 밖 접힘 안 종목도 고를 수 있다. 사람이 고른 표시일 뿐 — 판정 · 채점 · 정렬 · 기록에 안 쓴다.'],   // 11/12 `세표관심` (사용자 승인 문구 그대로)
-    ['관심 n (제목 밑 띠)', '고른 순서대로 한 종목 한 줄 : ★·☆ · 종목명(카드와 같은 취소선 · 안드로이드면 누르면 영웅문 호가주문) · 누적 · 1시간 · 10분 순위 · 등락률. 지금 회차 세 표에 없는 종목은 이름이 회색이고 \'이 회차 세 표 밖\'. 띠의 ♥ 를 누르면 빠진다. 이 폰 브라우저에만 날짜별로 남는다 — 다음 날은 빈 띠, 다른 폰 · PC 에는 안 보이고, 브라우저 사이트 데이터를 지우면 사라진다.'],
+    ['관심 n (제목 밑 띠)', '고른 순서대로 한 종목 한 줄 : ★·☆ · 종목명(카드와 같은 취소선 · 안드로이드면 누르면 영웅문 호가주문) · 누적 · 1시간 · 10분 순위 · 등락률. 지금 회차 세 표에 없는 종목은 이름이 회색이고 \'이 회차 세 표 밖\'. 띠의 ♥ 를 누르면 빠진다. 날짜별로 PC(티마 \'계획\' 화면)와 호가창 탭 맨 위에 같이 보인다 — 다음 날은 빈 띠. PC 에 못 닿으면 이 폰에 두고 띠 머리에 \'PC 미반영 n\', 닿으면 저절로 맞춘다.'],
     ['~~종목명~~ 취소선', '훑을 때 건너뛰라는 표시 — 다섯 중 하나면 긋는다. ① 거래대금 35위 밖(100위 밖 포함) — 이 종목은 위 목록에서 빠져 아래 ▸ 대금 35위 밖 접힘 안에 그어진 채로 있다. 35 = 강의 당일주도주 검색식의 "거래대금 순위 상위 35"(대조표 C4). 대금 순위 값이 없으면(윗줄 · 둘째 줄 오른쪽이 빈 줄) 이 이유로는 긋지 않고 위에 둔다. ② 섹터명이 개별이슈뿐 — 다른 테마 카드에도 들면 긋지 않는다. ③ 종목명에 레버리지. ④ 섹터명 없음 = 그 회차 캡처된 티마 카드(카드당 4종목)에 없는 종목 — 테마주라도 그 회차 카드 4종목 밖이면 그어진다. 그 회차 티마 캡처가 없으면(10/16 전의 15:12 화면 · 캡처 실패) ② · ④ 는 모르므로 긋지 않는다. ⑤ 신규주 = 상장 30일 이내("신규주" 표시와 같은 목록, 섹터명과 무관) — 상장일을 모르는 종목은 긋지 않는다. 판정에 안 쓴다 — ★ · ☆ · 코드 · 오른쪽 숫자 · 둘째 줄부터는 그대로 둔다.'],   // 10/19 세표35숨김 (사용자 결정) : ① 은 접힘 안에서 보인다
     ['15위 안 n/m회차 (셋째 줄 오른쪽)', '09:00 칸부터 제목 회차 칸까지 자료가 있는 10분 칸 m 개 중 이 종목이 세 표 모두 15위 안이었던 칸 n 개. 칸 = 키움 10분 표의 기준 시각(09:00 · 09:10 … 15:20, 하루 39칸) — 수집 회차의 칸(09:05 회차 = 09:00 칸 · 10:00 ~ 14:00 정각 · 14:50 · 15:00 · 15:10 · 15:20)은 수집 회차 자료, 나머지 29칸은 따로 10분마다 받는 자료다. 자료가 없는 칸은 m 에 안 세고, 한 간격만 못 받은 칸은 m 에 세고 n 에 안 센다. 카드에 나오는 종목은 제목 회차에 세 표 모두 20위 안인 종목 그대로 — 칸 수만 15위로 센다(사용자가 정한 숫자). 누르면 그래프가 펼쳐진다(▸ → ▾). 10분 자료가 없는 날(11/11 까지)은 칸 대신 수집 회차(약 1시간)로 센다 — ▸ · 그래프 없음.'],   // 11/11 `세표10분`
     ['★ (이름 앞)', '15위 안 n/m회차 에서 n = m — 09:00 칸부터 제목 회차까지 자료가 있는 모든 10분 칸에서 세 표 모두 15위 안이었던 종목. 첫 칸뿐인 아침엔 15위 안 종목이 모두 붙고, 한 간격이라도 못 받은 칸이 있는 날은 아무도 안 붙는다(n/m 과 같은 뜻 — 칸 수 하한은 두지 않는다). 10분 자료가 없는 날은 칸 대신 수집 회차로 같은 뜻(n = m).'],   // 11/11 `세표10분`
@@ -2225,6 +2349,7 @@ async function loadDate(ymd, dates) {
   renderDatebar(String(d.date || ''));
   setHero(CUR);   // 처음 탭은 CUR 기본값(장중) 하나로 — 자료를 다시 불러와도 탭은 안 바꾼다(탭 이동은 사용자 몫)
   hcSet(String(d.date || ''), null);   // 11/17 `호가창탭` : 호가창 탭도 이 날짜(보이고 있으면 그날 파일을 받는다)
+  fsWant(String(d.date || ''));   // 11/18 `관심연동` : 이 날짜 ♥ 를 PC 와 맞춤(기다리지 않는다 — 못 닿으면 폰 것 그대로)
 }
 
 const HERO_EL = document.querySelector('.hero');
