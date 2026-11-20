@@ -10,6 +10,23 @@
                                        "plan":  true
                                    }
                                ]
+                 },
+                 {
+                     "date":  "20261118",
+                     "items":  [
+                                   {
+                                       "name":  "원익홀딩스",
+                                       "sector":  "로봇",
+                                       "amt":  3634,
+                                       "plan":  true
+                                   },
+                                   {
+                                       "name":  "코리아써키트",
+                                       "sector":  "반도체소부장",
+                                       "amt":  2712,
+                                       "plan":  false
+                                   }
+                               ]
                  }
              ]
 }
