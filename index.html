@@ -1999,6 +1999,7 @@ setInterval(() => { if (document.visibilityState === 'visible' && FS.date) fsSyn
    돌려준 HC.ord, 날짜가 같을 때만), 카드에 없는 종목(호가는 10분 표 종목이라 카드보다 넓다)은 그 뒤 파일 차례. 그날 1억 이상 칸이 한 번도 없던 종목(종목 줄의
    '1억 이상 0 / m칸')은 맨 아래 접힌 줄 '1억 이상 한 번도 없는 종목 n' 안으로(같은 차례 · 처음엔 접힘). '지난 회차에만 든 종목' 줄은 그 밑에 그대로(파일 차례).
    카드를 못 셈한 날(수집 전 · 수집 실패)은 모두 파일 차례. 1억 = 위와 같은 C10 강의 숫자 — 새 숫자 없음
+   11/22 `호가창저녁합계` (사용자 요청) : 종목 줄 '1억 이상 n / m칸' 과 '1억 이상 한 번도 없는 종목' 줄은 저녁 회차(있는 날)까지 합친다 — 목록 · 차례는 그대로 장중
    같은 날 `카드밖접기` (사용자 결정 — 예시 그대로) : 카드를 셈한 날은 카드에 없는 종목(10분 표에만 — 11/17 KODEX 레버리지 등)을 1억과 상관없이 위 목록 · 1억 없는 줄에서
    빼 '세 표 카드 밖 종목 n' 접힌 줄로(1억 없는 줄 밑 · 지난 회차 줄 위 · 안은 파일 차례 · 처음엔 접힘). 그래서 위 목록 = 라벨 그대로 세 표 겹침 종목. 카드를 못 셈한 날은 그 줄 없음 */
 const HC_EOK = 1e8, HC_FROM = '20261019';
@@ -2053,7 +2054,7 @@ function hcPrep(v, ymd) {   // 모양 검사 + 회차별 합계 · 1억 칸 수 
         esum.push(a); ecnt.push(c); if (a > maxS) maxS = a;
       }
     }
-    return { c: String(s.code), n: has(s.name) ? String(s.name) : String(s.code), in: s.last === true, t, g, sum, cnt, tot: cnt.reduce((a, c) => a + (c || 0), 0), et, eg, esum, ecnt };   // tot : 11/17 `호가창정렬` — 종목 줄 '1억 이상 n' 의 n(장중만)
+    return { c: String(s.code), n: has(s.name) ? String(s.name) : String(s.code), in: s.last === true, t, g, sum, cnt, tot: cnt.concat(ecnt || []).reduce((a, c) => a + (c || 0), 0), nr: t.concat(et || []).filter(x => x).length, et, eg, esum, ecnt };   // tot · nr : 11/17 `호가창정렬` — 종목 줄 '1억 이상 n / m칸' 의 n · 회차 수(m = nr × 10) — 11/22 `호가창저녁합계` 부터 저녁 회차 포함(사용자 요청)
   });
   return { st, maxS, nt: arr(v.have).length, ne: ev ? arr(v.ehave).length : null };
 }
@@ -2121,7 +2122,7 @@ function hcFav(box, ymd, D) {   // 11/18 `관심연동` : 맨 위 '관심 n' —
   v.forEach(([c, n]) => {
     const s = by[c], r = el('div', 'hc-row');
     if (!s) { add(fb, add(r, hcFvBtn(ymd, c, n, true), el('span', 'hc-nm', n), el('span', 'hc-cd', `(${c})`), el('span', 'hc-cnt', '호가 기록 없음'))); return; }
-    const cnt = el('span', 'hc-cnt', '1억 이상 '); add(cnt, el('b', null, String(s.tot)), document.createTextNode(` / ${s.t.filter(x => x).length * 10}칸`));
+    const cnt = el('span', 'hc-cnt', '1억 이상 '); add(cnt, el('b', null, String(s.tot)), document.createTextNode(` / ${s.nr * 10}칸`));
     add(fb, add(r, hcFvBtn(ymd, c, s.n, true), el('span', 'hc-nm', s.n), el('span', 'hc-cd', `(${c})`), cnt), add(el('div', 'hc-box'), hcHeat(s, D.maxS), hcEve(s, D.maxS)));   // 11/18 `저녁호가` : 저녁 표(저녁 파일이 있는 날만)
   });
   add(box, fb);
@@ -2152,7 +2153,7 @@ function drawHoga() {
   let first = true;
   const line = s => {
     const open = HC.open[s.c] === true;
-    const nr = s.t.filter(x => x).length, tot = s.tot;
+    const nr = s.nr, tot = s.tot;
     const r = el('div', 'hc-row' + (first ? ' hc-first' : '')); first = false;
     r.setAttribute('role', 'button'); r.setAttribute('aria-expanded', open ? 'true' : 'false');
     const cnt = el('span', 'hc-cnt', '1억 이상 '); add(cnt, el('b', null, String(tot)), document.createTextNode(` / ${nr * 10}칸`));
@@ -2302,9 +2303,9 @@ const HELP = {
       ['종목', '장중 회차(9:05 · 10시 ~ 14시 매시 · 14:50 · 15:00 · 15:10)마다 그 회차 조회순위 10분 표 종목(세 표 카드 종목은 모두 든다)의 호가를 받는다. 목록 = 마지막 회차의 종목, 차례는 장중 탭 세 표 겹침 카드에 보이는 차례(위 목록 → 대금 35위 밖) 그대로. 그날 1억 이상 칸이 한 번도 없던 카드 종목은 맨 아래 "1억 이상 한 번도 없는 종목" 줄, 카드에 없는 종목(10분 표에만)은 1억과 상관없이 그 밑 "세 표 카드 밖 종목" 줄, 그 전 회차에만 들었던 종목은 "지난 회차에만 든 종목" 줄 — 누르면 펼쳐진다. 그날 카드를 못 셈했으면(수집 실패) 카드 밖 줄 없이 모두 위에 호가 파일 차례로. 종목을 누르면 그 아래 표가 열린다(여러 개 같이).'],
       ['칸', '숫자 = 그 호가 칸에 걸린 매수 금액, 억 단위 소수 한 자리(0.1억 아래는 버림 — 9,800만 = 0.9). 1억 이상 = 꽉 찬 빨강, 그 밖은 1억에 가까울수록 진하게. 테두리 = 그 회차에서 가장 큰 칸.'],
       ['· 와 -', '· = 그 회차엔 그 종목이 카드에 없었음. - = 호가를 못 받았거나 그 칸에 호가가 없음.'],
-      ['1억 · 합계', '1억 = 그 회차 10칸 중 1억 이상 칸 수. 합계 = 10칸 합(막대 높이는 그날 모든 종목 가운데 가장 큰 합계 기준). 종목 줄 오른쪽 "1억 이상 n / m칸" = 그날 그 종목이 든 회차를 모두 합친 수.'],
+      ['1억 · 합계', '1억 = 그 회차 10칸 중 1억 이상 칸 수. 합계 = 10칸 합(막대 높이는 그날 모든 종목 가운데 가장 큰 합계 기준). 종목 줄 오른쪽 "1억 이상 n / m칸" = 그날 그 종목이 든 회차(장중 · 저녁)를 모두 합친 수.'],
       ['15:20 · 1억', '15:20 회차는 종가 동시호가 중이라 매수 칸이 3칸뿐이어서 뺀다. 1억은 강의 숫자(C10 — 장중 탭 호가 1억 칩과 같은 표시).'],
-      ['저녁', '11/20 부터 저녁 회차(16시 · 17시 · 18시 · 19시 · 20시 — 20시는 20:00 장 끝 잔량)마다 그 회차 저녁 조회순위 10분 표 종목의 호가(KRX · NXT 저녁장 통합)를 받아, 종목을 펼치면 장중 표 아래 "저녁" 표로 보인다 — 칸 · 색 · 1억 · 합계는 장중과 같은 꼴 · 같은 자. 저녁 표의 · = 그 회차엔 저녁 세 표에 없었음. 저녁에 한 번도 안 든 종목은 "저녁 · 기록 없음" 한 줄. 목록 · 차례 · 종목 줄 "1억 이상 n / m칸" 은 장중만 — 저녁에만 든 종목은 여기 안 나온다.'],
+      ['저녁', '11/20 부터 저녁 회차(16시 · 17시 · 18시 · 19시 · 20시 — 20시는 20:00 장 끝 잔량)마다 그 회차 저녁 조회순위 10분 표 종목의 호가(KRX · NXT 저녁장 통합)를 받아, 종목을 펼치면 장중 표 아래 "저녁" 표로 보인다 — 칸 · 색 · 1억 · 합계는 장중과 같은 꼴 · 같은 자. 저녁 표의 · = 그 회차엔 저녁 세 표에 없었음. 저녁에 한 번도 안 든 종목은 "저녁 · 기록 없음" 한 줄. 목록 · 차례는 장중만 — 저녁에만 든 종목은 여기 안 나온다. 종목 줄 "1억 이상 n / m칸" 과 "1억 이상 한 번도 없는 종목" 줄은 저녁 회차까지 합친다.'],
       ['날짜 · 갱신', '날짜 줄은 장중 탭과 같다(고른 날을 두 탭이 같이 쓴다). 호가 기록은 10/19 부터. 장중엔 회차 갱신(09:12 ~ 15:12)마다 그날 회차가 늘어나고, 저녁엔 갱신(16:07 ~ 19:07 · 20:12)마다 저녁 칸이 늘어난다.']]]] }
 };
 const HELP_COMMON = [
