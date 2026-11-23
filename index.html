@@ -81,9 +81,6 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 .tabs button{padding:6px 0;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.72);font:inherit;font-size:12.5px;cursor:pointer}
 .tabs button.on{background:#fff;color:#7a0c17;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .tabs button:focus-visible{outline:2px solid #fff;outline-offset:1px}
-/* 11/23 `실시간탭` : 호가창과 선별 사이 — 패널 없는 링크 칸(누르면 호가 금액 실시간 화면을 새 창으로). 모양은 .tabs button 과 같게 */
-.tabs a.tab-ext{display:flex;align-items:center;justify-content:center;padding:6px 0;border-radius:9px;color:rgba(255,255,255,.72);font-size:12.5px;text-decoration:none;white-space:nowrap}
-.tabs a.tab-ext:focus-visible{outline:2px solid #fff;outline-offset:1px}
 .hero h1{margin:0;font-size:26px;letter-spacing:-.7px;font-weight:800;line-height:1.1}
 .hsub{margin-top:5px;font-size:12.5px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
 .hsrow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -463,6 +460,10 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
 .hc-fvh+.hc-row{border-top:0;padding-top:2px}
 .hc-fvb{font:inherit;font-size:15px;line-height:1;color:var(--muted);background:none;border:0;padding:6px 0;margin:-6px 0;cursor:pointer}
 .hc-fvb.on{color:var(--brand)}
+/* 11/23 `실시간탭` 회차 3 (사용자 결정 — 새 창 링크 → 탭 안) : 호가 금액 실시간 화면(hoga-live · Tailscale Serve /hoga · 내 기기만)을 iframe 으로. 높이는 그 화면이 postMessage 로 알려 준다(처음 값은 그 전까지만) */
+.rt-frame{display:block;width:100%;height:640px;border:0;background:transparent}
+.rt-note{margin:10px 0 0;font-size:12px;color:var(--sub);text-align:center}
+.rt-note a{color:var(--wine);font-weight:700}
 </style>
 </head>
 <body>
@@ -471,7 +472,7 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
     <div class="tabs">
       <button data-tab="live" class="on">장중</button>
       <button data-tab="hoga">호가창</button><!-- 11/17 `호가창탭` : 장중 바로 오른쪽 (.tabs 칸 수 repeat 4 · TAB_ORDER) -->
-      <a class="tab-ext" href="https://node.tail180b94.ts.net/hoga/" target="_blank" rel="noopener">실시간 ↗</a><!-- 11/23 `실시간탭` : 호가창과 선별 사이 (사용자 "호가창과 선별 사이에 탭 하나" · 이름 · 동작은 추천안) — 누르면 호가 금액 실시간 화면(hoga-live · Tailscale Serve /hoga · 내 기기만)을 새 창으로. 패널 없음 · TAB_ORDER · 밀기 밖 (.tabs 칸 수 repeat 5) -->
+      <button data-tab="rt">실시간</button><!-- 11/23 `실시간탭` : 호가창과 선별 사이 (사용자 "호가창과 선별 사이에 탭 하나") · 회차 3 (사용자 결정 — 배치 예시 승인) : 새 창 링크 → 탭 안 iframe(#rt) · TAB_ORDER · 밀기 안 (.tabs 칸 수 repeat 5) -->
       <!-- 11/12 시계열숨김 (사용자 "시계열 탭 사용 안 함 · 추천대로 숨겨") : 탭 버튼만 뺌. 화면 코드 · JSON 칸(condFlow · condTimes · inqFlow)은 그대로 — 되살리려면 이 버튼 · .tabs 칸 수(repeat 2 → 3) · TAB_ORDER · loadDate 의 renderSeries 호출 네 곳 -->
       <button data-tab="pick">선별</button><!-- 11/16 `선별탭` : 장중과 복기 사이 (.tabs 칸 수 repeat 3 · TAB_ORDER) — 시계열을 되살리면 4 -->
       <button data-tab="review">복기</button>
@@ -487,6 +488,7 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
   <div class="datebar" id="datebar" hidden></div>
   <section id="live"><div class="empty">불러오는 중</div></section>
   <section id="hoga" hidden><div class="empty">불러오는 중</div></section>
+  <section id="rt" hidden><iframe class="rt-frame" id="rtFrame" title="호가 금액 실시간" src="about:blank" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin"></iframe><div class="rt-note">안 보이면 Tailscale 을 켜세요 · <a href="https://node.tail180b94.ts.net/hoga/" target="_blank" rel="noopener">새 창으로 열기 ↗</a></div></section><!-- 11/23 `실시간탭` 회차 3 : 보일 때만 src(테마 붙여) · 다른 탭으로 가면 about:blank(보는 사람 0 → 키움 연결 끊김) -->
   <section id="series" hidden><div class="empty">불러오는 중</div></section>
   <section id="pick" hidden><div class="empty">불러오는 중</div></section>
   <section id="review" hidden><div class="empty">불러오는 중</div></section>
@@ -2424,7 +2426,14 @@ const HELP = {
       ['1억 · 합계', '1억 = 그 회차 10칸 중 1억 이상 칸 수. 합계 = 10칸 합(막대 높이는 그날 모든 종목 가운데 가장 큰 합계 기준). 종목 줄 오른쪽 "1억 이상 n / m칸" = 그날 그 종목이 든 회차(장중 · 저녁)를 모두 합친 수.'],
       ['15:20 · 1억', '15:20 회차는 종가 동시호가 중이라 매수 칸이 3칸뿐이어서 뺀다. 1억은 강의 숫자(C10 — 장중 탭 호가 1억 칩과 같은 표시).'],
       ['저녁', '11/20 부터 저녁 회차(16시 · 17시 · 18시 · 19시 · 20시 — 20시는 20:00 장 끝 잔량)마다 그 회차 저녁 조회순위 10분 표 종목의 호가(KRX · NXT 저녁장 통합)를 받아, 종목을 펼치면 장중 표 아래 "저녁" 표로 보인다 — 칸 · 색 · 1억 · 합계는 장중과 같은 꼴 · 같은 자. 저녁 표의 · = 그 회차엔 저녁 세 표에 없었음. 저녁에 한 번도 안 든 종목은 "저녁 · 기록 없음" 한 줄. 목록 · 차례는 장중만 — 저녁에만 든 종목은 여기 안 나온다. 종목 줄 "1억 이상 n / m칸" 과 "1억 이상 한 번도 없는 종목" 줄은 저녁 회차까지 합친다.'],
-      ['날짜 · 갱신', '날짜 줄은 장중 탭과 같다(고른 날을 두 탭이 같이 쓴다). 호가 기록은 10/19 부터. 장중엔 회차 갱신(09:12 ~ 15:12)마다 그날 회차가 늘어나고, 저녁엔 갱신(16:07 ~ 19:07 · 20:12)마다 저녁 칸이 늘어난다.']]]] }
+      ['날짜 · 갱신', '날짜 줄은 장중 탭과 같다(고른 날을 두 탭이 같이 쓴다). 호가 기록은 10/19 부터. 장중엔 회차 갱신(09:12 ~ 15:12)마다 그날 회차가 늘어나고, 저녁엔 갱신(16:07 ~ 19:07 · 20:12)마다 저녁 칸이 늘어난다.']]]] },
+  // 11/23 `실시간탭` 회차 3 : 도움말 글은 초안(기록 D:\stock docs\호가금액_기록.md 18절)
+  rt: { title: '실시간 탭', lead: 'PC 의 호가 금액 화면(hoga-live)을 이 탭 안에 그대로 띄운다 — 고른 한 종목의 매도 · 매수 10호가와 칸마다 걸린 돈. 보기만 — 판정 · 채점 · 표본과 무관하다.', groups: [
+    ['읽기', [
+      ['창 시간', 'NXT 가능 종목 08:00 ~ 08:30 · KRX 전용 09:00 ~ 09:30 에만 키움에 붙어 호가가 움직인다. 그 밖은 "시간 밖".'],
+      ['내 기기에서만', 'Tailscale(내 기기끼리만)로 PC 서버에 닿는다. 안 보이면 Tailscale 을 켜거나 아래 "새 창으로 열기".'],
+      ['다른 탭으로 가면', '화면을 내려 키움 연결이 끊긴다. 돌아오면 다시 붙는다.'],
+      ['대기', 'F존 자동매수 · 수집 회차가 웹소켓을 쓰는 동안은 "대기" — 두 번째 앱키 실측이 끝나기 전까지.']]]] }
 };
 const HELP_COMMON = [
   ['하루 루틴 — 언제 무엇을 보나', [
@@ -2478,7 +2487,7 @@ applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dar
 const AL_FROM = '20260917';
 let DATES = [];
 let CUR = 'live';   // 10/8 사용자 요청 : 처음 열면 언제나 장중 탭 (옛 8-3 ① '판정 전이면 장중, 판정 뒤엔 마감' 을 대신함)
-const HERO = { live: ['장중', '매시 07분 갱신 · 저녁 20:12 까지'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], pick: ['선별', '오후확인 때 적은 계획매매 리스트'], review: ['복기', ''], hoga: ['호가창', '장중 회차마다 갱신 · 저녁 20:12 까지'] };   // 11/18 `저녁호가` : 15:12 까지 → 저녁 20:12 까지
+const HERO = { live: ['장중', '매시 07분 갱신 · 저녁 20:12 까지'], series: ['시계열', '강의 네 기준 · 1시간 격자 · 저녁 20:02 까지'], pick: ['선별', '오후확인 때 적은 계획매매 리스트'], review: ['복기', ''], hoga: ['호가창', '장중 회차마다 갱신 · 저녁 20:12 까지'], rt: ['실시간', 'NXT 08:00~08:30 · KRX 09:00~09:30'] };   // 11/18 `저녁호가` : 15:12 까지 → 저녁 20:12 까지
 function setHero(tab) {
   document.getElementById('heroTitle').textContent = HERO[tab][0];
   document.getElementById('heroSub').textContent = tab === 'review' ? REVIEW_SUB : HERO[tab][1];
@@ -2523,7 +2532,25 @@ const HERO_TABS = HERO_EL.querySelector('.tabs');
 const STICK = document.getElementById('stick');
 STICK.firstElementChild.appendChild(HERO_TABS.cloneNode(true));
 
-const TAB_ORDER = ['live', 'hoga', 'pick', 'review'];   // 11/12 시계열숨김 : 'series' 뺌 · 11/16 `선별탭` : 밀면 장중 ↔ 선별 ↔ 복기 · 11/17 `호가창탭` : 장중 ↔ 호가창 ↔ 선별
+const TAB_ORDER = ['live', 'hoga', 'rt', 'pick', 'review'];   // 11/12 시계열숨김 : 'series' 뺌 · 11/16 `선별탭` : 밀면 장중 ↔ 선별 ↔ 복기 · 11/17 `호가창탭` : 장중 ↔ 호가창 ↔ 선별 · 11/23 `실시간탭` 회차 3 : 호가창 ↔ 실시간 ↔ 선별
+// 11/23 `실시간탭` 회차 3 : 호가 금액 실시간 화면(hoga-live)을 #rt 의 iframe 으로. 그 서버는 이 사이트(frameAncestor)만 끼울 수 있게 한다.
+const RT_URL = 'https://node.tail180b94.ts.net/hoga/';
+const RT_ORIGIN = 'https://node.tail180b94.ts.net';
+function rtSet(on) {
+  const f = document.getElementById('rtFrame'); if (!f) return;
+  const want = on ? RT_URL + '?theme=' + (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light') : 'about:blank';
+  if (f.getAttribute('src') !== want) f.setAttribute('src', want);
+}
+// 그 화면이 알려 주는 높이만 받는다 — 그 출처 · 그 iframe · {hl:'h', h:숫자} · 200 ~ 4000px
+window.addEventListener('message', e => {
+  if (e.origin !== RT_ORIGIN) return;
+  const f = document.getElementById('rtFrame'); if (!f || e.source !== f.contentWindow) return;
+  const d = e.data; if (!d || typeof d !== 'object' || d.hl !== 'h') return;
+  const h = Number(d.h); if (!Number.isFinite(h) || h < 200 || h > 4000) return;
+  f.style.height = Math.round(h) + 'px';
+});
+// 다크 단추(또는 폰 설정)로 모드가 바뀌면 실시간 탭이 보일 때만 새 모드로 다시 띄운다
+new MutationObserver(() => { if (CUR === 'rt') rtSet(true); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 // how : 'stick' = 고정 막대에서 누름 / 'swipe' = 좌우로 밈 — 둘 다 새 탭의 처음이 막대 바로 아래에 오게
 function switchTab(tab, how) {
   CUR = tab;
@@ -2533,6 +2560,7 @@ function switchTab(tab, how) {
   if (HELP_OPEN) renderHelp(CUR);   // 8-3 ⑩ 도움말이 열려 있으면 새 탭 내용으로
   if (CUR === 'pick') pkWant();   // 11/17 `선별카드` : 선별 탭이 보일 때 고른 날 JSON 을 받는다(받으면 그 리스트만 다시 그림)
   if (CUR === 'hoga') hcWant();   // 11/17 `호가창탭` : 호가창 탭이 보일 때 고른 날 호가 파일을 받는다
+  rtSet(CUR === 'rt');   // 11/23 `실시간탭` 회차 3 : 보이면 화면을 띄우고, 다른 탭이면 내린다(about:blank — 키움 연결이 끊긴다)
   const bar = document.getElementById('datebar');
   if (bar.childElementCount) bar.hidden = CUR !== 'live' && CUR !== 'hoga';
   const top = HERO_EL.offsetHeight - STICK.offsetHeight;
