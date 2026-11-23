@@ -27,6 +27,23 @@
                                        "plan":  false
                                    }
                                ]
+                 },
+                 {
+                     "date":  "20261120",
+                     "items":  [
+                                   {
+                                       "name":  "코리아써키트",
+                                       "sector":  "반도체",
+                                       "amt":  1676,
+                                       "plan":  false
+                                   },
+                                   {
+                                       "name":  "한진칼",
+                                       "sector":  "한진그룹",
+                                       "amt":  2824,
+                                       "plan":  false
+                                   }
+                               ]
                  }
              ]
 }
