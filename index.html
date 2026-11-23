@@ -77,10 +77,13 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 "Pretendard 
 /* 9/13 : 윗변은 폰 상태 표시줄 색(theme-color = --heroA) 한 색으로 시작해 아래로 대각선 그라데이션에 섞임 */
 .hero{color:#fff;background:linear-gradient(180deg,var(--heroA) calc(env(safe-area-inset-top, 0px) + 6px),var(--heroFade) calc(env(safe-area-inset-top, 0px) + 44px)),linear-gradient(135deg,var(--heroA) 0%,var(--heroB) 58%,var(--heroC) 100%);box-shadow:var(--heroShadow)}
 .hero .wrap{padding:calc(14px + env(safe-area-inset-top, 0px)) 18px 18px}
-.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
+.tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;padding:3px;border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:18px}
 .tabs button{padding:6px 0;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.72);font:inherit;font-size:12.5px;cursor:pointer}
 .tabs button.on{background:#fff;color:#7a0c17;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
 .tabs button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+/* 11/23 `실시간탭` : 호가창과 선별 사이 — 패널 없는 링크 칸(누르면 호가 금액 실시간 화면을 새 창으로). 모양은 .tabs button 과 같게 */
+.tabs a.tab-ext{display:flex;align-items:center;justify-content:center;padding:6px 0;border-radius:9px;color:rgba(255,255,255,.72);font-size:12.5px;text-decoration:none;white-space:nowrap}
+.tabs a.tab-ext:focus-visible{outline:2px solid #fff;outline-offset:1px}
 .hero h1{margin:0;font-size:26px;letter-spacing:-.7px;font-weight:800;line-height:1.1}
 .hsub{margin-top:5px;font-size:12.5px;color:rgba(255,255,255,.72);font-variant-numeric:tabular-nums}
 .hsrow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -468,6 +471,7 @@ button.pk-cell.pk-on{background:var(--rose);box-shadow:inset 0 0 0 1.5px var(--w
     <div class="tabs">
       <button data-tab="live" class="on">장중</button>
       <button data-tab="hoga">호가창</button><!-- 11/17 `호가창탭` : 장중 바로 오른쪽 (.tabs 칸 수 repeat 4 · TAB_ORDER) -->
+      <a class="tab-ext" href="https://node.tail180b94.ts.net/hoga/" target="_blank" rel="noopener">실시간 ↗</a><!-- 11/23 `실시간탭` : 호가창과 선별 사이 (사용자 "호가창과 선별 사이에 탭 하나" · 이름 · 동작은 추천안) — 누르면 호가 금액 실시간 화면(hoga-live · Tailscale Serve /hoga · 내 기기만)을 새 창으로. 패널 없음 · TAB_ORDER · 밀기 밖 (.tabs 칸 수 repeat 5) -->
       <!-- 11/12 시계열숨김 (사용자 "시계열 탭 사용 안 함 · 추천대로 숨겨") : 탭 버튼만 뺌. 화면 코드 · JSON 칸(condFlow · condTimes · inqFlow)은 그대로 — 되살리려면 이 버튼 · .tabs 칸 수(repeat 2 → 3) · TAB_ORDER · loadDate 의 renderSeries 호출 네 곳 -->
       <button data-tab="pick">선별</button><!-- 11/16 `선별탭` : 장중과 복기 사이 (.tabs 칸 수 repeat 3 · TAB_ORDER) — 시계열을 되살리면 4 -->
       <button data-tab="review">복기</button>
