@@ -44,6 +44,29 @@
                                        "plan":  false
                                    }
                                ]
+                 },
+                 {
+                     "date":  "20261123",
+                     "items":  [
+                                   {
+                                       "name":  "로보티즈",
+                                       "sector":  "로봇1",
+                                       "amt":  1873,
+                                       "plan":  false
+                                   },
+                                   {
+                                       "name":  "코리아써키트",
+                                       "sector":  "반도체소부장",
+                                       "amt":  1996,
+                                       "plan":  false
+                                   },
+                                   {
+                                       "name":  "원익홀딩스",
+                                       "sector":  "로봇2",
+                                       "amt":  1515,
+                                       "plan":  true
+                                   }
+                               ]
                  }
              ]
 }
