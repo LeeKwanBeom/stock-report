@@ -67,6 +67,23 @@
                                        "plan":  false
                                    }
                                ]
+                 },
+                 {
+                     "date":  "20261124",
+                     "items":  [
+                                   {
+                                       "name":  "로보티즈",
+                                       "sector":  "로봇2",
+                                       "amt":  4497,
+                                       "plan":  false
+                                   },
+                                   {
+                                       "name":  "원익홀딩스",
+                                       "sector":  "로봇",
+                                       "amt":  3776,
+                                       "plan":  true
+                                   }
+                               ]
                  }
              ]
 }
