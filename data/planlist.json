@@ -84,6 +84,17 @@
                                        "plan":  true
                                    }
                                ]
+                 },
+                 {
+                     "date":  "20261125",
+                     "items":  [
+                                   {
+                                       "name":  "안랩",
+                                       "sector":  "보안",
+                                       "amt":  5778,
+                                       "plan":  true
+                                   }
+                               ]
                  }
              ]
 }
