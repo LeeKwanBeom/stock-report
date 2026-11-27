@@ -95,6 +95,17 @@
                                        "plan":  true
                                    }
                                ]
+                 },
+                 {
+                     "date":  "20261126",
+                     "items":  [
+                                   {
+                                       "name":  "RFHIC",
+                                       "sector":  "개별이슈",
+                                       "amt":  1360,
+                                       "plan":  false
+                                   }
+                               ]
                  }
              ]
 }
